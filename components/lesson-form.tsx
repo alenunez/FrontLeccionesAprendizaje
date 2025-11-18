@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,6 +13,8 @@ import { X, Save, Plus, Trash2, Upload, FileText, Edit, Send, Globe, RotateCcw }
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:7043/api"
 
 interface LessonFormProps {
   onClose: () => void
@@ -32,6 +34,72 @@ interface Event {
   accionesImplementadas: { id: string; description: string; relatedImpactos: string[] }[]
   resultados: { id: string; description: string; relatedAcciones: string[] }[]
   leccionesAprendidas: { id: string; description: string; relatedResultados: string[] }[]
+}
+
+interface RemoteEntity {
+  id?: string | number
+  Id?: string | number
+  codigo?: string | number
+  nombre?: string
+  Nombre?: string
+  name?: string
+  Name?: string
+  [key: string]: unknown
+}
+
+interface SelectOption {
+  id: string
+  nombre: string
+}
+
+const normalizePayload = (payload: unknown): RemoteEntity[] => {
+  if (Array.isArray(payload)) {
+    return payload as RemoteEntity[]
+  }
+
+  if (payload && typeof payload === "object") {
+    const recordPayload = payload as Record<string, unknown>
+    if (Array.isArray(recordPayload.items)) {
+      return recordPayload.items as RemoteEntity[]
+    }
+    if (Array.isArray(recordPayload.data)) {
+      return recordPayload.data as RemoteEntity[]
+    }
+    return [payload as RemoteEntity]
+  }
+
+  return []
+}
+
+const toSelectOptions = (entities: RemoteEntity[]): SelectOption[] =>
+  entities.map((entity, index) => {
+    const identifier = entity.id ?? entity.Id ?? entity.codigo ?? index
+    const label = entity.nombre ?? entity.Nombre ?? entity.name ?? entity.Name ?? "Sin nombre"
+
+    return {
+      id: String(identifier),
+      nombre: String(label),
+    }
+  })
+
+const fetchEntities = async (
+  endpoint: string,
+  setter: React.Dispatch<React.SetStateAction<SelectOption[]>>,
+  signal: AbortSignal,
+) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/${endpoint}`, { signal })
+    if (!response.ok) {
+      throw new Error(`Error al cargar ${endpoint}: ${response.status}`)
+    }
+    const payload = await response.json()
+    const normalized = toSelectOptions(normalizePayload(payload))
+    setter(normalized)
+  } catch (error) {
+    if ((error as Error).name !== "AbortError") {
+      console.error(`No fue posible cargar ${endpoint}`, error)
+    }
+  }
 }
 
 const availableUsers = [
@@ -63,6 +131,20 @@ export function LessonForm({ onClose }: LessonFormProps) {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([])
   const [showUserDropdown, setShowUserDropdown] = useState(false)
   const [attachments, setAttachments] = useState<Attachment[]>([])
+
+  const [procesos, setProcesos] = useState<SelectOption[]>([])
+  const [companias, setCompanias] = useState<SelectOption[]>([])
+  const [sedes, setSedes] = useState<SelectOption[]>([])
+
+  useEffect(() => {
+    const controller = new AbortController()
+
+    fetchEntities("Proceso", setProcesos, controller.signal)
+    fetchEntities("Compania", setCompanias, controller.signal)
+    fetchEntities("Sede", setSedes, controller.signal)
+
+    return () => controller.abort()
+  }, [])
 
   const [eventos, setEventos] = useState<Event[]>([])
   const [showEventDialog, setShowEventDialog] = useState(false)
@@ -488,16 +570,17 @@ export function LessonForm({ onClose }: LessonFormProps) {
                       <SelectValue placeholder="Seleccionar proceso" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="gestion-proyectos">Gestión de Proyectos</SelectItem>
-                      <SelectItem value="desarrollo-software">Desarrollo de Software</SelectItem>
-                      <SelectItem value="infraestructura-ti">Infraestructura TI</SelectItem>
-                      <SelectItem value="recursos-humanos">Recursos Humanos</SelectItem>
-                      <SelectItem value="finanzas">Finanzas</SelectItem>
-                      <SelectItem value="operaciones">Operaciones</SelectItem>
-                      <SelectItem value="calidad">Calidad</SelectItem>
-                      <SelectItem value="seguridad">Seguridad</SelectItem>
-                      <SelectItem value="innovacion">Innovación</SelectItem>
-                      <SelectItem value="servicio-cliente">Servicio al Cliente</SelectItem>
+                      {procesos.length > 0 ? (
+                        procesos.map((proceso) => (
+                          <SelectItem key={proceso.id} value={proceso.id}>
+                            {proceso.nombre}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="sin-procesos" disabled>
+                          No hay procesos disponibles
+                        </SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -513,11 +596,17 @@ export function LessonForm({ onClose }: LessonFormProps) {
                       <SelectValue placeholder="Seleccionar compañía" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="empresa-a">Empresa A</SelectItem>
-                      <SelectItem value="empresa-b">Empresa B</SelectItem>
-                      <SelectItem value="empresa-c">Empresa C</SelectItem>
-                      <SelectItem value="filial-1">Filial 1</SelectItem>
-                      <SelectItem value="filial-2">Filial 2</SelectItem>
+                      {companias.length > 0 ? (
+                        companias.map((compania) => (
+                          <SelectItem key={compania.id} value={compania.id}>
+                            {compania.nombre}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="sin-companias" disabled>
+                          No hay compañías disponibles
+                        </SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -530,11 +619,17 @@ export function LessonForm({ onClose }: LessonFormProps) {
                       <SelectValue placeholder="Seleccionar sede" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="bogota">Bogotá</SelectItem>
-                      <SelectItem value="medellin">Medellín</SelectItem>
-                      <SelectItem value="cali">Cali</SelectItem>
-                      <SelectItem value="barranquilla">Barranquilla</SelectItem>
-                      <SelectItem value="bucaramanga">Bucaramanga</SelectItem>
+                      {sedes.length > 0 ? (
+                        sedes.map((sede) => (
+                          <SelectItem key={sede.id} value={sede.id}>
+                            {sede.nombre}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="sin-sedes" disabled>
+                          No hay sedes disponibles
+                        </SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>

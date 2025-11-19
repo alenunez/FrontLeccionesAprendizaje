@@ -13,6 +13,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:7043/api"
+const BRAND_COLOR = "#067138"
+const BRAND_ACCENT = "#0fa958"
 
 interface ProyectoSituacionDto {
   proyecto?: {
@@ -176,11 +178,11 @@ export function Dashboard() {
   ]
 
   const lessonsByLeader = [
-    { name: "María González", value: 28, color: "#3b82f6" },
-    { name: "Carlos Ruiz", value: 22, color: "#10b981" },
-    { name: "Ana López", value: 19, color: "#f59e0b" },
-    { name: "Juan Pérez", value: 16, color: "#ef4444" },
-    { name: "Luis Martín", value: 12, color: "#8b5cf6" },
+    { name: "María González", value: 28, color: BRAND_COLOR },
+    { name: "Carlos Ruiz", value: 22, color: BRAND_ACCENT },
+    { name: "Ana López", value: 19, color: "#45a06c" },
+    { name: "Juan Pérez", value: 16, color: "#8fd0ab" },
+    { name: "Luis Martín", value: 12, color: "#cbeed8" },
   ]
 
   const lessonsByCompany = [
@@ -192,42 +194,46 @@ export function Dashboard() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30">
-      <header className="border-b bg-white/80 backdrop-blur-sm shadow-sm">
-        <div className="container mx-auto px-6 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="p-2 bg-blue-600 rounded-xl">
-                <BookOpen className="h-8 w-8 text-white" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold text-slate-900 text-balance">
-                  Sistema de Gestión de Lecciones Aprendidas
-                </h1>
-                <p className="text-slate-600 font-medium">Sistema de gestión del conocimiento organizacional</p>
-              </div>
+    <div className="min-h-screen bg-gradient-to-br from-[#f4fff9] via-white to-[#d8f5e6] text-slate-900">
+      <header className="border-b border-emerald-100 bg-white/90 backdrop-blur-md shadow-sm">
+        <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-start gap-4">
+            <div className="rounded-2xl bg-[#067138] p-3 text-white shadow-lg">
+              <BookOpen className="h-8 w-8" />
             </div>
-            <Button onClick={() => setShowForm(true)} className="gap-2 bg-blue-600 hover:bg-blue-700 shadow-lg">
-              <Plus className="h-4 w-4" />
-              Nueva Lección
-            </Button>
+            <div className="space-y-2">
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#067138]/70">Gestión del conocimiento</p>
+              <h1 className="text-3xl font-semibold leading-tight text-balance sm:text-4xl">
+                Sistema de Lecciones Aprendidas
+              </h1>
+              <p className="text-base text-slate-600">
+                Seguimiento centralizado de proyectos, aprendizajes y conocimiento institucional.
+              </p>
+            </div>
           </div>
+          <Button
+            onClick={() => setShowForm(true)}
+            className="gap-2 rounded-full bg-[#067138] px-6 py-5 text-base font-semibold text-white shadow-xl shadow-emerald-200/60 transition hover:bg-[#05592d]"
+          >
+            <Plus className="h-4 w-4" />
+            Nueva Lección
+          </Button>
         </div>
       </header>
 
-      <main className="container mx-auto px-6 py-8">
+      <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-          <TabsList className="grid w-full grid-cols-2 bg-white shadow-sm border">
+          <TabsList className="grid w-full grid-cols-1 gap-2 rounded-2xl border border-emerald-100 bg-white/90 shadow-sm sm:grid-cols-2">
             <TabsTrigger
               value="lessons"
-              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white flex items-center gap-2"
+              className="flex items-center gap-2 rounded-xl data-[state=active]:bg-[#067138] data-[state=active]:text-white data-[state=active]:shadow-lg"
             >
               <BookOpen className="h-4 w-4" />
               Lecciones
             </TabsTrigger>
             <TabsTrigger
               value="analytics"
-              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white flex items-center gap-2"
+              className="flex items-center gap-2 rounded-xl data-[state=active]:bg-[#067138] data-[state=active]:text-white data-[state=active]:shadow-lg"
             >
               <BarChart3 className="h-4 w-4" />
               Analíticas
@@ -236,29 +242,29 @@ export function Dashboard() {
 
           <TabsContent value="lessons">
             <div className="space-y-8">
-              <div className="flex gap-4 items-start">
+              <div className="flex flex-col gap-4 xl:flex-row">
                 {/* Búsqueda Rápida */}
-                <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm flex-1">
+                <Card className="flex-1 border border-emerald-50 bg-white/80 shadow-sm backdrop-blur-sm">
                   <CardHeader className="pb-4">
                     <CardTitle className="flex items-center gap-3 text-xl">
-                      <div className="p-2 bg-blue-100 rounded-lg">
-                        <Search className="h-5 w-5 text-blue-600" />
+                      <div className="rounded-xl bg-[#e0f3e8] p-2">
+                        <Search className="h-5 w-5 text-[#067138]" />
                       </div>
                       Búsqueda Rápida
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex gap-3">
+                    <div className="flex flex-col gap-3 sm:flex-row">
                       <Input
                         placeholder="Buscar Proyecto o situación"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="flex-1 border-slate-200 focus:border-blue-500 focus:ring-blue-500/20"
+                        className="flex-1 rounded-2xl border-slate-200 bg-white/70 focus:border-[#067138] focus:ring-[#067138]/20"
                       />
                       <Button
                         variant="outline"
                         size="icon"
-                        className="border-slate-200 hover:bg-blue-50 bg-transparent"
+                        className="border-slate-200 bg-white text-[#067138] transition hover:bg-[#e0f3e8]"
                       >
                         <Filter className="h-4 w-4" />
                       </Button>
@@ -267,9 +273,9 @@ export function Dashboard() {
                 </Card>
 
                 {/* Estados del Flujo de Trabajo - Compact version */}
-                <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
+                <Card className="border border-emerald-50 bg-white/80 shadow-sm backdrop-blur-sm">
                   <CardContent className="p-3">
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       {[
                         {
                           status: "Borrador",
@@ -281,15 +287,15 @@ export function Dashboard() {
                         {
                           status: "En Revisión",
                           count: statusCounts["En Revisión"] ?? 0,
-                          color: "bg-amber-100 hover:bg-amber-200 border-amber-300",
+                          color: "bg-amber-50 hover:bg-amber-100 border-amber-200",
                           textColor: "text-amber-700",
                           icon: "👀",
                         },
                         {
                           status: "Publicada",
                           count: statusCounts["Publicada"] ?? 0,
-                          color: "bg-green-100 hover:bg-green-200 border-green-300",
-                          textColor: "text-green-700",
+                          color: "bg-[#e0f3e8] hover:bg-[#d1ecde] border-emerald-200",
+                          textColor: "text-[#067138]",
                           icon: "🚀",
                         },
                       ].map((stage) => (
@@ -297,7 +303,7 @@ export function Dashboard() {
                           key={stage.status}
                           variant="outline"
                           size="sm"
-                          className={`${stage.color} ${stage.textColor} border px-3 py-1 h-auto flex flex-col items-center gap-0.5 min-w-[70px] transition-all`}
+                          className={`${stage.color} ${stage.textColor} border px-3 py-2 h-auto flex flex-col items-center gap-1 rounded-2xl text-center min-w-[70px] transition-all`}
                           onClick={() => setWorkflowFilter(workflowFilter === stage.status ? null : stage.status)}
                         >
                           <span className="text-xs">{stage.icon}</span>
@@ -311,13 +317,13 @@ export function Dashboard() {
               </div>
 
               {/* Lista de Lecciones con Filtro de Estado */}
-              <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
+              <Card className="border border-emerald-50 bg-white/80 shadow-sm backdrop-blur-sm">
                 <CardHeader className="pb-4">
-                  <CardTitle className="text-xl flex items-center justify-between">
+                  <CardTitle className="flex flex-col gap-3 text-xl lg:flex-row lg:items-center lg:justify-between">
                     Gestión de Lecciones
                     {workflowFilter && (
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge variant="outline" className="rounded-full border-emerald-200 bg-[#e0f3e8] text-[#067138]">
                           Filtrado por: {workflowFilter}
                         </Badge>
                         <Button
@@ -385,7 +391,7 @@ export function Dashboard() {
                       filteredLessons.map((lesson) => (
                         <div
                           key={lesson.id}
-                          className="flex items-start justify-between p-5 border border-slate-200 rounded-xl bg-white hover:shadow-md transition-all duration-200 gap-4"
+                          className="flex flex-col gap-4 rounded-2xl border border-emerald-100 bg-white/90 p-5 shadow-sm transition-all duration-200 hover:border-[#067138]/40 hover:shadow-lg lg:flex-row lg:items-start lg:justify-between"
                         >
                           <div className="flex-1 space-y-3">
                             {/* Proyecto o Situación - Main title */}
@@ -399,7 +405,7 @@ export function Dashboard() {
                             </div>
 
                             {/* Grid with secondary information */}
-                            <div className="grid grid-cols-3 gap-x-6 gap-y-3 pt-2">
+                            <div className="grid grid-cols-1 gap-x-6 gap-y-3 pt-2 sm:grid-cols-2 lg:grid-cols-3">
                               <div>
                                 <span className="text-xs font-medium text-slate-500">Estado</span>
                                 <p className="text-sm text-slate-900 mt-0.5">{lesson.status}</p>
@@ -431,7 +437,7 @@ export function Dashboard() {
                               <span className="font-medium">{lesson.id}</span>
                             </div>
                           </div>
-                          <div className="flex items-center gap-3">
+                          <div className="flex flex-wrap items-center gap-3">
                             <Badge
                               variant={
                                 lesson.status === "Publicada"
@@ -442,10 +448,10 @@ export function Dashboard() {
                               }
                               className={
                                 lesson.status === "Publicada"
-                                  ? "bg-green-100 text-green-800 border-green-200"
+                                  ? "rounded-full bg-[#e0f3e8] text-[#067138] border-emerald-200"
                                   : lesson.status === "En Revisión"
                                     ? "bg-amber-100 text-amber-800 border-amber-200"
-                                    : "bg-slate-100 text-slate-800 border-slate-200"
+                                    : "rounded-full bg-slate-100 text-slate-800 border-slate-200"
                               }
                             >
                               {lesson.status}
@@ -453,13 +459,13 @@ export function Dashboard() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="hover:bg-orange-50 text-orange-600 hover:text-orange-700"
+                              className="text-[#b45309] hover:bg-orange-50"
                               onClick={() => handleGeneratePPTX(lesson)}
                               title="Generar presentación PPTX"
                             >
                               <Presentation className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="sm" className="hover:bg-blue-50">
+                            <Button variant="ghost" size="sm" className="text-[#067138] hover:bg-[#e0f3e8]">
                               <Eye className="h-4 w-4" />
                             </Button>
                           </div>
@@ -473,11 +479,11 @@ export function Dashboard() {
 
           <TabsContent value="analytics">
             <div className="space-y-8">
-              <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
+              <Card className="border border-emerald-50 bg-white/80 shadow-sm backdrop-blur-sm">
                 <CardHeader className="pb-4">
                   <CardTitle className="flex items-center gap-3 text-xl">
-                    <div className="p-2 bg-green-100 rounded-lg">
-                      <BarChart3 className="h-5 w-5 text-green-600" />
+                    <div className="rounded-xl bg-[#e0f3e8] p-2">
+                      <BarChart3 className="h-5 w-5 text-[#067138]" />
                     </div>
                     Analíticas del Repositorio
                   </CardTitle>
@@ -488,7 +494,7 @@ export function Dashboard() {
               </Card>
 
               {/* Eventos por Proyecto */}
-              <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
+              <Card className="shadow-sm border border-emerald-50 bg-white/80 backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle className="text-lg">Eventos por Proyecto</CardTitle>
                   <CardDescription>Distribución de eventos registrados por proyecto</CardDescription>
@@ -507,7 +513,7 @@ export function Dashboard() {
                             borderRadius: "8px",
                           }}
                         />
-                        <Bar dataKey="eventos" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="eventos" fill={BRAND_COLOR} radius={[4, 4, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -515,7 +521,7 @@ export function Dashboard() {
               </Card>
 
               {/* Lecciones por Proyecto */}
-              <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
+              <Card className="shadow-sm border border-emerald-50 bg-white/80 backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle className="text-lg">Lecciones por Proyecto</CardTitle>
                   <CardDescription>Número de lecciones aprendidas capturadas por proyecto</CardDescription>
@@ -534,7 +540,7 @@ export function Dashboard() {
                             borderRadius: "8px",
                           }}
                         />
-                        <Bar dataKey="lecciones" fill="#10b981" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="lecciones" fill={BRAND_ACCENT} radius={[4, 4, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -543,7 +549,7 @@ export function Dashboard() {
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Lecciones por Líder del Proyecto */}
-                <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
+                <Card className="shadow-sm border border-emerald-50 bg-white/80 backdrop-blur-sm">
                   <CardHeader>
                     <CardTitle className="text-lg">Lecciones por Líder del Proyecto</CardTitle>
                     <CardDescription>Distribución de lecciones por líder responsable</CardDescription>
@@ -557,7 +563,7 @@ export function Dashboard() {
                             cx="50%"
                             cy="50%"
                             outerRadius={80}
-                            fill="#8884d8"
+                            fill={BRAND_COLOR}
                             dataKey="value"
                             label={({ name, value }) => `${name}: ${value}`}
                             labelLine={false}
@@ -580,7 +586,7 @@ export function Dashboard() {
                 </Card>
 
                 {/* Lecciones por Compañía */}
-                <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
+                <Card className="shadow-sm border border-emerald-50 bg-white/80 backdrop-blur-sm">
                   <CardHeader>
                     <CardTitle className="text-lg">Lecciones por Compañía</CardTitle>
                     <CardDescription>Número de lecciones registradas por compañía</CardDescription>
@@ -599,7 +605,7 @@ export function Dashboard() {
                               borderRadius: "8px",
                             }}
                           />
-                          <Bar dataKey="lecciones" fill="#f59e0b" radius={[0, 4, 4, 0]} />
+                          <Bar dataKey="lecciones" fill="#45a06c" radius={[0, 4, 4, 0]} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>

@@ -172,11 +172,11 @@ export function ChatBot() {
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[calc(100vh-200px)]">
       {/* Chat Interface */}
       <div className="lg:col-span-3">
-        <Card className="h-full flex flex-col shadow-sm border-0 bg-white/70 backdrop-blur-sm">
-          <CardHeader className="pb-4 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
+        <Card className="h-full flex flex-col border border-emerald-50 bg-white/80 shadow-sm backdrop-blur-sm">
+          <CardHeader className="pb-4 border-b border-emerald-100 bg-gradient-to-r from-[#f4fff9] via-white to-[#d8f5e6]">
             <CardTitle className="flex items-center gap-3 text-xl">
-              <div className="p-2 bg-blue-600 rounded-lg">
-                <MessageCircle className="h-5 w-5 text-white" />
+              <div className="rounded-lg bg-[#067138] p-2 text-white">
+                <MessageCircle className="h-5 w-5" />
               </div>
               Consultor IA de Lecciones Aprendidas
             </CardTitle>
@@ -192,14 +192,14 @@ export function ChatBot() {
                     className={`flex gap-3 ${message.type === "user" ? "justify-end" : "justify-start"}`}
                   >
                     {message.type === "bot" && (
-                      <div className="p-2 bg-blue-100 rounded-full">
-                        <Bot className="h-4 w-4 text-blue-600" />
+                      <div className="rounded-full bg-[#e0f3e8] p-2">
+                        <Bot className="h-4 w-4 text-[#067138]" />
                       </div>
                     )}
 
                     <div
                       className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                        message.type === "user" ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-900"
+                        message.type === "user" ? "bg-[#067138] text-white" : "bg-slate-100 text-slate-900"
                       }`}
                     >
                       <div className="whitespace-pre-wrap text-sm leading-relaxed">{message.content}</div>
@@ -234,8 +234,8 @@ export function ChatBot() {
 
                 {isTyping && (
                   <div className="flex gap-3 justify-start">
-                    <div className="p-2 bg-blue-100 rounded-full">
-                      <Bot className="h-4 w-4 text-blue-600" />
+                    <div className="rounded-full bg-[#e0f3e8] p-2">
+                      <Bot className="h-4 w-4 text-[#067138]" />
                     </div>
                     <div className="bg-slate-100 rounded-2xl px-4 py-3">
                       <div className="flex gap-1">
@@ -263,13 +263,13 @@ export function ChatBot() {
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyPress={handleKeyPress}
                   placeholder="Pregunta sobre lecciones aprendidas..."
-                  className="flex-1 border-slate-200 focus:border-blue-500 focus:ring-blue-500/20"
+                  className="flex-1 border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30"
                   disabled={isTyping}
                 />
                 <Button
                   onClick={handleSendMessage}
                   disabled={!inputValue.trim() || isTyping}
-                  className="bg-blue-600 hover:bg-blue-700"
+                  className="rounded-full bg-[#067138] px-6 hover:bg-[#05592d]"
                 >
                   <Send className="h-4 w-4" />
                 </Button>
@@ -282,7 +282,7 @@ export function ChatBot() {
       {/* Sidebar */}
       <div className="space-y-6">
         {/* Suggested Queries */}
-        <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
+        <Card className="border border-emerald-50 bg-white/80 shadow-sm backdrop-blur-sm">
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Lightbulb className="h-5 w-5 text-amber-500" />
@@ -294,7 +294,7 @@ export function ChatBot() {
               <Button
                 key={index}
                 variant="outline"
-                className="w-full text-left justify-start h-auto p-3 text-sm bg-white hover:bg-blue-50 border-slate-200"
+                className="h-auto w-full justify-start rounded-2xl border-slate-200 bg-white p-3 text-left text-sm hover:bg-[#e0f3e8]"
                 onClick={() => setInputValue(query)}
               >
                 <Search className="h-4 w-4 mr-2 text-slate-400" />
@@ -305,14 +305,14 @@ export function ChatBot() {
         </Card>
 
         {/* Quick Stats */}
-        <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
+        <Card className="border border-emerald-50 bg-white/80 shadow-sm backdrop-blur-sm">
           <CardHeader className="pb-4">
             <CardTitle className="text-lg">Base de Conocimiento</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex justify-between items-center">
               <span className="text-sm text-slate-600">Lecciones Disponibles</span>
-              <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+              <Badge variant="secondary" className="rounded-full bg-[#e0f3e8] text-[#067138]">
                 {lessonsDatabase.length}
               </Badge>
             </div>

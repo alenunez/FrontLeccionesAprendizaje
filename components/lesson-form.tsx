@@ -318,7 +318,7 @@ export function LessonForm({ onClose }: LessonFormProps) {
                   onChange={(e) => updateRowWithRelations(row.id, "description", e.target.value, setter)}
                   placeholder={`${placeholder} ${index + 1}`}
                   rows={2}
-                  className="border-slate-200 focus:border-blue-500 focus:ring-blue-500/20"
+                  className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30"
                 />
               </div>
               {data.length > 1 && (
@@ -349,7 +349,7 @@ export function LessonForm({ onClose }: LessonFormProps) {
                           variant={isSelected ? "default" : "outline"}
                           className={`cursor-pointer text-xs ${
                             isSelected
-                              ? "bg-blue-600 text-white hover:bg-blue-700"
+                              ? "bg-[#067138] text-white hover:bg-[#05592d]"
                               : "bg-white text-slate-600 hover:bg-slate-50"
                           }`}
                           onClick={() => toggleRelation(row.id, option.id, relationKey, setter)}
@@ -370,7 +370,7 @@ export function LessonForm({ onClose }: LessonFormProps) {
           type="button"
           variant="outline"
           onClick={() => (relationKey ? addRowWithRelations(setter, relationKey) : addRow(setter))}
-          className="gap-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200"
+          className="gap-2 border-[#8fd0ab] text-[#067138] hover:bg-[#e0f3e8]"
         >
           <Plus className="h-4 w-4" />
           Agregar
@@ -402,7 +402,7 @@ export function LessonForm({ onClose }: LessonFormProps) {
                 onChange={(e) => updateRow(row.id, e.target.value, setter)}
                 placeholder={`${placeholder} ${index + 1}`}
                 rows={2}
-                className="border-slate-200 focus:border-blue-500 focus:ring-blue-500/20"
+                className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30"
               />
             </div>
             {data.length > 1 && (
@@ -422,7 +422,7 @@ export function LessonForm({ onClose }: LessonFormProps) {
           type="button"
           variant="outline"
           onClick={() => addRow(setter)}
-          className="gap-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200"
+          className="gap-2 border-[#8fd0ab] text-[#067138] hover:bg-[#e0f3e8]"
         >
           <Plus className="h-4 w-4" />
           Agregar
@@ -464,11 +464,11 @@ export function LessonForm({ onClose }: LessonFormProps) {
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <Card className="w-[90%] max-h-[90vh] overflow-y-auto shadow-2xl border-0">
-        <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-lg">
+      <Card className="w-[90%] max-h-[90vh] overflow-y-auto border border-emerald-100 bg-white shadow-2xl">
+        <CardHeader className="flex flex-row items-center justify-between rounded-t-lg bg-gradient-to-r from-[#067138] via-[#0fa958] to-[#45a06c] text-white">
           <div>
             <CardTitle className="text-xl text-white">Proyecto o Situación</CardTitle>
-            <CardDescription className="text-blue-100">
+            <CardDescription className="text-emerald-100">
               Eventos y lecciones aprendidas de un proyecto o situación
             </CardDescription>
           </div>
@@ -477,15 +477,15 @@ export function LessonForm({ onClose }: LessonFormProps) {
           </Button>
         </CardHeader>
 
-        <div className="flex items-center justify-between gap-3 px-8 py-4 bg-slate-50 border-b border-slate-200">
+        <div className="flex flex-col gap-3 border-b border-emerald-100 bg-[#f4fff9] px-6 py-4 md:flex-row md:items-center md:justify-between">
           <div className="text-sm font-medium text-slate-700">Acciones de Flujo de Trabajo</div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={handleSendToReview}
-              className="gap-2 border-blue-200 text-blue-700 hover:bg-blue-50 bg-transparent"
+              className="gap-2 border-[#8fd0ab] text-[#067138] hover:bg-[#e0f3e8]"
             >
               <Send className="h-4 w-4" />
               Enviar a revisión
@@ -517,7 +517,7 @@ export function LessonForm({ onClose }: LessonFormProps) {
           <CardContent className="space-y-8 p-8">
             {/* ENCABEZADO - Información General hasta Anexos */}
             <div className="space-y-6">
-              <div className="border-l-4 border-blue-500 pl-4">
+              <div className="border-l-4 border-[#067138] pl-4">
                 <h3 className="text-xl font-bold text-slate-900">Información General</h3>
                 <p className="text-sm text-slate-600">Datos básicos del evento o situación</p>
               </div>
@@ -554,7 +554,7 @@ export function LessonForm({ onClose }: LessonFormProps) {
                     type="date"
                     value={formData.fecha}
                     onChange={(e) => setFormData({ ...formData, fecha: e.target.value })}
-                    className="border-slate-200 focus:border-blue-500 focus:ring-blue-500/20"
+                    className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30"
                     required
                   />
                 </div>
@@ -566,7 +566,7 @@ export function LessonForm({ onClose }: LessonFormProps) {
                     value={formData.proceso}
                     onValueChange={(value) => setFormData({ ...formData, proceso: value })}
                   >
-                    <SelectTrigger className="border-slate-200 focus:border-blue-500 focus:ring-blue-500/20">
+                    <SelectTrigger className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30">
                       <SelectValue placeholder="Seleccionar proceso" />
                     </SelectTrigger>
                     <SelectContent>
@@ -592,7 +592,7 @@ export function LessonForm({ onClose }: LessonFormProps) {
                     value={formData.compania}
                     onValueChange={(value) => setFormData({ ...formData, compania: value })}
                   >
-                    <SelectTrigger className="border-slate-200 focus:border-blue-500 focus:ring-blue-500/20">
+                    <SelectTrigger className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30">
                       <SelectValue placeholder="Seleccionar compañía" />
                     </SelectTrigger>
                     <SelectContent>
@@ -615,7 +615,7 @@ export function LessonForm({ onClose }: LessonFormProps) {
                     Sede *
                   </Label>
                   <Select value={formData.sede} onValueChange={(value) => setFormData({ ...formData, sede: value })}>
-                    <SelectTrigger className="border-slate-200 focus:border-blue-500 focus:ring-blue-500/20">
+                    <SelectTrigger className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30">
                       <SelectValue placeholder="Seleccionar sede" />
                     </SelectTrigger>
                     <SelectContent>
@@ -641,7 +641,7 @@ export function LessonForm({ onClose }: LessonFormProps) {
                     value={formData.responsable}
                     onValueChange={(value) => setFormData({ ...formData, responsable: value })}
                   >
-                    <SelectTrigger className="border-slate-200 focus:border-blue-500 focus:ring-blue-500/20">
+                    <SelectTrigger className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30">
                       <SelectValue placeholder="Seleccionar responsable" />
                     </SelectTrigger>
                     <SelectContent>
@@ -666,7 +666,7 @@ export function LessonForm({ onClose }: LessonFormProps) {
                     onChange={(e) => setFormData({ ...formData, proyectoOSituacion: e.target.value })}
                     placeholder="Descripción detallada del proyecto o situación"
                     rows={3}
-                    className="border-slate-200 focus:border-blue-500 focus:ring-blue-500/20"
+                    className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30"
                     required
                   />
                 </div>
@@ -680,7 +680,7 @@ export function LessonForm({ onClose }: LessonFormProps) {
                     onChange={(e) => setFormData({ ...formData, aplicacionPractica: e.target.value })}
                     placeholder="¿Cómo y donde puede usarse lo aprendido?"
                     rows={3}
-                    className="border-slate-200 focus:border-blue-500 focus:ring-blue-500/20"
+                    className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30"
                     required
                   />
                 </div>
@@ -690,7 +690,7 @@ export function LessonForm({ onClose }: LessonFormProps) {
                     Nivel de Acceso *
                   </Label>
                   <Select value={nivelAcceso} onValueChange={(value: "Público" | "Privado") => setNivelAcceso(value)}>
-                    <SelectTrigger className="border-slate-200 focus:border-blue-500">
+                    <SelectTrigger className="border-slate-200 focus:border-[#067138]">
                       <SelectValue placeholder="Seleccionar nivel de acceso" />
                     </SelectTrigger>
                     <SelectContent>
@@ -714,7 +714,7 @@ export function LessonForm({ onClose }: LessonFormProps) {
                           type="button"
                           variant="outline"
                           onClick={() => setShowUserDropdown(!showUserDropdown)}
-                          className="w-full justify-between border-slate-200 focus:border-blue-500"
+                          className="w-full justify-between border-slate-200 focus:border-[#067138]"
                         >
                           <span className="text-slate-600">
                             {selectedUsers.length === 0
@@ -754,7 +754,7 @@ export function LessonForm({ onClose }: LessonFormProps) {
                             <Badge
                               key={user.id}
                               variant="secondary"
-                              className="gap-1 bg-blue-50 text-blue-700 hover:bg-blue-100"
+                              className="gap-1 rounded-full bg-[#e0f3e8] text-[#067138]"
                             >
                               {user.name}
                               <Button
@@ -762,7 +762,7 @@ export function LessonForm({ onClose }: LessonFormProps) {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => removeUser(user.id)}
-                                className="h-4 w-4 p-0 hover:bg-blue-200"
+                                className="h-4 w-4 p-0 text-[#067138] hover:bg-[#cbeed8]"
                               >
                                 <X className="h-3 w-3" />
                               </Button>
@@ -835,7 +835,7 @@ export function LessonForm({ onClose }: LessonFormProps) {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => openEditEventDialog(evento)}
-                                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                className="text-[#067138] hover:bg-[#e0f3e8]"
                               >
                                 <Edit className="h-4 w-4" />
                               </Button>
@@ -868,7 +868,7 @@ export function LessonForm({ onClose }: LessonFormProps) {
 
             {/* Anexos Section */}
             <div className="space-y-6">
-              <div className="border-l-4 border-green-500 pl-4">
+              <div className="border-l-4 border-[#067138] pl-4">
                 <h3 className="text-xl font-bold text-slate-900">Anexos</h3>
                 <p className="text-sm text-slate-600">Adjunte documentos, imágenes o archivos relacionados</p>
               </div>
@@ -926,16 +926,19 @@ export function LessonForm({ onClose }: LessonFormProps) {
             </div>
           </CardContent>
 
-          <div className="flex justify-end gap-3 p-6 border-t bg-slate-50 rounded-b-lg">
+          <div className="flex flex-col gap-3 border-t border-emerald-100 bg-[#f4fff9] p-6 text-right sm:flex-row sm:justify-end">
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
-              className="border-slate-300 hover:bg-slate-100 bg-transparent"
+              className="border-slate-300 bg-transparent hover:bg-slate-100"
             >
               Cancelar
             </Button>
-            <Button type="submit" className="gap-2 bg-blue-600 hover:bg-blue-700 shadow-lg">
+            <Button
+              type="submit"
+              className="gap-2 rounded-full bg-[#067138] px-6 py-5 text-base font-semibold text-white shadow-lg shadow-emerald-200/60 hover:bg-[#05592d]"
+            >
               <Save className="h-4 w-4" />
               Guardar
             </Button>
@@ -947,7 +950,7 @@ export function LessonForm({ onClose }: LessonFormProps) {
         <DialogContent className="w-screen max-w-none p-0 m-0 rounded-none h-[90vh] overflow-y-auto min-w-full">
           <div className="space-y-6 px-6 pt-6 pb-4">
             <div className="space-y-3">
-              <div className="border-l-4 border-blue-500 pl-4">
+              <div className="border-l-4 border-[#067138] pl-4">
                 <h3 className="text-lg font-bold text-slate-900">Evento (Qué ocurrió)</h3>
               </div>
               <Textarea
@@ -956,7 +959,7 @@ export function LessonForm({ onClose }: LessonFormProps) {
                 onChange={(e) => setCurrentEvent({ ...currentEvent, evento: e.target.value })}
                 placeholder="Describa el evento relacionado con esta lección"
                 rows={3}
-                className="border-slate-200 focus:border-blue-500 focus:ring-blue-500/20"
+                className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30"
                 required
               />
             </div>

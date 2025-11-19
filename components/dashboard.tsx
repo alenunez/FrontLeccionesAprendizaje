@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { useEffect, useMemo, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -15,6 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:7043/api"
 const BRAND_COLOR = "#067138"
 const BRAND_ACCENT = "#0fa958"
+const SOLLA_LOGO_URL = "https://www.solla.com/wp-content/uploads/2022/01/logo-solla-1.png"
 
 interface ProyectoSituacionDto {
   proyecto?: {
@@ -194,34 +196,52 @@ export function Dashboard() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f4fff9] via-white to-[#d8f5e6] text-slate-900">
-      <header className="border-b border-emerald-100 bg-white/90 backdrop-blur-md shadow-sm">
-        <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-start gap-4">
-            <div className="rounded-2xl bg-[#067138] p-3 text-white shadow-lg">
-              <BookOpen className="h-8 w-8" />
-            </div>
-            <div className="space-y-2">
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#067138]/70">Gestión del conocimiento</p>
-              <h1 className="text-3xl font-semibold leading-tight text-balance sm:text-4xl">
-                Sistema de Lecciones Aprendidas
-              </h1>
-              <p className="text-base text-slate-600">
-                Seguimiento centralizado de proyectos, aprendizajes y conocimiento institucional.
-              </p>
+    <div className="min-h-screen w-full bg-gradient-to-br from-[#f4fff9] via-white to-[#d8f5e6] text-slate-900">
+      <header className="border-b border-emerald-100 bg-white/90 shadow-sm backdrop-blur-md">
+        <div className="mx-auto flex w-full flex-col gap-6 px-4 py-8 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-10 xl:px-16 2xl:px-24">
+          <div className="flex w-full flex-1 flex-col gap-4">
+            <div className="flex flex-wrap items-center gap-6">
+              <div className="flex min-w-[260px] flex-1 items-start gap-4">
+                <div className="rounded-2xl bg-[#067138] p-3 text-white shadow-lg">
+                  <BookOpen className="h-8 w-8" />
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#067138]/70">Gestión del conocimiento</p>
+                  <h1 className="text-3xl font-semibold leading-tight text-balance sm:text-4xl">
+                    Sistema de Lecciones Aprendidas
+                  </h1>
+                  <p className="text-base text-slate-600">
+                    Seguimiento centralizado de proyectos, aprendizajes y conocimiento institucional.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 rounded-3xl border border-emerald-100 bg-white/80 px-4 py-3 shadow-sm">
+                <Image
+                  src={SOLLA_LOGO_URL}
+                  alt="Logo de Solla"
+                  width={180}
+                  height={64}
+                  className="h-10 w-auto sm:h-12"
+                  sizes="(min-width: 1024px) 180px, 150px"
+                  priority
+                />
+                <span className="text-xs font-semibold uppercase tracking-[0.4em] text-[#067138]/70">Solla</span>
+              </div>
             </div>
           </div>
-          <Button
-            onClick={() => setShowForm(true)}
-            className="gap-2 rounded-full bg-[#067138] px-6 py-5 text-base font-semibold text-white shadow-xl shadow-emerald-200/60 transition hover:bg-[#05592d]"
-          >
-            <Plus className="h-4 w-4" />
-            Nueva Lección
-          </Button>
+          <div className="flex justify-start lg:justify-end">
+            <Button
+              onClick={() => setShowForm(true)}
+              className="gap-2 rounded-full bg-[#067138] px-6 py-5 text-base font-semibold text-white shadow-xl shadow-emerald-200/60 transition hover:bg-[#05592d]"
+            >
+              <Plus className="h-4 w-4" />
+              Nueva Lección
+            </Button>
+          </div>
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
+      <main className="mx-auto w-full px-4 py-8 sm:px-6 lg:px-10 xl:px-16 2xl:px-24">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
           <TabsList className="grid w-full grid-cols-1 gap-2 rounded-2xl border border-emerald-100 bg-white/90 shadow-sm sm:grid-cols-2">
             <TabsTrigger

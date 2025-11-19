@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,24 +9,154 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BookOpen, Plus, Search, Filter, Eye, BarChart3, Presentation } from "lucide-react"
 import { LessonForm } from "./lesson-form"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Skeleton } from "@/components/ui/skeleton"
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:7043/api"
+
+interface ProyectoSituacionDto {
+  proyecto?: {
+    id?: string
+    fecha?: string
+    descripcion?: string
+    aplicacionPractica?: string
+    estado?: { data?: { descripcion?: string | null } }
+    responsable?: { nombre?: string | null; value?: string | null }
+    autor?: { nombre?: string | null; value?: string | null }
+    sede?: { data?: { nombre?: string | null; compania?: { data?: { nombre?: string | null } } } }
+    proceso?: { data?: { nombre?: string | null } }
+  }
+}
+
+interface LessonSummary {
+  id: string
+  projectOrSituation: string
+  status: string
+  responsable: string
+  fecha: string
+  proceso: string
+  compania: string
+  sede: string
+}
+
+const normalizeLessonsResponse = (payload: unknown): ProyectoSituacionDto[] => {
+  if (Array.isArray(payload)) {
+    return payload as ProyectoSituacionDto[]
+  }
+
+  if (payload && typeof payload === "object") {
+    const record = payload as Record<string, unknown>
+    if (Array.isArray(record.data)) {
+      return record.data as ProyectoSituacionDto[]
+    }
+    if (Array.isArray(record.items)) {
+      return record.items as ProyectoSituacionDto[]
+    }
+  }
+
+  return []
+}
+
+const formatDate = (value?: string): string => {
+  if (!value) return "Sin fecha"
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return date.toLocaleDateString("es-CO", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  })
+}
+
+const mapLessons = (payload: ProyectoSituacionDto[]): LessonSummary[] =>
+  payload.map((item, index) => {
+    const proyecto = item.proyecto ?? {}
+    const estadoDescripcion = proyecto.estado?.data?.descripcion ?? "Sin estado"
+    const responsableNombre =
+      proyecto.responsable?.nombre ??
+      proyecto.responsable?.value ??
+      proyecto.autor?.nombre ??
+      proyecto.autor?.value ??
+      "Sin responsable"
+
+    return {
+      id: proyecto.id ?? `sin-id-${index}`,
+      projectOrSituation: proyecto.descripcion ?? "Sin descripción",
+      status: estadoDescripcion,
+      responsable: responsableNombre,
+      fecha: formatDate(proyecto.fecha),
+      proceso: proyecto.proceso?.data?.nombre ?? "Sin proceso",
+      compania: proyecto.sede?.data?.compania?.data?.nombre ?? "Sin compañía",
+      sede: proyecto.sede?.data?.nombre ?? "Sin sede",
+    }
+  })
 
 export function Dashboard() {
   const [activeTab, setActiveTab] = useState("lessons")
   const [showForm, setShowForm] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [workflowFilter, setWorkflowFilter] = useState<string | null>(null)
+  const [lessons, setLessons] = useState<LessonSummary[]>([])
+  const [isLoadingLessons, setIsLoadingLessons] = useState(false)
+  const [fetchError, setFetchError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const controller = new AbortController()
+
+    const handler = setTimeout(async () => {
+      setIsLoadingLessons(true)
+      setFetchError(null)
+      try {
+        const params = new URLSearchParams()
+        params.set("query", searchQuery)
+        const url = `${API_BASE_URL}/ProyectoSituacion/full?${params.toString()}`
+        const response = await fetch(url, { signal: controller.signal })
+        if (!response.ok) {
+          throw new Error(`Error al cargar las lecciones: ${response.status}`)
+        }
+        const payload = await response.json()
+        const normalized = normalizeLessonsResponse(payload)
+        setLessons(mapLessons(normalized))
+      } catch (error) {
+        if ((error as Error).name !== "AbortError") {
+          console.error("No fue posible cargar las lecciones", error)
+          setFetchError("No fue posible cargar la información. Intenta nuevamente.")
+          setLessons([])
+        }
+      } finally {
+        setIsLoadingLessons(false)
+      }
+    }, 400)
+
+    return () => {
+      clearTimeout(handler)
+      controller.abort()
+    }
+  }, [searchQuery])
+
+  const statusCounts = useMemo(() => {
+    return lessons.reduce<Record<string, number>>((acc, lesson) => {
+      acc[lesson.status] = (acc[lesson.status] ?? 0) + 1
+      return acc
+    }, {})
+  }, [lessons])
+
+  const filteredLessons = useMemo(
+    () => lessons.filter((lesson) => !workflowFilter || lesson.status === workflowFilter),
+    [lessons, workflowFilter],
+  )
 
   const handleGeneratePPTX = (lesson: any) => {
     // Simulate PPTX generation
-    console.log(`Generando presentación PPTX para: ${lesson.title}`)
+    console.log(`Generando presentación PPTX para: ${lesson.projectOrSituation}`)
 
     // Create a simple notification or download simulation
     const link = document.createElement("a")
     link.href = "#"
-    link.download = `${lesson.id}_${lesson.title.replace(/\s+/g, "_")}.pptx`
+    link.download = `${lesson.id}_${lesson.projectOrSituation.replace(/\s+/g, "_")}.pptx`
 
     // Show a success message
-    alert(`Generando presentación PPTX para: "${lesson.title}"\nArchivo: ${lesson.id}_presentacion.pptx`)
+    alert(`Generando presentación PPTX para: "${lesson.projectOrSituation}"\nArchivo: ${lesson.id}_presentacion.pptx`)
   }
 
   const eventsByProject = [
@@ -143,21 +273,21 @@ export function Dashboard() {
                       {[
                         {
                           status: "Borrador",
-                          count: 5,
+                          count: statusCounts["Borrador"] ?? 0,
                           color: "bg-slate-100 hover:bg-slate-200 border-slate-300",
                           textColor: "text-slate-700",
                           icon: "📝",
                         },
                         {
                           status: "En Revisión",
-                          count: 3,
+                          count: statusCounts["En Revisión"] ?? 0,
                           color: "bg-amber-100 hover:bg-amber-200 border-amber-300",
                           textColor: "text-amber-700",
                           icon: "👀",
                         },
                         {
                           status: "Publicada",
-                          count: 24,
+                          count: statusCounts["Publicada"] ?? 0,
                           color: "bg-green-100 hover:bg-green-200 border-green-300",
                           textColor: "text-green-700",
                           icon: "🚀",
@@ -209,70 +339,50 @@ export function Dashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {[
-                      {
-                        id: "LA-2024-004",
-                        projectOrSituation: "Implementación de SAP en planta de manufactura",
-                        status: "Borrador",
-                        responsable: "María González",
-                        fecha: "2024-01-15",
-                        proceso: "Gestión de Proyectos",
-                        compania: "Acme Manufacturing",
-                        sede: "Planta Norte - Monterrey",
-                      },
-                      {
-                        id: "LA-2024-005",
-                        projectOrSituation: "Construcción de centro de distribución regional",
-                        status: "En Revisión",
-                        responsable: "Carlos Ruiz",
-                        fecha: "2024-02-03",
-                        proceso: "Infraestructura TI",
-                        compania: "Logistics Corp",
-                        sede: "Centro - Guadalajara",
-                      },
-                      {
-                        id: "LA-2024-006",
-                        projectOrSituation: "Desarrollo de aplicación móvil para ventas",
-                        status: "Publicada",
-                        responsable: "Ana López",
-                        fecha: "2024-01-28",
-                        proceso: "Desarrollo de Software",
-                        compania: "Tech Solutions",
-                        sede: "Oficina Principal - CDMX",
-                      },
-                      {
-                        id: "LA-2024-001",
-                        projectOrSituation: "Actualización de infraestructura de red corporativa",
-                        status: "Publicada",
-                        responsable: "Juan Pérez",
-                        fecha: "2024-01-10",
-                        proceso: "Infraestructura TI",
-                        compania: "Global Industries",
-                        sede: "Campus Corporativo - Querétaro",
-                      },
-                      {
-                        id: "LA-2024-007",
-                        projectOrSituation: "Capacitación en metodologías ágiles para equipos remotos",
-                        status: "Publicada",
-                        responsable: "Luis Martín",
-                        fecha: "2024-02-12",
-                        proceso: "Recursos Humanos",
-                        compania: "Innovation Labs",
-                        sede: "Remoto - Múltiples ubicaciones",
-                      },
-                      {
-                        id: "LA-2024-008",
-                        projectOrSituation: "Integración de sistema de gestión de calidad ISO 9001",
-                        status: "Publicada",
-                        responsable: "Patricia Sánchez",
-                        fecha: "2024-01-22",
-                        proceso: "Gestión de Calidad",
-                        compania: "Quality Systems Inc",
-                        sede: "Planta Sur - Puebla",
-                      },
-                    ]
-                      .filter((lesson) => !workflowFilter || lesson.status === workflowFilter)
-                      .map((lesson) => (
+                    {isLoadingLessons && (
+                      <>
+                        {Array.from({ length: 3 }).map((_, index) => (
+                          <div
+                            key={`lesson-skeleton-${index}`}
+                            className="flex items-start justify-between p-5 border border-slate-200 rounded-xl bg-white gap-4"
+                          >
+                            <div className="flex-1 space-y-3">
+                              <Skeleton className="h-4 w-1/3" />
+                              <Skeleton className="h-5 w-3/4" />
+                              <div className="grid grid-cols-3 gap-x-6 gap-y-3 pt-2">
+                                {Array.from({ length: 6 }).map((_, infoIndex) => (
+                                  <div key={`lesson-info-${infoIndex}`} className="space-y-1">
+                                    <Skeleton className="h-3 w-1/2" />
+                                    <Skeleton className="h-4 w-full" />
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <Skeleton className="h-6 w-20" />
+                              <Skeleton className="h-8 w-8" />
+                              <Skeleton className="h-8 w-8" />
+                            </div>
+                          </div>
+                        ))}
+                      </>
+                    )}
+
+                    {!isLoadingLessons && fetchError && (
+                      <Alert variant="destructive">
+                        <AlertTitle>No se pudo cargar la información</AlertTitle>
+                        <AlertDescription>{fetchError}</AlertDescription>
+                      </Alert>
+                    )}
+
+                    {!isLoadingLessons && !fetchError && filteredLessons.length === 0 && (
+                      <p className="text-sm text-slate-500 text-center py-8">
+                        No se encontraron proyectos ni situaciones para la búsqueda ingresada.
+                      </p>
+                    )}
+
+                    {!isLoadingLessons && !fetchError &&
+                      filteredLessons.map((lesson) => (
                         <div
                           key={lesson.id}
                           className="flex items-start justify-between p-5 border border-slate-200 rounded-xl bg-white hover:shadow-md transition-all duration-200 gap-4"

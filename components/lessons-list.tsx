@@ -99,7 +99,7 @@ export function LessonsList({ searchQuery }: LessonsListProps) {
       case "Publicada":
         return "bg-green-100 text-green-800 border-green-200"
       case "Aprobada":
-        return "bg-blue-100 text-blue-800 border-blue-200"
+        return "bg-[#e0f3e8] text-[#067138] border-emerald-200"
       case "En Revisión":
         return "bg-amber-100 text-amber-800 border-amber-200"
       case "Borrador":
@@ -126,11 +126,11 @@ export function LessonsList({ searchQuery }: LessonsListProps) {
 
   return (
     <div className="space-y-8">
-      <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
+      <Card className="border border-emerald-50 bg-white/80 shadow-sm backdrop-blur-sm">
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center gap-3 text-xl">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Filter className="h-5 w-5 text-blue-600" />
+            <div className="rounded-lg bg-[#e0f3e8] p-2">
+              <Filter className="h-5 w-5 text-[#067138]" />
             </div>
             Filtros
           </CardTitle>
@@ -140,7 +140,7 @@ export function LessonsList({ searchQuery }: LessonsListProps) {
             <div className="space-y-3">
               <label className="text-sm font-semibold text-slate-700">Categoría</label>
               <Select value={filterCategory} onValueChange={setFilterCategory}>
-                <SelectTrigger className="border-slate-200 focus:border-blue-500 focus:ring-blue-500/20">
+                <SelectTrigger className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30">
                   <SelectValue placeholder="Todas las categorías" />
                 </SelectTrigger>
                 <SelectContent>
@@ -156,7 +156,7 @@ export function LessonsList({ searchQuery }: LessonsListProps) {
             <div className="space-y-3">
               <label className="text-sm font-semibold text-slate-700">Estado</label>
               <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="border-slate-200 focus:border-blue-500 focus:ring-blue-500/20">
+                <SelectTrigger className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30">
                   <SelectValue placeholder="Todos los estados" />
                 </SelectTrigger>
                 <SelectContent>
@@ -175,7 +175,7 @@ export function LessonsList({ searchQuery }: LessonsListProps) {
                   setFilterCategory("all")
                   setFilterStatus("all")
                 }}
-                className="w-full border-slate-200 hover:bg-slate-50"
+                className="w-full rounded-full border-[#8fd0ab] text-[#067138] hover:bg-[#e0f3e8]"
               >
                 Limpiar Filtros
               </Button>
@@ -184,7 +184,7 @@ export function LessonsList({ searchQuery }: LessonsListProps) {
         </CardContent>
       </Card>
 
-      <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
+      <Card className="border border-emerald-50 bg-white/80 shadow-sm backdrop-blur-sm">
         <CardHeader className="pb-4">
           <CardTitle className="text-xl">Lecciones Aprendidas</CardTitle>
           <CardDescription className="text-slate-600">
@@ -196,13 +196,13 @@ export function LessonsList({ searchQuery }: LessonsListProps) {
             {filteredLessons.map((lesson) => (
               <div
                 key={lesson.id}
-                className="border border-slate-200 rounded-xl p-6 space-y-4 bg-white hover:shadow-lg transition-all duration-200 hover:border-blue-200"
+                className="rounded-2xl border border-emerald-100 bg-white/90 p-6 transition-all duration-200 hover:border-[#067138]/40 hover:shadow-lg"
               >
                 <div className="flex items-start justify-between">
                   <div className="space-y-3 flex-1">
                     <div className="flex items-center gap-3 flex-wrap">
                       <h3 className="font-bold text-lg text-slate-900 text-balance">{lesson.title}</h3>
-                      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 font-medium">
+                      <Badge variant="outline" className="rounded-full border-emerald-200 bg-[#e0f3e8] text-[#067138] font-medium">
                         {lesson.category}
                       </Badge>
                     </div>
@@ -224,10 +224,10 @@ export function LessonsList({ searchQuery }: LessonsListProps) {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 ml-4">
-                    <Button variant="ghost" size="sm" className="hover:bg-blue-50 hover:text-blue-600">
+                    <Button variant="ghost" size="sm" className="text-[#067138] hover:bg-[#e0f3e8]">
                       <Eye className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="sm" className="hover:bg-blue-50 hover:text-blue-600">
+                    <Button variant="ghost" size="sm" className="text-[#067138] hover:bg-[#e0f3e8]">
                       <Edit className="h-4 w-4" />
                     </Button>
                   </div>

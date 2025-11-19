@@ -9,28 +9,27 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BookOpen, Plus, Search, Filter, Eye, BarChart3, Presentation } from "lucide-react"
 import { LessonForm } from "./lesson-form"
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
+import { LessonViewer } from "./lesson-viewer"
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
+import type { ProyectoSituacionDto } from "@/types/lessons"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:7043/api"
 const BRAND_COLOR = "#067138"
 const BRAND_ACCENT = "#0fa958"
 const SOLLA_LOGO_URL = "https://www.solla.com/wp-content/uploads/2022/01/logo-solla-1.png"
-
-interface ProyectoSituacionDto {
-  proyecto?: {
-    id?: string
-    fecha?: string
-    descripcion?: string
-    aplicacionPractica?: string
-    estado?: { data?: { descripcion?: string | null } }
-    responsable?: { nombre?: string | null; value?: string | null }
-    autor?: { nombre?: string | null; value?: string | null }
-    sede?: { data?: { nombre?: string | null; compania?: { data?: { nombre?: string | null } } } }
-    proceso?: { data?: { nombre?: string | null } }
-  }
-}
 
 interface LessonSummary {
   id: string
@@ -101,8 +100,10 @@ export function Dashboard() {
   const [searchQuery, setSearchQuery] = useState("")
   const [workflowFilter, setWorkflowFilter] = useState<string | null>(null)
   const [lessons, setLessons] = useState<LessonSummary[]>([])
+  const [rawLessons, setRawLessons] = useState<ProyectoSituacionDto[]>([])
   const [isLoadingLessons, setIsLoadingLessons] = useState(false)
   const [fetchError, setFetchError] = useState<string | null>(null)
+  const [selectedLesson, setSelectedLesson] = useState<ProyectoSituacionDto | null>(null)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -120,12 +121,14 @@ export function Dashboard() {
         }
         const payload = await response.json()
         const normalized = normalizeLessonsResponse(payload)
+        setRawLessons(normalized)
         setLessons(mapLessons(normalized))
       } catch (error) {
         if ((error as Error).name !== "AbortError") {
           console.error("No fue posible cargar las lecciones", error)
           setFetchError("No fue posible cargar la información. Intenta nuevamente.")
           setLessons([])
+          setRawLessons([])
         }
       } finally {
         setIsLoadingLessons(false)
@@ -161,6 +164,19 @@ export function Dashboard() {
 
     // Show a success message
     alert(`Generando presentación PPTX para: "${lesson.projectOrSituation}"\nArchivo: ${lesson.id}_presentacion.pptx`)
+  }
+
+  const handleViewLesson = (lesson: LessonSummary) => {
+    const foundLesson = rawLessons.find((item) => item.proyecto?.id === lesson.id)
+    if (foundLesson) {
+      setSelectedLesson(foundLesson)
+    } else {
+      alert("No fue posible encontrar la información completa de esta lección.")
+    }
+  }
+
+  const handleCloseViewer = () => {
+    setSelectedLesson(null)
   }
 
   const eventsByProject = [
@@ -207,11 +223,11 @@ export function Dashboard() {
                 </div>
                 <div className="space-y-2">
                   <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#067138]/70">Gestión del conocimiento</p>
-                  <h1 className="text-3xl font-semibold leading-tight text-balance sm:text-4xl">
-                    Sistema de Lecciones Aprendidas
+                  <h1 className="font-display text-3xl font-semibold leading-tight text-balance sm:text-4xl">
+                    Sistema de Gestión de Lecciones Aprendidas
                   </h1>
                   <p className="text-base text-slate-600">
-                    Seguimiento centralizado de proyectos, aprendizajes y conocimiento institucional.
+                    Sistema de gestión del conocimiento organizacional.
                   </p>
                 </div>
               </div>
@@ -485,7 +501,13 @@ export function Dashboard() {
                             >
                               <Presentation className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="sm" className="text-[#067138] hover:bg-[#e0f3e8]">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-[#067138] hover:bg-[#e0f3e8]"
+                              onClick={() => handleViewLesson(lesson)}
+                              title="Visualizar lección"
+                            >
                               <Eye className="h-4 w-4" />
                             </Button>
                           </div>
@@ -639,6 +661,7 @@ export function Dashboard() {
 
       {/* Lesson Form Modal */}
       {showForm && <LessonForm onClose={() => setShowForm(false)} />}
+      {selectedLesson && <LessonViewer lesson={selectedLesson} onClose={handleCloseViewer} />}
     </div>
   )
 }

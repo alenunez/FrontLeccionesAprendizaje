@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { X, Save, Plus, Trash2, Upload, FileText, Edit, Send, Globe, RotateCcw } from "lucide-react"
+import { X, Save, Plus, Trash2, Upload, FileText, Edit } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -52,6 +52,17 @@ interface SelectOption {
   nombre: string
 }
 
+interface SedeOption extends SelectOption {
+  companiaId?: string
+}
+
+interface DirectoryUser {
+  id: string
+  name: string
+  email?: string
+  title?: string
+}
+
 const normalizePayload = (payload: unknown): RemoteEntity[] => {
   if (Array.isArray(payload)) {
     return payload as RemoteEntity[]
@@ -82,6 +93,23 @@ const toSelectOptions = (entities: RemoteEntity[]): SelectOption[] =>
     }
   })
 
+const toSedeOptions = (entities: RemoteEntity[]): SedeOption[] =>
+  entities.map((entity, index) => {
+    const identifier = entity.id ?? entity.Id ?? entity.codigo ?? index
+    const label = entity.nombre ?? entity.Nombre ?? entity.name ?? entity.Name ?? "Sin nombre"
+    const compania = (entity as { compania?: RemoteEntity }).compania
+    const companiaId =
+      (compania?.id ?? compania?.Id ?? (compania as { data?: RemoteEntity })?.data?.id ??
+        (compania as { data?: RemoteEntity })?.data?.Id) ??
+      undefined
+
+    return {
+      id: String(identifier),
+      nombre: String(label),
+      companiaId: companiaId ? String(companiaId) : undefined,
+    }
+  })
+
 const fetchEntities = async (
   endpoint: string,
   setter: React.Dispatch<React.SetStateAction<SelectOption[]>>,
@@ -102,16 +130,43 @@ const fetchEntities = async (
   }
 }
 
-const availableUsers = [
-  { id: "1", name: "Ana García", role: "Gerente de Proyecto" },
-  { id: "2", name: "Carlos Rodríguez", role: "Líder Técnico" },
-  { id: "3", name: "María López", role: "Desarrolladora Senior" },
-  { id: "4", name: "Juan Pérez", role: "Arquitecto de Software" },
-  { id: "5", name: "Laura Martínez", role: "Product Owner" },
-  { id: "6", name: "Diego Sánchez", role: "Scrum Master" },
-  { id: "7", name: "Carmen Ruiz", role: "Analista de Negocio" },
-  { id: "8", name: "Roberto Silva", role: "DevOps Engineer" },
-]
+const fetchSedes = async (
+  setter: React.Dispatch<React.SetStateAction<SedeOption[]>>,
+  signal: AbortSignal,
+) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/Sede`, { signal })
+    if (!response.ok) {
+      throw new Error(`Error al cargar sedes: ${response.status}`)
+    }
+    const payload = await response.json()
+    setter(toSedeOptions(normalizePayload(payload)))
+  } catch (error) {
+    if ((error as Error).name !== "AbortError") {
+      console.error("No fue posible cargar las sedes", error)
+    }
+  }
+}
+
+const normalizeUserSuggestions = (payload: unknown): DirectoryUser[] => {
+  const entities = normalizePayload(payload)
+
+  return entities.map((entity, index) => {
+    const identifier =
+      entity.id ?? entity.Id ?? entity.userPrincipalName ?? entity.UserPrincipalName ?? entity.oid ?? index
+    const displayName =
+      entity.displayName ?? entity.DisplayName ?? entity.nombre ?? entity.Nombre ?? entity.name ?? "Sin nombre"
+    const email = entity.mail ?? entity.email ?? entity.userPrincipalName ?? entity.UserPrincipalName
+    const title = entity.jobTitle ?? entity.cargo ?? entity.title
+
+    return {
+      id: String(identifier),
+      name: String(displayName),
+      email: email ? String(email) : undefined,
+      title: title ? String(title) : undefined,
+    }
+  })
+}
 
 export function LessonForm({ onClose }: LessonFormProps) {
   const [formData, setFormData] = useState({
@@ -134,17 +189,120 @@ export function LessonForm({ onClose }: LessonFormProps) {
 
   const [procesos, setProcesos] = useState<SelectOption[]>([])
   const [companias, setCompanias] = useState<SelectOption[]>([])
-  const [sedes, setSedes] = useState<SelectOption[]>([])
+  const [allSedes, setAllSedes] = useState<SedeOption[]>([])
+  const [sedes, setSedes] = useState<SedeOption[]>([])
+  const [availableUsers, setAvailableUsers] = useState<DirectoryUser[]>([])
+  const [responsableQuery, setResponsableQuery] = useState("")
+  const [responsableSuggestions, setResponsableSuggestions] = useState<DirectoryUser[]>([])
+  const [isLoadingResponsables, setIsLoadingResponsables] = useState(false)
+  const [lectorQuery, setLectorQuery] = useState("")
+  const [lectorSuggestions, setLectorSuggestions] = useState<DirectoryUser[]>([])
+  const [isLoadingLectores, setIsLoadingLectores] = useState(false)
+  const [showResponsableDropdown, setShowResponsableDropdown] = useState(false)
 
   useEffect(() => {
     const controller = new AbortController()
 
     fetchEntities("Proceso", setProcesos, controller.signal)
     fetchEntities("Compania", setCompanias, controller.signal)
-    fetchEntities("Sede", setSedes, controller.signal)
+    fetchSedes(setAllSedes, controller.signal)
 
     return () => controller.abort()
   }, [])
+
+  useEffect(() => {
+    if (!formData.compania) {
+      setSedes(allSedes)
+      setFormData((prev) => (prev.sede ? { ...prev, sede: "" } : prev))
+      return
+    }
+
+    const filtered = allSedes.filter((sede) => sede.companiaId === formData.compania)
+    setSedes(filtered)
+    if (formData.sede && !filtered.some((sede) => sede.id === formData.sede)) {
+      setFormData((prev) => ({ ...prev, sede: "" }))
+    }
+  }, [formData.compania, formData.sede, allSedes])
+
+  useEffect(() => {
+    if (!responsableQuery.trim()) {
+      setResponsableSuggestions([])
+      return
+    }
+
+    const controller = new AbortController()
+    const handler = setTimeout(async () => {
+      setIsLoadingResponsables(true)
+      try {
+        const params = new URLSearchParams({ query: responsableQuery })
+        const response = await fetch(`${API_BASE_URL}/DirectoriActivo/suggestions?${params.toString()}`, {
+          signal: controller.signal,
+        })
+        if (!response.ok) {
+          throw new Error("No fue posible obtener responsables")
+        }
+        const payload = await response.json()
+        const normalized = normalizeUserSuggestions(payload)
+        setResponsableSuggestions(normalized)
+        setAvailableUsers((prev) => {
+          const registry = new Map(prev.map((user) => [user.id, user]))
+          normalized.forEach((user) => registry.set(user.id, user))
+          return Array.from(registry.values())
+        })
+      } catch (error) {
+        if ((error as Error).name !== "AbortError") {
+          console.error(error)
+        }
+      } finally {
+        setIsLoadingResponsables(false)
+      }
+    }, 400)
+
+    return () => {
+      clearTimeout(handler)
+      controller.abort()
+    }
+  }, [responsableQuery])
+
+  useEffect(() => {
+    if (!lectorQuery.trim()) {
+      setLectorSuggestions([])
+      return
+    }
+
+    const controller = new AbortController()
+    const handler = setTimeout(async () => {
+      setIsLoadingLectores(true)
+      try {
+        const params = new URLSearchParams({ query: lectorQuery })
+        const response = await fetch(`${API_BASE_URL}/DirectoriActivo/suggestions?${params.toString()}`, {
+          signal: controller.signal,
+        })
+        if (!response.ok) {
+          throw new Error("No fue posible obtener lectores")
+        }
+        const payload = await response.json()
+        const normalized = normalizeUserSuggestions(payload)
+        setLectorSuggestions(normalized)
+        setAvailableUsers((prev) => {
+          const registry = new Map(prev.map((user) => [user.id, user]))
+          normalized.forEach((user) => registry.set(user.id, user))
+          return Array.from(registry.values())
+        })
+      } catch (error) {
+        if ((error as Error).name !== "AbortError") {
+          console.error(error)
+        }
+      } finally {
+        setIsLoadingLectores(false)
+      }
+    }, 400)
+
+    return () => {
+      clearTimeout(handler)
+      controller.abort()
+    }
+  }, [lectorQuery])
 
   const [eventos, setEventos] = useState<Event[]>([])
   const [showEventDialog, setShowEventDialog] = useState(false)
@@ -166,8 +324,13 @@ export function LessonForm({ onClose }: LessonFormProps) {
     { id: string; description: string; relatedResultados: string[] }[]
   >([{ id: "1", description: "", relatedResultados: [] }])
 
-  const toggleUser = (userId: string) => {
-    setSelectedUsers((prev) => (prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]))
+  const toggleUser = (user: DirectoryUser) => {
+    setAvailableUsers((prev) => {
+      const registry = new Map(prev.map((item) => [item.id, item]))
+      registry.set(user.id, user)
+      return Array.from(registry.values())
+    })
+    setSelectedUsers((prev) => (prev.includes(user.id) ? prev.filter((id) => id !== user.id) : [...prev, user.id]))
   }
 
   const removeUser = (userId: string) => {
@@ -446,22 +609,6 @@ export function LessonForm({ onClose }: LessonFormProps) {
 
   const selectedUserObjects = availableUsers.filter((user) => selectedUsers.includes(user.id))
 
-  // Handlers for approval workflow buttons
-  const handleSendToReview = () => {
-    console.log("Enviando a revisión...")
-    // Logic to send lesson to review
-  }
-
-  const handleReturnToReview = () => {
-    console.log("Devolviendo a revisión...")
-    // Logic to return lesson to review
-  }
-
-  const handlePublish = () => {
-    console.log("Publicando lección...")
-    // Logic to publish lesson
-  }
-
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
       <Card className="w-[90%] max-h-[90vh] overflow-y-auto border border-emerald-100 bg-white shadow-2xl">
@@ -477,39 +624,10 @@ export function LessonForm({ onClose }: LessonFormProps) {
           </Button>
         </CardHeader>
 
-        <div className="flex flex-col gap-3 border-b border-emerald-100 bg-[#f4fff9] px-6 py-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-2 border-b border-emerald-100 bg-[#f4fff9] px-6 py-4 md:flex-row md:items-center md:justify-between">
           <div className="text-sm font-medium text-slate-700">Acciones de Flujo de Trabajo</div>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleSendToReview}
-              className="gap-2 border-[#8fd0ab] text-[#067138] hover:bg-[#e0f3e8]"
-            >
-              <Send className="h-4 w-4" />
-              Enviar a revisión
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleReturnToReview}
-              className="gap-2 border-orange-200 text-orange-700 hover:bg-orange-50 bg-transparent"
-            >
-              <RotateCcw className="h-4 w-4" />
-              Devolver a revisión
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handlePublish}
-              className="gap-2 border-purple-200 text-purple-700 hover:bg-purple-50 bg-transparent"
-            >
-              <Globe className="h-4 w-4" />
-              Publicar
-            </Button>
+          <div className="text-xs text-slate-500">
+            Las acciones de revisión se habilitarán después de crear el borrador.
           </div>
         </div>
 
@@ -619,16 +737,16 @@ export function LessonForm({ onClose }: LessonFormProps) {
                       <SelectValue placeholder="Seleccionar sede" />
                     </SelectTrigger>
                     <SelectContent>
-                      {sedes.length > 0 ? (
-                        sedes.map((sede) => (
-                          <SelectItem key={sede.id} value={sede.id}>
-                            {sede.nombre}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <SelectItem value="sin-sedes" disabled>
-                          No hay sedes disponibles
+                      {sedes.map((sede) => (
+                        <SelectItem key={sede.id} value={sede.id}>
+                          {sede.nombre}
                         </SelectItem>
+                      ))}
+                      {formData.compania && sedes.length === 0 && (
+                        <div className="px-3 py-2 text-sm text-slate-500">No hay sedes para la compañía seleccionada.</div>
+                      )}
+                      {!formData.compania && sedes.length === 0 && (
+                        <div className="px-3 py-2 text-sm text-slate-500">Selecciona una compañía primero.</div>
                       )}
                     </SelectContent>
                   </Select>
@@ -637,24 +755,47 @@ export function LessonForm({ onClose }: LessonFormProps) {
                   <Label htmlFor="responsable" className="text-sm font-semibold text-slate-700">
                     Responsable *
                   </Label>
-                  <Select
-                    value={formData.responsable}
-                    onValueChange={(value) => setFormData({ ...formData, responsable: value })}
-                  >
-                    <SelectTrigger className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30">
-                      <SelectValue placeholder="Seleccionar responsable" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableUsers.map((user) => (
-                        <SelectItem key={user.id} value={user.name}>
-                          <div className="flex flex-col">
-                            <span className="font-medium">{user.name}</span>
-                            <span className="text-xs text-slate-500">{user.role}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="relative">
+                    <Input
+                      value={responsableQuery || formData.responsable}
+                      onFocus={() => setShowResponsableDropdown(true)}
+                      onBlur={() => setTimeout(() => setShowResponsableDropdown(false), 150)}
+                      onChange={(e) => {
+                        setResponsableQuery(e.target.value)
+                        setFormData({ ...formData, responsable: e.target.value })
+                      }}
+                      placeholder="Buscar responsable"
+                      className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30"
+                      required
+                    />
+                    {showResponsableDropdown && (responsableQuery || responsableSuggestions.length > 0) && (
+                      <div className="absolute top-full left-0 right-0 z-10 mt-1 max-h-60 overflow-y-auto rounded-md border border-slate-200 bg-white shadow-lg">
+                        {isLoadingResponsables && (
+                          <div className="px-3 py-2 text-sm text-slate-500">Buscando responsables...</div>
+                        )}
+                        {!isLoadingResponsables && responsableSuggestions.length === 0 && responsableQuery && (
+                          <div className="px-3 py-2 text-sm text-slate-500">No se encontraron resultados.</div>
+                        )}
+                        {responsableSuggestions.map((user) => (
+                          <button
+                            key={user.id}
+                            type="button"
+                            className="flex w-full flex-col items-start gap-1 px-3 py-2 text-left hover:bg-slate-50"
+                            onMouseDown={() => {
+                              setFormData({ ...formData, responsable: user.name })
+                              setResponsableQuery(user.name)
+                              setShowResponsableDropdown(false)
+                            }}
+                          >
+                            <span className="font-medium text-slate-900">{user.name}</span>
+                            {(user.email || user.title) && (
+                              <span className="text-xs text-slate-500">{user.email ?? user.title}</span>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="space-y-3">
                   <Label htmlFor="proyectoOSituacion" className="text-sm font-semibold text-slate-700">
@@ -705,48 +846,71 @@ export function LessonForm({ onClose }: LessonFormProps) {
                   </p>
                 </div>
 
-                {nivelAcceso === "Privado" && (
-                  <div className="space-y-3 md:col-span-2">
-                    <Label className="text-sm font-semibold text-slate-700">Lectores *</Label>
-                    <div className="space-y-3">
-                      <div className="relative">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => setShowUserDropdown(!showUserDropdown)}
-                          className="w-full justify-between border-slate-200 focus:border-[#067138]"
-                        >
-                          <span className="text-slate-600">
-                            {selectedUsers.length === 0
-                              ? "Seleccionar usuarios..."
-                              : `${selectedUsers.length} usuario(s) seleccionado(s)`}
-                          </span>
-                          <Plus className="h-4 w-4" />
-                        </Button>
+                  {nivelAcceso === "Privado" && (
+                    <div className="space-y-3 md:col-span-2">
+                      <Label className="text-sm font-semibold text-slate-700">Lectores *</Label>
+                      <div className="space-y-3">
+                        <div className="relative">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setShowUserDropdown(!showUserDropdown)}
+                            className="w-full justify-between border-slate-200 focus:border-[#067138]"
+                          >
+                            <span className="text-slate-600">
+                              {selectedUsers.length === 0
+                                ? "Seleccionar usuarios..."
+                                : `${selectedUsers.length} usuario(s) seleccionado(s)`}
+                            </span>
+                            <Plus className="h-4 w-4" />
+                          </Button>
 
-                        {showUserDropdown && (
-                          <div className="absolute top-full left-0 right-0 z-10 mt-1 bg-white border border-slate-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                            {availableUsers.map((user) => (
-                              <div
-                                key={user.id}
-                                className="flex items-center gap-3 p-3 hover:bg-slate-50 cursor-pointer"
-                                onClick={() => toggleUser(user.id)}
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={selectedUsers.includes(user.id)}
-                                  onChange={() => {}}
-                                  className="rounded border-slate-300"
+                          {showUserDropdown && (
+                            <div className="absolute top-full left-0 right-0 z-10 mt-1 max-h-72 overflow-hidden rounded-md border border-slate-200 bg-white shadow-lg">
+                              <div className="border-b border-slate-100 p-3">
+                                <Input
+                                  value={lectorQuery}
+                                  onChange={(e) => setLectorQuery(e.target.value)}
+                                  placeholder="Buscar lectores"
+                                  className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30"
                                 />
-                                <div className="flex-1">
-                                  <div className="font-medium text-slate-900">{user.name}</div>
-                                  <div className="text-sm text-slate-500">{user.role}</div>
-                                </div>
                               </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                              <div className="max-h-56 overflow-y-auto">
+                                {isLoadingLectores && (
+                                  <div className="px-3 py-2 text-sm text-slate-500">Cargando sugerencias...</div>
+                                )}
+                                {!isLoadingLectores && lectorQuery && lectorSuggestions.length === 0 && (
+                                  <div className="px-3 py-2 text-sm text-slate-500">Sin resultados para la búsqueda.</div>
+                                )}
+                                {(!lectorQuery ? availableUsers : lectorSuggestions).map((user) => (
+                                  <div
+                                    key={user.id}
+                                    className="flex cursor-pointer items-center gap-3 p-3 hover:bg-slate-50"
+                                    onClick={() => toggleUser(user)}
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={selectedUsers.includes(user.id)}
+                                      onChange={() => {}}
+                                      className="rounded border-slate-300"
+                                    />
+                                    <div className="flex-1">
+                                      <div className="font-medium text-slate-900">{user.name}</div>
+                                      {(user.email || user.title) && (
+                                        <div className="text-sm text-slate-500">{user.email ?? user.title}</div>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                                {!isLoadingLectores && !lectorQuery && availableUsers.length === 0 && (
+                                  <div className="px-3 py-2 text-sm text-slate-500">
+                                    Empieza a escribir para buscar usuarios.
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
 
                       {selectedUserObjects.length > 0 && (
                         <div className="flex flex-wrap gap-2">

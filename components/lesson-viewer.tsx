@@ -55,6 +55,10 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
   const eventos = lesson.eventos ?? []
   const privacyLabel = proyecto.isPrivate === undefined ? "No especificado" : proyecto.isPrivate ? "Privado" : "Público"
   const lectores = lesson.lectores ?? []
+  const responsableNombre = safeText(proyecto.nombreResponsable ?? proyecto.nombreAutor ?? undefined)
+  const autorNombre = safeText(proyecto.nombreAutor ?? proyecto.nombreResponsable ?? undefined)
+  const lectorNames = lectores.map((lector) => lector.nombreLector).filter((name): name is string => Boolean(name))
+  const lectoresLabel = lectorNames.length ? lectorNames.join(", ") : "Sin lectores"
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-8">
@@ -87,14 +91,12 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
               },
               {
                 label: "Responsable",
-                value:
-                  safeText(
-                    proyecto.responsable?.nombre ??
-                      proyecto.responsable?.value ??
-                      proyecto.autor?.nombre ??
-                      proyecto.autor?.value ??
-                      undefined,
-                  ),
+                value: responsableNombre,
+                icon: <UserCircle2 className="h-4 w-4" />,
+              },
+              {
+                label: "Autor",
+                value: autorNombre,
                 icon: <UserCircle2 className="h-4 w-4" />,
               },
               {
@@ -124,7 +126,7 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
               },
               {
                 label: "Lectores asignados",
-                value: lectores.length ? `${lectores.length} usuario(s)` : "Sin lectores",
+                value: lectoresLabel,
                 icon: <Users className="h-4 w-4" />,
               }].map((item) => (
                 <div

@@ -6,22 +6,21 @@ export interface ProyectoSituacionDto {
     aplicacionPractica?: string
     isPrivate?: boolean
     estado?: { data?: { descripcion?: string | null; isActive?: boolean } }
-    responsable?: RemoteUser
-    autor?: RemoteUser
+    nombreResponsable?: string | null
+    correoResponsable?: string | null
+    nombreAutor?: string | null
+    correoAutor?: string | null
     sede?: { data?: { nombre?: string | null; compania?: { data?: { nombre?: string | null } } } }
     proceso?: { data?: { nombre?: string | null; descripcion?: string | null } }
   }
-  lectores?: RemoteUser[]
+  lectores?: LectorDto[]
   eventos?: ProyectoSituacionEventoDto[]
 }
 
-export interface RemoteUser {
+export interface LectorDto {
   id?: number | string
-  value?: string | null
-  nombre?: string | null
-  oid?: string | null
-  correo?: string | null
-  userPrincipalName?: string | null
+  correoLector?: string | null
+  nombreLector?: string | null
 }
 
 export interface ProyectoSituacionEventoDto {

@@ -75,12 +75,7 @@ const mapLessons = (payload: ProyectoSituacionDto[]): LessonSummary[] =>
   payload.map((item, index) => {
     const proyecto = item.proyecto ?? {}
     const estadoDescripcion = proyecto.estado?.data?.descripcion ?? "Sin estado"
-    const responsableNombre =
-      proyecto.responsable?.nombre ??
-      proyecto.responsable?.value ??
-      proyecto.autor?.nombre ??
-      proyecto.autor?.value ??
-      "Sin responsable"
+    const responsableNombre = proyecto.nombreResponsable ?? proyecto.nombreAutor ?? "Sin responsable"
 
     return {
       id: proyecto.id ?? `sin-id-${index}`,

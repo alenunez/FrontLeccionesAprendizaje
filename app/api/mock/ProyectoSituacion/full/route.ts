@@ -8,6 +8,10 @@ const sampleResponse = [
       descripcion: "Test 1",
       aplicacionPractica: "Test 1 app practica",
       isPrivate: false,
+      correoAutor: null,
+      nombreAutor: null,
+      correoResponsable: null,
+      nombreResponsable: null,
       estado: {
         id: 1,
         value: null,
@@ -15,22 +19,6 @@ const sampleResponse = [
           descripcion: "Borrador",
           isActive: true,
         },
-      },
-      responsable: {
-        id: 13,
-        value: null,
-        nombre: null,
-        oid: null,
-        correo: null,
-        userPrincipalName: null,
-      },
-      autor: {
-        id: 14,
-        value: null,
-        nombre: null,
-        oid: null,
-        correo: null,
-        userPrincipalName: null,
       },
       sede: {
         id: 1,
@@ -57,7 +45,13 @@ const sampleResponse = [
         },
       },
     },
-    lectores: [],
+    lectores: [
+      {
+        id: "1",
+        correoLector: "anherrera@cono.com",
+        nombreLector: "Alejandro Nuñez",
+      },
+    ],
     eventos: [
       {
         evento: {
@@ -124,7 +118,64 @@ const sampleResponse = [
           },
         ],
       },
+      {
+        evento: {
+          id: "2",
+          descripcion: "Event 2 proy 1",
+        },
+        impactos: [],
+        acciones: [],
+        resultados: [],
+        lecciones: [],
+      },
     ],
+  },
+  {
+    proyecto: {
+      id: "2",
+      fecha: "2025-11-20T05:00:00Z",
+      descripcion: "proyect 2",
+      aplicacionPractica: "proyect 2 app practica",
+      isPrivate: false,
+      correoAutor: null,
+      nombreAutor: null,
+      correoResponsable: null,
+      nombreResponsable: null,
+      estado: {
+        id: 1,
+        value: null,
+        data: {
+          descripcion: "Borrador",
+          isActive: true,
+        },
+      },
+      sede: {
+        id: 1,
+        value: null,
+        data: {
+          nombre: "Central",
+          compania: {
+            id: 1,
+            value: null,
+            data: {
+              nombre: "Solla",
+              isActive: true,
+            },
+          },
+          isActive: true,
+        },
+      },
+      proceso: {
+        id: 1,
+        value: null,
+        data: {
+          nombre: "Proceso de prueba 1",
+          descripcion: null,
+        },
+      },
+    },
+    lectores: [],
+    eventos: [],
   },
 ]
 

@@ -239,7 +239,7 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
       setIsLoadingResponsables(true)
       try {
         const params = new URLSearchParams({ query: responsableQuery })
-        const response = await fetch(`${API_BASE_URL}/DirectoriActivo/suggestions?${params.toString()}`, {
+        const response = await fetch(`${API_BASE_URL}/DirectorioActivo/suggestions?${params.toString()}`, {
           signal: controller.signal,
         })
         if (!response.ok) {
@@ -279,7 +279,7 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
       setIsLoadingLectores(true)
       try {
         const params = new URLSearchParams({ query: lectorQuery })
-        const response = await fetch(`${API_BASE_URL}/DirectoriActivo/suggestions?${params.toString()}`, {
+        const response = await fetch(`${API_BASE_URL}/DirectorioActivo/suggestions?${params.toString()}`, {
           signal: controller.signal,
         })
         if (!response.ok) {

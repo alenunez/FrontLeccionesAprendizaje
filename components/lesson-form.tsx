@@ -180,6 +180,7 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
     compania: "",
     sede: "",
     responsable: "",
+    responsableCorreo: "",
     proyectoOSituacion: "",
     aplicacionPractica: "",
   })
@@ -697,7 +698,7 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
         aplicacionPractica: formData.aplicacionPractica,
         correoAutor: formData.autor,
         nombreAutor: formData.autor,
-        correoResponsable: formData.responsable,
+        correoResponsable: formData.responsableCorreo || formData.responsable,
         nombreResponsable: formData.responsable,
         estado: {
           id: formData.estado,
@@ -910,7 +911,7 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
                       onBlur={() => setTimeout(() => setShowResponsableDropdown(false), 150)}
                       onChange={(e) => {
                         setResponsableQuery(e.target.value)
-                        setFormData({ ...formData, responsable: e.target.value })
+                        setFormData({ ...formData, responsable: e.target.value, responsableCorreo: "" })
                       }}
                       placeholder="Buscar responsable"
                       className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30"
@@ -930,7 +931,11 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
                             type="button"
                             className="flex w-full flex-col items-start gap-1 px-3 py-2 text-left hover:bg-slate-50"
                             onMouseDown={() => {
-                              setFormData({ ...formData, responsable: user.name })
+                              setFormData({
+                                ...formData,
+                                responsable: user.name,
+                                responsableCorreo: user.email ?? "",
+                              })
                               setResponsableQuery(user.name)
                               setShowResponsableDropdown(false)
                             }}

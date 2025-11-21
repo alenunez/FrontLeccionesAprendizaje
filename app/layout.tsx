@@ -22,6 +22,9 @@ export const metadata: Metadata = {
   title: 'Sistema de Gestión de Lecciones Aprendidas',
   description: 'Plataforma para administrar el conocimiento organizacional',
   generator: 'v0.app',
+  icons: {
+    icon: '/solla-favicon.svg',
+  },
 }
 
 export default function RootLayout({

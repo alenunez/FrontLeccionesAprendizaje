@@ -195,6 +195,7 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
   const [companias, setCompanias] = useState<SelectOption[]>([])
   const [allSedes, setAllSedes] = useState<SedeOption[]>([])
   const [sedes, setSedes] = useState<SedeOption[]>([])
+  const [estados, setEstados] = useState<RemoteEntity[]>([])
   const [availableUsers, setAvailableUsers] = useState<DirectoryUser[]>([])
   const [responsableQuery, setResponsableQuery] = useState("")
   const [responsableSuggestions, setResponsableSuggestions] = useState<DirectoryUser[]>([])
@@ -211,6 +212,23 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
     fetchEntities("Proceso", setProcesos, controller.signal)
     fetchEntities("Compania", setCompanias, controller.signal)
     fetchSedes(setAllSedes, controller.signal)
+
+    const fetchEstados = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/Estado`, { signal: controller.signal })
+        if (!response.ok) {
+          throw new Error(`Error al cargar estados: ${response.status}`)
+        }
+        const payload = await response.json()
+        setEstados(normalizePayload(payload))
+      } catch (error) {
+        if ((error as Error).name !== "AbortError") {
+          console.error("No fue posible cargar los estados", error)
+        }
+      }
+    }
+
+    fetchEstados()
 
     return () => controller.abort()
   }, [])
@@ -690,6 +708,30 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
     const selectedProceso = procesos.find((proceso) => proceso.id === formData.proceso)
     const selectedLectores = availableUsers.filter((user) => selectedUsers.includes(user.id))
 
+    const estadoBorrador = estados.find((estado) => {
+      const descripcion =
+        estado.descripcion ?? estado.description ?? estado.nombre ?? estado.Nombre ?? estado.name ?? estado.Name
+      return typeof descripcion === "string" && descripcion.toLowerCase() === "borrador"
+    })
+
+    const estadoId = Number(
+      estadoBorrador?.id ?? estadoBorrador?.Id ?? estadoBorrador?.codigo ?? estadoBorrador?.Codigo ?? null,
+    )
+
+    if (!estadoBorrador || !Number.isFinite(estadoId)) {
+      alert("No se pudo determinar el estado 'Borrador'. Intenta nuevamente más tarde.")
+      return
+    }
+
+    const estadoDescripcion =
+      estadoBorrador.descripcion ??
+      estadoBorrador.description ??
+      estadoBorrador.nombre ??
+      estadoBorrador.Nombre ??
+      estadoBorrador.name ??
+      estadoBorrador.Name ??
+      "Borrador"
+
     const payload = {
       proyecto: {
         titulo: formData.proyectoOSituacion,
@@ -701,9 +743,9 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
         correoResponsable: formData.responsableCorreo || formData.responsable,
         nombreResponsable: formData.responsable,
         estado: {
-          id: formData.estado,
-          value: formData.estado,
-          data: formData.estado,
+          id: estadoId,
+          value: estadoDescripcion,
+          data: estadoDescripcion,
         },
         sede: {
           id: formData.sede,

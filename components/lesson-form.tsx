@@ -18,6 +18,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:7
 
 interface LessonFormProps {
   onClose: () => void
+  onSaved: () => void
 }
 
 interface Attachment {
@@ -62,6 +63,8 @@ interface DirectoryUser {
   email?: string
   title?: string
 }
+
+const isDefined = <T,>(value: T | undefined | null): value is T => value !== undefined && value !== null
 
 const normalizePayload = (payload: unknown): RemoteEntity[] => {
   if (Array.isArray(payload)) {
@@ -168,7 +171,7 @@ const normalizeUserSuggestions = (payload: unknown): DirectoryUser[] => {
   })
 }
 
-export function LessonForm({ onClose }: LessonFormProps) {
+export function LessonForm({ onClose, onSaved }: LessonFormProps) {
   const [formData, setFormData] = useState({
     autor: "",
     estado: "Borrador",
@@ -199,6 +202,7 @@ export function LessonForm({ onClose }: LessonFormProps) {
   const [lectorSuggestions, setLectorSuggestions] = useState<DirectoryUser[]>([])
   const [isLoadingLectores, setIsLoadingLectores] = useState(false)
   const [showResponsableDropdown, setShowResponsableDropdown] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -594,17 +598,157 @@ export function LessonForm({ onClose }: LessonFormProps) {
     </div>
   )
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    const lessonData = {
-      ...formData,
-      audienciaClave: selectedUsers,
-      attachments: attachments,
-      eventos: eventos,
-      nivelAcceso: nivelAcceso,
+  const mapEventToDto = (event: Event) => {
+    const impactoIndexMap = new Map(event.impactos.map((impacto, index) => [impacto.id, index]))
+    const accionIndexMap = new Map(event.accionesImplementadas.map((accion, index) => [accion.id, index]))
+    const resultadoIndexMap = new Map(event.resultados.map((resultado, index) => [resultado.id, index]))
+
+    const resultadosDto = event.resultados.map((resultado, resultadoIndex) => {
+      const accionesReferenciadas = resultado.relatedAcciones
+        .map((accionId) => accionIndexMap.get(accionId))
+        .filter(isDefined)
+      const leccionesDto = event.leccionesAprendidas
+        .filter((leccion) => leccion.relatedResultados.includes(resultado.id))
+        .map((leccion) => ({
+          leccion: {
+            titulo: leccion.description,
+            descripcion: leccion.description,
+          },
+          resultados: leccion.relatedResultados
+            .map((resultadoId) => resultadoIndexMap.get(resultadoId))
+            .filter(isDefined),
+        }))
+
+      return {
+        resultado: {
+          titulo: resultado.description,
+          descripcion: resultado.description,
+          identificador: resultadoIndex,
+        },
+        acciones: accionesReferenciadas,
+        lecciones: leccionesDto,
+      }
+    })
+
+    const accionesDto = event.accionesImplementadas.map((accion, accionIndex) => {
+      const resultadosAsociados = resultadosDto.filter((_, resultadoIndex) =>
+        event.resultados[resultadoIndex]?.relatedAcciones.includes(accion.id),
+      )
+
+      return {
+        accion: {
+          titulo: accion.description,
+          descripcion: accion.description,
+          identificador: accionIndex,
+        },
+        impactos: accion.relatedImpactos
+          .map((impactoId) => impactoIndexMap.get(impactoId))
+          .filter(isDefined),
+        resultados: resultadosAsociados,
+      }
+    })
+
+    const impactosDto = event.impactos.map((impacto, impactoIndex) => {
+      const accionesRelacionadas = accionesDto.filter((_, accionIndex) =>
+        event.accionesImplementadas[accionIndex]?.relatedImpactos.includes(impacto.id),
+      )
+
+      return {
+        impacto: {
+          titulo: impacto.description,
+          descripcion: impacto.description,
+          identificador: impactoIndex,
+        },
+        acciones: accionesRelacionadas,
+      }
+    })
+
+    return {
+      evento: {
+        titulo: event.evento,
+        descripcion: event.evento,
+      },
+      impactos: impactosDto,
     }
-    console.log("Guardando lección:", lessonData)
-    onClose()
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!formData.compania || !formData.sede || !formData.proceso || !formData.fecha) {
+      alert("Por favor completa todos los campos obligatorios antes de guardar.")
+      return
+    }
+
+    if (nivelAcceso === "Privado" && selectedUsers.length === 0) {
+      alert("Para un nivel de acceso privado debes seleccionar al menos un lector.")
+      return
+    }
+
+    const fechaIso = formData.fecha ? new Date(formData.fecha).toISOString() : new Date().toISOString()
+    const selectedSede = allSedes.find((sede) => sede.id === formData.sede)
+    const selectedProceso = procesos.find((proceso) => proceso.id === formData.proceso)
+    const selectedLectores = availableUsers.filter((user) => selectedUsers.includes(user.id))
+
+    const payload = {
+      proyecto: {
+        titulo: formData.proyectoOSituacion,
+        fecha: fechaIso,
+        descripcion: formData.proyectoOSituacion,
+        aplicacionPractica: formData.aplicacionPractica,
+        correoAutor: formData.autor,
+        nombreAutor: formData.autor,
+        correoResponsable: formData.responsable,
+        nombreResponsable: formData.responsable,
+        estado: {
+          id: formData.estado,
+          value: formData.estado,
+          data: formData.estado,
+        },
+        sede: {
+          id: formData.sede,
+          value: selectedSede?.nombre ?? formData.sede,
+          data: selectedSede?.nombre ?? formData.sede,
+        },
+        proceso: {
+          id: formData.proceso,
+          value: selectedProceso?.nombre ?? formData.proceso,
+          data: selectedProceso?.nombre ?? formData.proceso,
+        },
+        isPrivate: nivelAcceso === "Privado",
+      },
+      lectores:
+        nivelAcceso === "Privado"
+          ? selectedLectores.map((lector) => ({
+              titulo: lector.title ?? lector.name,
+              correoLector: lector.email ?? "",
+              nombreLector: lector.name,
+            }))
+          : [],
+      eventos: eventos.map(mapEventToDto),
+    }
+
+    setIsSubmitting(true)
+    try {
+      const response = await fetch(`${API_BASE_URL}/ProyectoSituacion/complete`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      })
+
+      if (!response.ok) {
+        throw new Error("No fue posible guardar la información")
+      }
+
+      alert("Proyecto o situación guardado correctamente.")
+      onSaved()
+    } catch (error) {
+      console.error(error)
+      alert("No se pudo guardar el proyecto o situación. Intenta nuevamente.")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const selectedUserObjects = availableUsers.filter((user) => selectedUsers.includes(user.id))
@@ -732,7 +876,11 @@ export function LessonForm({ onClose }: LessonFormProps) {
                   <Label htmlFor="sede" className="text-sm font-semibold text-slate-700">
                     Sede *
                   </Label>
-                  <Select value={formData.sede} onValueChange={(value) => setFormData({ ...formData, sede: value })}>
+                  <Select
+                    value={formData.sede}
+                    onValueChange={(value) => setFormData({ ...formData, sede: value })}
+                    disabled={!formData.compania}
+                  >
                     <SelectTrigger className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30">
                       <SelectValue placeholder="Seleccionar sede" />
                     </SelectTrigger>
@@ -1101,10 +1249,11 @@ export function LessonForm({ onClose }: LessonFormProps) {
             </Button>
             <Button
               type="submit"
-              className="gap-2 rounded-full bg-[#067138] px-6 py-5 text-base font-semibold text-white shadow-lg shadow-emerald-200/60 hover:bg-[#05592d]"
+              disabled={isSubmitting}
+              className="gap-2 rounded-full bg-[#067138] px-6 py-5 text-base font-semibold text-white shadow-lg shadow-emerald-200/60 hover:bg-[#05592d] disabled:opacity-70"
             >
               <Save className="h-4 w-4" />
-              Guardar
+              {isSubmitting ? "Guardando..." : "Guardar"}
             </Button>
           </div>
         </form>

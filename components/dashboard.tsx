@@ -106,6 +106,7 @@ export function Dashboard() {
   const [isLoadingLessons, setIsLoadingLessons] = useState(false)
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [selectedLesson, setSelectedLesson] = useState<ProyectoSituacionDto | null>(null)
+  const [reloadKey, setReloadKey] = useState(0)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -141,7 +142,7 @@ export function Dashboard() {
       clearTimeout(handler)
       controller.abort()
     }
-  }, [searchQuery])
+  }, [searchQuery, reloadKey])
 
   const statusCounts = useMemo(() => {
     return lessons.reduce<Record<string, number>>((acc, lesson) => {
@@ -179,6 +180,11 @@ export function Dashboard() {
 
   const handleCloseViewer = () => {
     setSelectedLesson(null)
+  }
+
+  const handleFormSaved = () => {
+    setShowForm(false)
+    setReloadKey((prev) => prev + 1)
   }
 
   const handleLogout = () => {
@@ -686,7 +692,7 @@ export function Dashboard() {
       </main>
 
       {/* Lesson Form Modal */}
-      {showForm && <LessonForm onClose={() => setShowForm(false)} />}
+      {showForm && <LessonForm onClose={() => setShowForm(false)} onSaved={handleFormSaved} />}
       {selectedLesson && <LessonViewer lesson={selectedLesson} onClose={handleCloseViewer} />}
     </div>
   )

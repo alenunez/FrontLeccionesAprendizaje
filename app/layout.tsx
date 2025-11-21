@@ -3,6 +3,7 @@ import { GeistMono } from 'geist/font/mono'
 import { Plus_Jakarta_Sans, Public_Sans } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
+import { Toaster } from '@/components/ui/toaster'
 
 const publicSans = Public_Sans({
   subsets: ['latin'],
@@ -39,6 +40,7 @@ export default function RootLayout({
       >
         {children}
         <Analytics />
+        <Toaster />
       </body>
     </html>
   )

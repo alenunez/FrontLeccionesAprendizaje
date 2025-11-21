@@ -2,17 +2,18 @@
 
 import type React from "react"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { X, Save, Plus, Trash2, Upload, FileText, Edit } from "lucide-react"
+import { X, Save, Plus, Trash2, Upload, FileText, Edit, Loader2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { toast } from "@/hooks/use-toast"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:7043/api"
 
@@ -189,6 +190,7 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
 
   const [selectedUsers, setSelectedUsers] = useState<string[]>([])
   const [showUserDropdown, setShowUserDropdown] = useState(false)
+  const userDropdownRef = useRef<HTMLDivElement | null>(null)
   const [attachments, setAttachments] = useState<Attachment[]>([])
 
   const [procesos, setProcesos] = useState<SelectOption[]>([])
@@ -327,6 +329,18 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
     }
   }, [lectorQuery])
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!showUserDropdown) return
+      if (userDropdownRef.current && !userDropdownRef.current.contains(event.target as Node)) {
+        setShowUserDropdown(false)
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [showUserDropdown])
+
   const [eventos, setEventos] = useState<Event[]>([])
   const [showEventDialog, setShowEventDialog] = useState(false)
   const [editingEventId, setEditingEventId] = useState<string | null>(null)
@@ -389,6 +403,40 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
     setter((prev) => prev.filter((row) => row.id !== id))
   }
 
+  const notifyBlockedRemoval = (message: string) =>
+    toast({
+      title: "No se puede eliminar",
+      description: message,
+      variant: "destructive",
+    })
+
+  const handleRemoveImpacto = (id: string) => {
+    const hasRelations = currentAccionesImplementadas.some((accion) => accion.relatedImpactos.includes(id))
+    if (hasRelations) {
+      notifyBlockedRemoval("Este impacto tiene acciones relacionadas. Elimina las relaciones antes de borrarlo.")
+      return
+    }
+    removeRow(id, setCurrentImpactos)
+  }
+
+  const handleRemoveAccion = (id: string) => {
+    const hasRelations = currentResultados.some((resultado) => resultado.relatedAcciones.includes(id))
+    if (hasRelations) {
+      notifyBlockedRemoval("Esta acción tiene resultados relacionados. Elimina las relaciones antes de borrarla.")
+      return
+    }
+    removeRow(id, setCurrentAccionesImplementadas)
+  }
+
+  const handleRemoveResultado = (id: string) => {
+    const hasRelations = currentLeccionesAprendidas.some((leccion) => leccion.relatedResultados.includes(id))
+    if (hasRelations) {
+      notifyBlockedRemoval("Este resultado tiene lecciones relacionadas. Elimina las relaciones antes de borrarlo.")
+      return
+    }
+    removeRow(id, setCurrentResultados)
+  }
+
   const updateRow = (
     id: string,
     description: string,
@@ -418,20 +466,63 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
   }
 
   const saveEvent = () => {
+    const impactos = currentImpactos.filter((row) => row.description.trim())
+    const acciones = currentAccionesImplementadas
+      .filter((row) => row.description.trim())
+      .map((accion) => ({
+        ...accion,
+        relatedImpactos: accion.relatedImpactos.filter((id) => impactos.some((impacto) => impacto.id === id)),
+      }))
+
+    const resultados = currentResultados
+      .filter((row) => row.description.trim())
+      .map((resultado) => ({
+        ...resultado,
+        relatedAcciones: resultado.relatedAcciones.filter((id) => acciones.some((accion) => accion.id === id)),
+      }))
+
+    const lecciones = currentLeccionesAprendidas
+      .filter((row) => row.description.trim())
+      .map((leccion) => ({
+        ...leccion,
+        relatedResultados: leccion.relatedResultados.filter((id) => resultados.some((resultado) => resultado.id === id)),
+      }))
+
+    if (!impactos.length || !acciones.length || !resultados.length || !lecciones.length) {
+      toast({
+        title: "Faltan elementos obligatorios",
+        description: "Agrega al menos un impacto, una acción, un resultado y una lección para guardar el evento.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    const accionesSinImpacto = acciones.some((accion) => accion.relatedImpactos.length === 0)
+    const resultadosSinAccion = resultados.some((resultado) => resultado.relatedAcciones.length === 0)
+    const leccionesSinResultado = lecciones.some((leccion) => leccion.relatedResultados.length === 0)
+
+    if (accionesSinImpacto || resultadosSinAccion || leccionesSinResultado) {
+      toast({
+        title: "Relaciones incompletas",
+        description:
+          "Cada acción, resultado y lección debe estar relacionado con al menos un elemento de la columna anterior.",
+        variant: "destructive",
+      })
+      return
+    }
+
     const eventData: Event = {
       id: editingEventId || Date.now().toString(),
       evento: currentEvent.evento,
-      impactos: currentImpactos.filter((row) => row.description.trim()),
-      accionesImplementadas: currentAccionesImplementadas.filter((row) => row.description.trim()),
-      resultados: currentResultados.filter((row) => row.description.trim()),
-      leccionesAprendidas: currentLeccionesAprendidas.filter((row) => row.description.trim()),
+      impactos,
+      accionesImplementadas: acciones,
+      resultados,
+      leccionesAprendidas: lecciones,
     }
 
     if (editingEventId) {
-      // Update existing event
       setEventos((prev) => prev.map((e) => (e.id === editingEventId ? eventData : e)))
     } else {
-      // Add new event
       setEventos((prev) => [...prev, eventData])
     }
 
@@ -486,6 +577,7 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
     relationOptions?: { id: string; description: string }[],
     relationKey?: string,
     relationLabel?: string,
+    onRemoveRow?: (id: string) => void,
   ) => (
     <div className="space-y-4">
       <div className={`border-l-4 border-${color}-500 pl-4`}>
@@ -512,7 +604,7 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
                   type="button"
                   variant="outline"
                   size="icon"
-                  onClick={() => removeRow(row.id, setter)}
+                  onClick={() => (onRemoveRow ? onRemoveRow(row.id) : removeRow(row.id, setter))}
                   className="mt-1 text-red-600 hover:text-red-700 hover:bg-red-50 h-5 w-5"
                 >
                   <Trash2 className="h-1.5 w-1.5" />
@@ -571,6 +663,7 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
     setter: React.Dispatch<React.SetStateAction<{ id: string; description: string }[]>>,
     placeholder: string,
     color: string,
+    onRemoveRow?: (id: string) => void,
   ) => (
     <div className="space-y-4">
       <div className={`border-l-4 border-${color}-500 pl-4`}>
@@ -596,7 +689,7 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
                 type="button"
                 variant="outline"
                 size="icon"
-                onClick={() => removeRow(row.id, setter)}
+                onClick={() => (onRemoveRow ? onRemoveRow(row.id) : removeRow(row.id, setter))}
                 className="mt-1 text-red-600 hover:text-red-700 hover:bg-red-50 h-5 w-5"
               >
                 <Trash2 className="h-1.5 w-1.5" />
@@ -694,12 +787,20 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!formData.compania || !formData.sede || !formData.proceso || !formData.fecha) {
-      alert("Por favor completa todos los campos obligatorios antes de guardar.")
+      toast({
+        title: "Campos obligatorios",
+        description: "Completa compañía, sede, proceso y fecha antes de guardar.",
+        variant: "destructive",
+      })
       return
     }
 
     if (nivelAcceso === "Privado" && selectedUsers.length === 0) {
-      alert("Para un nivel de acceso privado debes seleccionar al menos un lector.")
+      toast({
+        title: "Lectores requeridos",
+        description: "Agrega al menos un lector para un nivel de acceso privado.",
+        variant: "destructive",
+      })
       return
     }
 
@@ -719,7 +820,11 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
     )
 
     if (!estadoBorrador || !Number.isFinite(estadoId)) {
-      alert("No se pudo determinar el estado 'Borrador'. Intenta nuevamente más tarde.")
+      toast({
+        title: "No se pudo guardar",
+        description: "No se encontró el estado 'Borrador'. Inténtalo nuevamente más tarde.",
+        variant: "destructive",
+      })
       return
     }
 
@@ -784,11 +889,19 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
         throw new Error("No fue posible guardar la información")
       }
 
-      alert("Proyecto o situación guardado correctamente.")
+      toast({
+        title: "Proyecto guardado",
+        description: "El proyecto o situación se guardó correctamente.",
+        className: "bg-emerald-50 border-emerald-200 text-emerald-900",
+      })
       onSaved()
     } catch (error) {
       console.error(error)
-      alert("No se pudo guardar el proyecto o situación. Intenta nuevamente.")
+      toast({
+        title: "No se pudo guardar",
+        description: "Ocurrió un error al guardar el proyecto o situación.",
+        variant: "destructive",
+      })
     } finally {
       setIsSubmitting(false)
     }
@@ -1042,7 +1155,7 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
                 </div>
 
                   {nivelAcceso === "Privado" && (
-                    <div className="space-y-3 md:col-span-2">
+                    <div className="space-y-3 md:col-span-2" ref={userDropdownRef}>
                       <Label className="text-sm font-semibold text-slate-700">Lectores *</Label>
                       <div className="space-y-3">
                         <div className="relative">
@@ -1299,8 +1412,17 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
               disabled={isSubmitting}
               className="gap-2 rounded-full bg-[#067138] px-6 py-5 text-base font-semibold text-white shadow-lg shadow-emerald-200/60 hover:bg-[#05592d] disabled:opacity-70"
             >
-              <Save className="h-4 w-4" />
-              {isSubmitting ? "Guardando..." : "Guardar"}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Guardando...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4" />
+                  Guardar
+                </>
+              )}
             </Button>
           </div>
         </form>
@@ -1331,6 +1453,7 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
                 setCurrentImpactos,
                 "Describa el impacto identificado",
                 "red",
+                handleRemoveImpacto,
               )}
 
               {renderTableWithRelations(
@@ -1342,6 +1465,7 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
                 currentImpactos,
                 "relatedImpactos",
                 "Relacionado con impactos:",
+                handleRemoveAccion,
               )}
 
               {renderTableWithRelations(
@@ -1353,6 +1477,7 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
                 currentAccionesImplementadas,
                 "relatedAcciones",
                 "Relacionado con acciones:",
+                handleRemoveResultado,
               )}
 
               {renderTableWithRelations(

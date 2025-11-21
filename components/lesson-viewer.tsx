@@ -62,7 +62,7 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-8">
-      <Card className="w-full max-w-6xl max-h-[95vh] overflow-hidden border border-emerald-100 shadow-2xl">
+      <Card className="w-full max-w-6xl max-h-[95vh] overflow-hidden border border-emerald-100 shadow-2xl break-words">
         <CardHeader className="flex flex-row items-center justify-between gap-4 bg-gradient-to-r from-[#067138] via-[#0fa958] to-[#45a06c] text-white">
           <div>
             <CardTitle className="text-xl font-semibold text-white">Visualización del Proyecto</CardTitle>
@@ -79,8 +79,8 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
           <section className="space-y-4">
             <div className="flex flex-col gap-3 rounded-3xl border border-emerald-100 bg-white/80 p-6 shadow-sm">
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#067138]/70">Proyecto o situación</p>
-              <h2 className="text-2xl font-semibold text-slate-900">{safeText(proyecto.descripcion)}</h2>
-              <p className="text-sm text-slate-600">{safeText(proyecto.aplicacionPractica)}</p>
+              <h2 className="text-2xl font-semibold text-slate-900 break-words">{safeText(proyecto.descripcion)}</h2>
+              <p className="text-sm text-slate-600 break-words">{safeText(proyecto.aplicacionPractica)}</p>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -137,7 +137,7 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
                     {item.icon}
                     {item.label}
                   </div>
-                  <p className="mt-2 text-base font-medium text-slate-900">{item.value}</p>
+                  <p className="mt-2 text-base font-medium text-slate-900 break-words">{item.value}</p>
                 </div>
               ))}
             </div>
@@ -295,7 +295,7 @@ function EventColumn({ title, subtitle, items }: EventColumnProps) {
           {items.map((item, index) => (
             <li key={item.id} className="rounded-2xl border border-emerald-100 bg-white/80 p-3 shadow-sm">
               <div className="text-xs font-semibold text-slate-500">#{index + 1}</div>
-              <p className="text-sm font-medium text-slate-900">{item.descripcion}</p>
+              <p className="text-sm font-medium text-slate-900 break-words">{item.descripcion}</p>
               {item.relations && item.relations.length > 0 && (
                 <div className="mt-2 space-y-1">
                   <p className="text-xs font-semibold text-slate-500">
@@ -306,7 +306,7 @@ function EventColumn({ title, subtitle, items }: EventColumnProps) {
                       <Badge
                         key={`${item.id}-${relation}-${relationIndex}`}
                         variant="outline"
-                        className="rounded-full border-emerald-200 text-[11px] text-[#067138]"
+                        className="rounded-full border-emerald-200 text-[11px] text-[#067138] break-words whitespace-normal"
                       >
                         {relation}
                       </Badge>

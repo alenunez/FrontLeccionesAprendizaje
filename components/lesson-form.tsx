@@ -919,7 +919,13 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
               Eventos y lecciones aprendidas de un proyecto o situación
             </CardDescription>
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose} className="text-white hover:bg-white/20">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            disabled={isSubmitting}
+            className="text-white hover:bg-white/20"
+          >
             <X className="h-4 w-4" />
           </Button>
         </CardHeader>
@@ -932,9 +938,10 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
         </div>
 
         <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-8 p-8">
-            {/* ENCABEZADO - Información General hasta Anexos */}
-            <div className="space-y-6">
+          <fieldset disabled={isSubmitting} className="border-0 p-0 m-0">
+            <CardContent className="space-y-8 p-8">
+              {/* ENCABEZADO - Información General hasta Anexos */}
+              <div className="space-y-6">
               <div className="border-l-4 border-[#067138] pl-4">
                 <h3 className="text-xl font-bold text-slate-900">Información General</h3>
                 <p className="text-sm text-slate-600">Datos básicos del evento o situación</p>
@@ -1425,11 +1432,14 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
               )}
             </Button>
           </div>
+          </fieldset>
         </form>
       </Card>
 
-      <Dialog open={showEventDialog} onOpenChange={setShowEventDialog}>
-        <DialogContent className="w-screen max-w-none p-0 m-0 rounded-none h-[90vh] overflow-y-auto min-w-full">
+      <Dialog open={showEventDialog} onOpenChange={(open) => !isSubmitting && setShowEventDialog(open)}>
+        <DialogContent
+          className={`w-screen max-w-none p-0 m-0 rounded-none h-[90vh] overflow-y-auto min-w-full ${isSubmitting ? "pointer-events-none opacity-70" : ""}`}
+        >
           <div className="space-y-6 px-6 pt-6 pb-4">
             <div className="space-y-3">
               <div className="border-l-4 border-[#067138] pl-4">
@@ -1494,14 +1504,14 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
           </div>
 
           <DialogFooter className="p-6 pt-4">
-            <Button type="button" variant="outline" onClick={() => setShowEventDialog(false)}>
+            <Button type="button" variant="outline" onClick={() => setShowEventDialog(false)} disabled={isSubmitting}>
               Cancelar
             </Button>
             <Button
               type="button"
               onClick={saveEvent}
               className="bg-purple-600 hover:bg-purple-700"
-              disabled={!currentEvent.evento.trim()}
+              disabled={isSubmitting || !currentEvent.evento.trim()}
             >
               <Save className="h-4 w-4 mr-2" />
               {editingEventId ? "Actualizar" : "Guardar"} Evento

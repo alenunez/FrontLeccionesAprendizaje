@@ -345,9 +345,13 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
   }, [])
 
   useEffect(() => {
+    if (allSedes.length === 0) return
+
     if (!formData.compania) {
       setSedes(allSedes)
-      setFormData((prev) => (prev.sede ? { ...prev, sede: "" } : prev))
+      if (formData.sede && !allSedes.some((sede) => sede.id === formData.sede)) {
+        setFormData((prev) => ({ ...prev, sede: "" }))
+      }
       return
     }
 

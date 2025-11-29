@@ -33,6 +33,7 @@ interface Attachment {
   name: string
   size: string
   type: string
+  file: File
 }
 
 interface Event {
@@ -105,6 +106,8 @@ const normalizePayload = (payload: unknown): RemoteEntity[] => {
 
   return []
 }
+
+const formatFileSize = (bytes: number) => `${(bytes / 1024 / 1024).toFixed(2)} MB`
 
 const toSelectOptions = (entities: RemoteEntity[]): SelectOption[] =>
   entities.map((entity, index) => {
@@ -735,16 +738,55 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
     setSelectedUsers((prev) => prev.filter((id) => id !== userId))
   }
 
+  const MAX_ATTACHMENTS = 5
+  const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (files) {
-      const newAttachments: Attachment[] = Array.from(files).map((file) => ({
-        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-        name: file.name,
-        size: (file.size / 1024 / 1024).toFixed(2) + " MB",
-        type: file.type || "application/octet-stream",
-      }))
-      setAttachments((prev) => [...prev, ...newAttachments])
+      const remainingSlots = MAX_ATTACHMENTS - attachments.length
+
+      if (remainingSlots <= 0) {
+        toast({
+          title: "Límite alcanzado",
+          description: `Solo puedes adjuntar hasta ${MAX_ATTACHMENTS} archivos.`,
+          variant: "destructive",
+        })
+        e.target.value = ""
+        return
+      }
+
+      const selectableFiles = Array.from(files)
+
+      if (selectableFiles.length > remainingSlots) {
+        toast({
+          title: "Demasiados archivos",
+          description: `Solo se cargarán los primeros ${MAX_ATTACHMENTS} archivos permitidos.`,
+          variant: "destructive",
+        })
+      }
+
+      const filesWithinLimit = selectableFiles.slice(0, remainingSlots)
+      const validFiles = filesWithinLimit.filter((file) => file.size <= MAX_FILE_SIZE_BYTES)
+
+      if (validFiles.length !== filesWithinLimit.length) {
+        toast({
+          title: "Archivo demasiado grande",
+          description: "Cada adjunto debe pesar máximo 10 MB.",
+          variant: "destructive",
+        })
+      }
+
+      if (validFiles.length > 0) {
+        const newAttachments: Attachment[] = validFiles.map((file) => ({
+          id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+          name: file.name,
+          size: formatFileSize(file.size),
+          type: file.type || "application/octet-stream",
+          file,
+        }))
+        setAttachments((prev) => [...prev, ...newAttachments])
+      }
     }
     e.target.value = ""
   }
@@ -1369,18 +1411,22 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
           ? `${API_BASE_URL}/ProyectoSituacion/complete/${initialData.proyecto.id}`
           : `${API_BASE_URL}/ProyectoSituacion/complete`
 
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-      }
+      const headers: Record<string, string> = {}
 
       if (loggedUser?.email) {
         headers.correousuario = loggedUser.email
       }
 
+      const submission = new FormData()
+      submission.append("Payload", JSON.stringify(payload))
+      attachments.forEach((attachment) => {
+        submission.append("Adjuntos", attachment.file)
+      })
+
       const response = await fetch(endpointUrl, {
         method: isEditing ? "PUT" : "POST",
         headers,
-        body: JSON.stringify(payload),
+        body: submission,
       })
 
       if (!response.ok) {
@@ -1915,7 +1961,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                     Subir archivos
                   </Button>
                   <span className="text-sm text-slate-500">
-                    Formatos soportados: PDF, Word, Excel, PowerPoint, imágenes, texto
+                    Formatos soportados: PDF, Word, Excel, PowerPoint, imágenes, texto. Hasta 5 archivos de 10 MB cada uno.
                   </span>
                 </div>
 

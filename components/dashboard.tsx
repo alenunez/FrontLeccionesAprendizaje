@@ -24,7 +24,11 @@ import {
 } from "recharts"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
-import type { ProyectoSituacionDto } from "@/types/lessons"
+import type {
+  ProyectoSituacionDto,
+  ProyectoSituacionEstadoCounts,
+  ProyectoSituacionPaginatedResponse,
+} from "@/types/lessons"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useSimulatedUser } from "@/lib/user-context"
 import { canEditLesson } from "@/lib/permissions"
@@ -63,6 +67,27 @@ const normalizeLessonsResponse = (payload: unknown): ProyectoSituacionDto[] => {
   return []
 }
 
+const parseLessonsResponse = (
+  payload: unknown,
+): {
+  items: ProyectoSituacionDto[]
+  totalCount: number
+  pageNumber: number
+  pageSize: number
+  estadoCounts?: ProyectoSituacionEstadoCounts
+} => {
+  const normalizedItems = normalizeLessonsResponse(payload)
+  const typedPayload = (payload ?? {}) as ProyectoSituacionPaginatedResponse
+
+  return {
+    items: normalizedItems,
+    totalCount: typedPayload.totalCount ?? normalizedItems.length,
+    pageNumber: typedPayload.pageNumber ?? 1,
+    pageSize: typedPayload.pageSize ?? (normalizedItems.length > 0 ? normalizedItems.length : 10),
+    estadoCounts: typedPayload.estadoCounts,
+  }
+}
+
 const formatDate = (value?: string): string => {
   if (!value) return "Sin fecha"
   const date = new Date(value)
@@ -79,9 +104,10 @@ const mapLessons = (payload: ProyectoSituacionDto[]): LessonSummary[] =>
     const proyecto = item.proyecto ?? {}
     const estadoDescripcion = proyecto.estado?.data?.descripcion ?? "Sin estado"
     const responsableNombre = proyecto.nombreResponsable ?? proyecto.nombreAutor ?? "Sin responsable"
+    const projectId = proyecto.id != null ? `${proyecto.id}` : `sin-id-${index}`
 
     return {
-      id: proyecto.id ?? `sin-id-${index}`,
+      id: projectId,
       projectOrSituation: proyecto.descripcion ?? "Sin descripción",
       status: estadoDescripcion,
       responsable: responsableNombre,
@@ -105,6 +131,17 @@ export function Dashboard() {
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [selectedLesson, setSelectedLesson] = useState<ProyectoSituacionDto | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
+  const [estadoCounts, setEstadoCounts] = useState<ProyectoSituacionEstadoCounts>({
+    borrador: 0,
+    enRevision: 0,
+    publicado: 0,
+  })
+  const [estadoIds, setEstadoIds] = useState<Record<string, string | number | undefined>>({})
+  const [pageNumber, setPageNumber] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+  const [totalCount, setTotalCount] = useState(0)
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc")
+  const [estadoFilterId, setEstadoFilterId] = useState<string | number | null>(null)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -115,21 +152,53 @@ export function Dashboard() {
       try {
         const params = new URLSearchParams()
         params.set("query", searchQuery)
+        params.set("pageNumber", pageNumber.toString())
+        params.set("pageSize", pageSize.toString())
+        params.set("sortDirection", sortDirection)
+        if (estadoFilterId !== null) {
+          params.set("idEstado", `${estadoFilterId}`)
+        }
+
         const url = `${API_BASE_URL}/ProyectoSituacion/full?${params.toString()}`
-        const response = await fetch(url, { signal: controller.signal })
+        const response = await fetch(url, {
+          signal: controller.signal,
+          headers: {
+            correoUsuario: loggedUser.email,
+          },
+        })
         if (!response.ok) {
           throw new Error(`Error al cargar las lecciones: ${response.status}`)
         }
-        const payload = await response.json()
-        const normalized = normalizeLessonsResponse(payload)
-        setRawLessons(normalized)
-        setLessons(mapLessons(normalized))
+        const payload: ProyectoSituacionPaginatedResponse = await response.json()
+        const { items, totalCount: total, estadoCounts: totalsByEstado } = parseLessonsResponse(payload)
+        setRawLessons(items)
+        setLessons(mapLessons(items))
+        setTotalCount(total)
+        setEstadoCounts({
+          borrador: totalsByEstado?.borrador ?? 0,
+          enRevision: totalsByEstado?.enRevision ?? 0,
+          publicado: totalsByEstado?.publicado ?? 0,
+        })
+        setEstadoIds((prev) => {
+          const next = { ...prev }
+          items.forEach((item) => {
+            const descripcion = item.proyecto?.estado?.data?.descripcion
+            const id = item.proyecto?.estado?.id
+            if (descripcion && id !== undefined && next[descripcion] === undefined) {
+              next[descripcion] = id
+            }
+          })
+          return next
+        })
       } catch (error) {
         if ((error as Error).name !== "AbortError") {
           console.error("No fue posible cargar las lecciones", error)
           setFetchError("No fue posible cargar la información. Intenta nuevamente.")
           setLessons([])
           setRawLessons([])
+          setEstadoCounts({ borrador: 0, enRevision: 0, publicado: 0 })
+          setTotalCount(0)
+          setEstadoIds({})
         }
       } finally {
         setIsLoadingLessons(false)
@@ -140,19 +209,81 @@ export function Dashboard() {
       clearTimeout(handler)
       controller.abort()
     }
-  }, [searchQuery, reloadKey])
+  }, [
+    estadoFilterId,
+    loggedUser.email,
+    pageNumber,
+    pageSize,
+    reloadKey,
+    searchQuery,
+    sortDirection,
+  ])
 
-  const statusCounts = useMemo(() => {
-    return lessons.reduce<Record<string, number>>((acc, lesson) => {
-      acc[lesson.status] = (acc[lesson.status] ?? 0) + 1
-      return acc
-    }, {})
-  }, [lessons])
+  const statusCounts = useMemo(
+    () => ({
+      Borrador: estadoCounts.borrador ?? 0,
+      "En Revisión": estadoCounts.enRevision ?? 0,
+      Publicado: estadoCounts.publicado ?? 0,
+    }),
+    [estadoCounts],
+  )
 
   const filteredLessons = useMemo(
-    () => lessons.filter((lesson) => !workflowFilter || lesson.status === workflowFilter),
-    [lessons, workflowFilter],
+    () => {
+      if (estadoFilterId !== null) return lessons
+      if (!workflowFilter) return lessons
+      return lessons.filter((lesson) => lesson.status === workflowFilter)
+    },
+    [estadoFilterId, lessons, workflowFilter],
   )
+
+  const totalPages = useMemo(() => {
+    if (pageSize <= 0) return 1
+    const calculated = Math.ceil((totalCount ?? 0) / pageSize)
+    return calculated > 0 ? calculated : 1
+  }, [pageSize, totalCount])
+
+  const handleWorkflowStageClick = (status: string) => {
+    const nextStatus = workflowFilter === status ? null : status
+    setWorkflowFilter(nextStatus)
+    setEstadoFilterId(nextStatus ? estadoIds[nextStatus] ?? null : null)
+    setPageNumber(1)
+  }
+
+  const handleSortToggle = () => {
+    setSortDirection((prev) => (prev === "desc" ? "asc" : "desc"))
+    setPageNumber(1)
+  }
+
+  const handleViewLesson = (lesson: LessonSummary) => {
+    const foundLesson = rawLessons.find((item) => `${item.proyecto?.id ?? ""}` === lesson.id)
+    if (foundLesson) {
+      setSelectedLesson(foundLesson)
+    } else {
+      alert("No fue posible encontrar la información completa de esta lección.")
+    }
+  }
+
+  const handlePageSizeChange = (value: number) => {
+    if (Number.isNaN(value) || value <= 0) return
+    setPageSize(value)
+    setPageNumber(1)
+  }
+
+  const handlePageChange = (direction: "next" | "prev") => {
+    if (direction === "prev") {
+      setPageNumber((prev) => Math.max(1, prev - 1))
+      return
+    }
+    setPageNumber((prev) => Math.min(totalPages, prev + 1))
+  }
+
+  useEffect(() => {
+    const maxPage = pageSize > 0 ? Math.max(1, Math.ceil(Math.max(totalCount, 0) / pageSize)) : 1
+    if (pageNumber > maxPage) {
+      setPageNumber(maxPage)
+    }
+  }, [pageNumber, pageSize, totalCount])
 
   const handleGeneratePPTX = (lesson: any) => {
     // Simulate PPTX generation
@@ -165,15 +296,6 @@ export function Dashboard() {
 
     // Show a success message
     alert(`Generando presentación PPTX para: "${lesson.projectOrSituation}"\nArchivo: ${lesson.id}_presentacion.pptx`)
-  }
-
-  const handleViewLesson = (lesson: LessonSummary) => {
-    const foundLesson = rawLessons.find((item) => item.proyecto?.id === lesson.id)
-    if (foundLesson) {
-      setSelectedLesson(foundLesson)
-    } else {
-      alert("No fue posible encontrar la información completa de esta lección.")
-    }
   }
 
   const handleCloseViewer = () => {
@@ -330,15 +452,20 @@ export function Dashboard() {
                       <Input
                         placeholder="Buscar Proyecto o situación"
                         value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onChange={(e) => {
+                          setSearchQuery(e.target.value)
+                          setPageNumber(1)
+                        }}
                         className="flex-1 rounded-2xl border-slate-200 bg-white/70 focus:border-[#067138] focus:ring-[#067138]/20"
                       />
                       <Button
                         variant="outline"
-                        size="icon"
+                        size="sm"
+                        onClick={handleSortToggle}
                         className="border-slate-200 bg-white text-[#067138] transition hover:bg-[#e0f3e8]"
                       >
-                        <Filter className="h-4 w-4" />
+                        <Filter className="mr-2 h-4 w-4" />
+                        Fecha {sortDirection === "desc" ? "↓" : "↑"}
                       </Button>
                     </div>
                   </CardContent>
@@ -376,7 +503,7 @@ export function Dashboard() {
                           variant="outline"
                           size="sm"
                           className={`${stage.color} ${stage.textColor} border px-3 py-2 h-auto flex flex-col items-center gap-1 rounded-2xl text-center min-w-[70px] transition-all`}
-                          onClick={() => setWorkflowFilter(workflowFilter === stage.status ? null : stage.status)}
+                          onClick={() => handleWorkflowStageClick(stage.status)}
                         >
                           <span className="text-xs">{stage.icon}</span>
                           <span className="text-lg font-bold leading-none">{stage.count}</span>
@@ -394,17 +521,21 @@ export function Dashboard() {
                   <CardTitle className="flex flex-col gap-3 text-xl lg:flex-row lg:items-center lg:justify-between">
                     Gestión de Lecciones
                     {workflowFilter && (
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Badge variant="outline" className="rounded-full border-emerald-200 bg-[#e0f3e8] text-[#067138]">
-                          Filtrado por: {workflowFilter}
-                        </Badge>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setWorkflowFilter(null)}
-                          className="text-slate-500 hover:text-slate-700"
-                        >
-                          Limpiar filtro
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge variant="outline" className="rounded-full border-emerald-200 bg-[#e0f3e8] text-[#067138]">
+                            Filtrado por: {workflowFilter}
+                          </Badge>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setWorkflowFilter(null)
+                              setEstadoFilterId(null)
+                              setPageNumber(1)
+                            }}
+                            className="text-slate-500 hover:text-slate-700"
+                          >
+                            Limpiar filtro
                         </Button>
                       </div>
                     )}
@@ -461,7 +592,7 @@ export function Dashboard() {
 
                     {!isLoadingLessons && !fetchError &&
                       filteredLessons.map((lesson) => {
-                        const fullLesson = rawLessons.find((item) => item.proyecto?.id === lesson.id)
+                        const fullLesson = rawLessons.find((item) => `${item.proyecto?.id ?? ""}` === lesson.id)
                         const isEditable = canEditLesson(fullLesson, loggedUser)
 
                         return (
@@ -568,6 +699,53 @@ export function Dashboard() {
                         </div>
                         )
                       })}
+                    {!isLoadingLessons && !fetchError && totalCount >= 0 && (
+                      <div className="flex flex-col gap-3 border-t border-emerald-50 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="text-sm text-slate-600">
+                          {`Mostrando ${totalCount === 0 ? 0 : (pageNumber - 1) * pageSize + 1}-${Math.min(totalCount, pageNumber * pageSize)} de ${totalCount} resultados`}
+                        </div>
+                        <div className="flex flex-wrap items-center gap-3">
+                          <label className="text-sm text-slate-600" htmlFor="page-size-select">
+                            Tamaño de página
+                          </label>
+                          <select
+                            id="page-size-select"
+                            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm focus:border-[#067138] focus:outline-none focus:ring-1 focus:ring-[#067138]/30"
+                            value={pageSize}
+                            onChange={(event) => handlePageSizeChange(Number(event.target.value))}
+                          >
+                            {[5, 10, 20, 30].map((sizeOption) => (
+                              <option key={`page-size-${sizeOption}`} value={sizeOption}>
+                                {sizeOption}
+                              </option>
+                            ))}
+                          </select>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="border-slate-200 text-slate-700 hover:bg-[#e0f3e8]"
+                              onClick={() => handlePageChange("prev")}
+                              disabled={pageNumber <= 1 || totalCount === 0}
+                            >
+                              Anterior
+                            </Button>
+                            <span className="text-sm text-slate-600">
+                              Página {pageNumber} de {totalPages}
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="border-slate-200 text-slate-700 hover:bg-[#e0f3e8]"
+                              onClick={() => handlePageChange("next")}
+                              disabled={pageNumber >= totalPages || totalCount === 0}
+                            >
+                              Siguiente
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

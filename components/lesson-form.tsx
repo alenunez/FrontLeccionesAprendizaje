@@ -446,7 +446,7 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
     publish: {
       label: "Publicar",
       icon: <Globe2 className="h-4 w-4" />,
-      targetEstado: "Publicada",
+      targetEstado: "Publicado",
     },
     returnToDraft: {
       label: "Devolver a borrador",

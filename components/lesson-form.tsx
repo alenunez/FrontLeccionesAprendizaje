@@ -982,69 +982,80 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
     resultadoIdMap.set(resultado.id, index + 1)
   })
 
-  const impactosDto = event.impactos.map((impacto, impactoIndex) => {
-    const impactoIdentificador = impactoIdMap.get(impacto.id) ?? impactoIndex + 1
+  const impactosDto = event.impactos.map((impacto, impactoIndex) => ({
+    impacto: {
+      titulo: impacto.description,
+      descripcion: impacto.description,
+      identificador: impactoIdMap.get(impacto.id) ?? impactoIndex + 1,
+    },
+  }))
 
-    const accionesDto = event.accionesImplementadas
-      .filter((accion) => accion.relatedImpactos.includes(impacto.id))
-      .map((accion, accionIndex) => {
-        const accionIdentificador = accionIdMap.get(accion.id) ?? accionIndex + 1
+  const accionesDto = event.accionesImplementadas.map((accion, accionIndex) => {
+    const accionIdentificador = accionIdMap.get(accion.id) ?? accionIndex + 1
 
-        const impactoIds =
-          accion.relatedImpactos.length > 0
-            ? accion.relatedImpactos.map((id, relationIndex) => {
-                const mapped = impactoIdMap.get(id)
-                if (mapped) return mapped
+    const impactoIds =
+      accion.relatedImpactos.length > 0
+        ? accion.relatedImpactos.map((id, relationIndex) => {
+            const mapped = impactoIdMap.get(id)
+            if (mapped) return mapped
 
-                const foundIndex = event.impactos.findIndex((impactoItem) => impactoItem.id === id)
-                return foundIndex >= 0 ? foundIndex + 1 : relationIndex + 1
-              })
-            : [impactoIdentificador]
-
-        const resultadosDto = event.resultados
-          .filter((resultado) => resultado.relatedAcciones.includes(accion.id))
-          .map((resultado, resultadoIndex) => {
-            const resultadoIdentificador = resultadoIdMap.get(resultado.id) ?? resultadoIndex + 1
-
-            const leccionesDto = event.leccionesAprendidas
-              .filter((leccion) => leccion.relatedResultados.includes(resultado.id))
-              .map((leccion, leccionIndex) => ({
-                leccion: {
-                  titulo: leccion.description,
-                  descripcion: leccion.description,
-                },
-                resultados: [resultadoIdentificador],
-              }))
-
-            return {
-              resultado: {
-                titulo: resultado.description,
-                descripcion: resultado.description,
-                identificador: resultadoIdentificador,
-              },
-              acciones: [accionIdentificador],
-              lecciones: leccionesDto,
-            }
+            const foundIndex = event.impactos.findIndex((impactoItem) => impactoItem.id === id)
+            return foundIndex >= 0 ? foundIndex + 1 : relationIndex + 1
           })
-
-        return {
-          accion: {
-            titulo: accion.description,
-            descripcion: accion.description,
-            identificador: accionIdentificador,
-          },
-          impactos: impactoIds,
-          resultados: resultadosDto,
-        }
-      })
+        : [accionIndex + 1]
 
     return {
-      impacto: {
-        titulo: impacto.description,
-        descripcion: impacto.description,
-        identificador: impactoIdentificador,
+      accion: {
+        titulo: accion.description,
+        descripcion: accion.description,
+        identificador: accionIdentificador,
       },
-      acciones: accionesDto,
+      impactos: impactoIds,
+    }
+  })
+
+  const resultadosDto = event.resultados.map((resultado, resultadoIndex) => {
+    const resultadoIdentificador = resultadoIdMap.get(resultado.id) ?? resultadoIndex + 1
+
+    const accionIds =
+      resultado.relatedAcciones.length > 0
+        ? resultado.relatedAcciones.map((id, relationIndex) => {
+            const mapped = accionIdMap.get(id)
+            if (mapped) return mapped
+
+            const foundIndex = event.accionesImplementadas.findIndex((accion) => accion.id === id)
+            return foundIndex >= 0 ? foundIndex + 1 : relationIndex + 1
+          })
+        : [resultadoIndex + 1]
+
+    return {
+      resultado: {
+        titulo: resultado.description,
+        descripcion: resultado.description,
+        identificador: resultadoIdentificador,
+      },
+      acciones: accionIds,
+    }
+  })
+
+  const leccionesDto = event.leccionesAprendidas.map((leccion, leccionIndex) => {
+    const resultadoIds =
+      leccion.relatedResultados.length > 0
+        ? leccion.relatedResultados.map((id, relationIndex) => {
+            const mapped = resultadoIdMap.get(id)
+            if (mapped) return mapped
+
+            const foundIndex = event.resultados.findIndex((resultado) => resultado.id === id)
+            return foundIndex >= 0 ? foundIndex + 1 : relationIndex + 1
+          })
+        : [leccionIndex + 1]
+
+    return {
+      leccion: {
+        titulo: leccion.description,
+        descripcion: leccion.description,
+      },
+      resultados: resultadoIds,
     }
   })
 
@@ -1054,6 +1065,9 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
       descripcion: event.evento,
     },
     impactos: impactosDto,
+    acciones: accionesDto,
+    resultados: resultadosDto,
+    lecciones: leccionesDto,
   }
 }
 

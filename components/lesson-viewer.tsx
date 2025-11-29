@@ -23,6 +23,13 @@ interface LessonViewerProps {
 interface NormalizedEntity {
   id: string
   descripcion: string
+  lookupIds?: string[]
+}
+
+interface NormalizableEntity {
+  id: string | number
+  descripcion: string
+  lookupIds?: (string | number | undefined)[]
 }
 
 const formatDate = (value?: string): string => {
@@ -41,19 +48,35 @@ const safeText = (value?: string | null): string => {
   return value.trim() === "" ? "Sin información" : value
 }
 
-const normalizeEntities = (entities: NormalizedEntity[]): NormalizedEntity[] =>
-  entities.map((entity) => ({
-    ...entity,
-    id: String(entity.id),
-    descripcion: safeText(entity.descripcion ?? String(entity.id)),
-  }))
+const normalizeEntities = (entities: NormalizableEntity[]): NormalizedEntity[] =>
+  entities.map((entity) => {
+    const lookupIds = new Set<string>()
+    const addId = (value: string | number | undefined) => {
+      if (value !== undefined && value !== null) {
+        lookupIds.add(String(value))
+      }
+    }
+
+    addId(entity.id)
+    entity.lookupIds?.forEach(addId)
+
+    return {
+      ...entity,
+      id: String(entity.id),
+      descripcion: safeText(entity.descripcion ?? String(entity.id)),
+      lookupIds: Array.from(lookupIds),
+    }
+  })
 
 const getRelatedDescriptions = (ids: string[] | undefined, dataset: NormalizedEntity[]): string[] => {
   if (!ids || ids.length === 0) return []
 
   const normalizedIds = ids.map(String)
 
-  return normalizedIds.map((id) => dataset.find((item) => item.id === id)?.descripcion ?? `ID: ${id}`)
+  return normalizedIds.map((id) => {
+    const match = dataset.find((item) => item.id === id || item.lookupIds?.includes(id))
+    return match?.descripcion ?? `ID: ${id}`
+  })
 }
 
 const normalizeAccessLevel = (value: unknown): "Público" | "Privado" | null => {
@@ -195,6 +218,7 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
                   id: impacto.impacto?.identificador ?? impacto.impacto?.id ?? `impacto-${impactoIndex}`,
                   descripcion:
                     impacto.impacto?.descripcion ?? (impacto.impacto as { titulo?: string })?.titulo ?? "Sin descripción",
+                  lookupIds: [impacto.impacto?.id, impacto.impacto?.identificador],
                 })),
               )
 
@@ -203,6 +227,7 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
                   id: accion.accion?.identificador ?? accion.accion?.id ?? `accion-${accionIndex}`,
                   descripcion:
                     accion.accion?.descripcion ?? (accion.accion as { titulo?: string })?.titulo ?? "Sin descripción",
+                  lookupIds: [accion.accion?.id, accion.accion?.identificador],
                 })),
               )
 
@@ -213,6 +238,7 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
                     resultado.resultado?.descripcion ??
                     (resultado.resultado as { titulo?: string })?.titulo ??
                     "Sin descripción",
+                  lookupIds: [resultado.resultado?.id, resultado.resultado?.identificador],
                 })),
               )
 
@@ -224,6 +250,10 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
                     `leccion-${leccionIndex}`,
                   descripcion:
                     leccion.leccion?.descripcion ?? (leccion.leccion as { titulo?: string })?.titulo ?? "Sin descripción",
+                  lookupIds: [
+                    (leccion.leccion as { identificador?: string | number })?.identificador,
+                    leccion.leccion?.id,
+                  ],
                 })),
               )
 

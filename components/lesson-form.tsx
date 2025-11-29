@@ -243,15 +243,6 @@ const extractEstadoFromProyecto = (proyecto: ProyectoSituacionDto["proyecto"] | 
   )
 }
 
-const toNumericId = (value: string | number | undefined, fallback: number): number => {
-  if (typeof value === "number" && Number.isFinite(value)) {
-    return value
-  }
-
-  const numeric = Number(value)
-  return Number.isFinite(numeric) ? numeric : fallback
-}
-
 const mapEventoDtoToState = (eventoDto: ProyectoSituacionEventoDto, eventIndex: number): Event => {
   const flattened = flattenEventoDto(eventoDto, eventIndex)
 
@@ -980,37 +971,40 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
   const resultadoIdMap = new Map<string, number>()
 
   event.impactos.forEach((impacto, index) => {
-    impactoIdMap.set(impacto.id, toNumericId(impacto.id, index + 1))
+    impactoIdMap.set(impacto.id, index + 1)
   })
 
   event.accionesImplementadas.forEach((accion, index) => {
-    accionIdMap.set(accion.id, toNumericId(accion.id, index + 1))
+    accionIdMap.set(accion.id, index + 1)
   })
 
   event.resultados.forEach((resultado, index) => {
-    resultadoIdMap.set(resultado.id, toNumericId(resultado.id, index + 1))
+    resultadoIdMap.set(resultado.id, index + 1)
   })
 
   const impactosDto = event.impactos.map((impacto, impactoIndex) => {
-    const impactoIdentificador = impactoIdMap.get(impacto.id) ?? toNumericId(impacto.id, impactoIndex + 1)
+    const impactoIdentificador = impactoIdMap.get(impacto.id) ?? impactoIndex + 1
 
     const accionesDto = event.accionesImplementadas
       .filter((accion) => accion.relatedImpactos.includes(impacto.id))
       .map((accion, accionIndex) => {
-        const accionIdentificador = accionIdMap.get(accion.id) ?? toNumericId(accion.id, accionIndex + 1)
+        const accionIdentificador = accionIdMap.get(accion.id) ?? accionIndex + 1
 
         const impactoIds =
           accion.relatedImpactos.length > 0
-            ? accion.relatedImpactos.map((id, relationIndex) =>
-                impactoIdMap.get(id) ?? toNumericId(id, relationIndex + 1),
-              )
+            ? accion.relatedImpactos.map((id, relationIndex) => {
+                const mapped = impactoIdMap.get(id)
+                if (mapped) return mapped
+
+                const foundIndex = event.impactos.findIndex((impactoItem) => impactoItem.id === id)
+                return foundIndex >= 0 ? foundIndex + 1 : relationIndex + 1
+              })
             : [impactoIdentificador]
 
         const resultadosDto = event.resultados
           .filter((resultado) => resultado.relatedAcciones.includes(accion.id))
           .map((resultado, resultadoIndex) => {
-            const resultadoIdentificador =
-              resultadoIdMap.get(resultado.id) ?? toNumericId(resultado.id, resultadoIndex + 1)
+            const resultadoIdentificador = resultadoIdMap.get(resultado.id) ?? resultadoIndex + 1
 
             const leccionesDto = event.leccionesAprendidas
               .filter((leccion) => leccion.relatedResultados.includes(resultado.id))
@@ -1054,14 +1048,14 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
     }
   })
 
-    return {
-      evento: {
-        titulo: event.evento,
-        descripcion: event.evento,
-      },
-      impactos: impactosDto,
-    }
+  return {
+    evento: {
+      titulo: event.evento,
+      descripcion: event.evento,
+    },
+    impactos: impactosDto,
   }
+}
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

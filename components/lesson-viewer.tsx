@@ -68,15 +68,33 @@ const normalizeEntities = (entities: NormalizableEntity[]): NormalizedEntity[] =
     }
   })
 
-const getRelatedDescriptions = (ids: string[] | undefined, dataset: NormalizedEntity[]): string[] => {
+const getRelatedDescriptions = (ids: (string | number)[] | undefined, dataset: NormalizedEntity[]): string[] => {
   if (!ids || ids.length === 0) return []
 
-  const normalizedIds = ids.map(String)
+  const lookupMap = new Map<string, string>()
 
-  return normalizedIds.map((id) => {
-    const match = dataset.find((item) => item.id === id || item.lookupIds?.includes(id))
-    return match?.descripcion ?? `ID: ${id}`
+  dataset.forEach((item, index) => {
+    const candidateIds = [
+      item.id,
+      ...(item.lookupIds ?? []),
+      String(index + 1),
+      String(index),
+    ].map((value) => String(value).trim())
+
+    candidateIds.forEach((candidateId) => {
+      if (!lookupMap.has(candidateId)) {
+        lookupMap.set(candidateId, item.descripcion)
+      }
+    })
   })
+
+  return ids
+    .map((rawId) => {
+      const normalizedId = String(rawId ?? "").trim()
+      if (!normalizedId) return null
+      return lookupMap.get(normalizedId) ?? `ID: ${normalizedId}`
+    })
+    .filter((value): value is string => Boolean(value))
 }
 
 const normalizeAccessLevel = (value: unknown): "Público" | "Privado" | null => {

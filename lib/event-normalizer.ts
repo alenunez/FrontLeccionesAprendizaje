@@ -40,7 +40,7 @@ export const flattenEventoDto = (
     const record: ProyectoSituacionImpactoDto & { accionIds?: string[] } = {
       impacto: {
         ...impactoDto.impacto,
-        id: undefined,
+        id: impactoDto.impacto?.id ?? impactoId,
         identificador: impactoDto.impacto?.identificador ?? impactoDto.impacto?.id ?? impactoId,
       },
       accionIds: [],
@@ -68,7 +68,7 @@ export const flattenEventoDto = (
     const record: ProyectoSituacionAccionDto & { impactoIds?: string[]; resultadoIds?: string[] } = {
       accion: {
         ...accionDto.accion,
-        id: undefined,
+        id: accionDto.accion?.id ?? accionId,
         identificador: accionDto.accion?.identificador ?? accionDto.accion?.id ?? accionId,
       },
       impactoIds: [],
@@ -98,7 +98,7 @@ export const flattenEventoDto = (
     const record: ProyectoSituacionResultadoDto & { accionIds?: string[]; leccionIds?: string[] } = {
       resultado: {
         ...resultadoDto.resultado,
-        id: undefined,
+        id: resultadoDto.resultado?.id ?? resultadoId,
         identificador: resultadoDto.resultado?.identificador ?? resultadoDto.resultado?.id ?? resultadoId,
       },
       accionIds: [],
@@ -128,7 +128,7 @@ export const flattenEventoDto = (
     const record: ProyectoSituacionLeccionDto & { resultadoIds?: string[] } = {
       leccion: {
         ...leccionDto.leccion,
-        id: undefined,
+        id: leccionDto.leccion?.id ?? leccionId,
         identificador: (leccionDto.leccion as { identificador?: string | number })?.identificador ?? leccionId,
       },
       resultadoIds: [],

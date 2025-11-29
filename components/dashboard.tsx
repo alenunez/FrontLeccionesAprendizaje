@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { BookOpen, Plus, Search, Filter, Eye, BarChart3, Presentation, LogOut } from "lucide-react"
+import { BookOpen, Plus, Search, Filter, Eye, BarChart3, Presentation, LogOut, Edit3 } from "lucide-react"
 import { LessonForm } from "./lesson-form"
 import { LessonViewer } from "./lesson-viewer"
 import {
@@ -26,17 +26,13 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { ProyectoSituacionDto } from "@/types/lessons"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useSimulatedUser } from "@/lib/user-context"
+import { canEditLesson } from "@/lib/permissions"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:7043/api"
 const BRAND_COLOR = "#067138"
 const BRAND_ACCENT = "#0fa958"
 const SOLLA_LOGO_URL = "https://www.solla.com/wp-content/uploads/2022/01/logo-solla-1.png"
-const LOGGED_USER = {
-  name: "Usuario Invitado",
-  role: "Gestor de conocimiento",
-  email: "usuario@solla.com",
-  avatarUrl: "",
-}
 
 interface LessonSummary {
   id: string
@@ -97,8 +93,10 @@ const mapLessons = (payload: ProyectoSituacionDto[]): LessonSummary[] =>
   })
 
 export function Dashboard() {
+  const loggedUser = useSimulatedUser()
   const [activeTab, setActiveTab] = useState("lessons")
   const [showForm, setShowForm] = useState(false)
+  const [lessonToEdit, setLessonToEdit] = useState<ProyectoSituacionDto | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [workflowFilter, setWorkflowFilter] = useState<string | null>(null)
   const [lessons, setLessons] = useState<LessonSummary[]>([])
@@ -184,7 +182,13 @@ export function Dashboard() {
 
   const handleFormSaved = () => {
     setShowForm(false)
+    setLessonToEdit(null)
     setReloadKey((prev) => prev + 1)
+  }
+
+  const handleOpenForm = (lesson?: ProyectoSituacionDto) => {
+    setLessonToEdit(lesson ?? null)
+    setShowForm(true)
   }
 
   const handleLogout = () => {
@@ -260,13 +264,13 @@ export function Dashboard() {
           <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-end lg:w-auto">
             <div className="flex items-center gap-3 rounded-3xl border border-emerald-100 bg-white/80 px-4 py-3 shadow-sm sm:w-auto">
               <Avatar className="border-2 border-[#e0f3e8]">
-                <AvatarImage src={LOGGED_USER.avatarUrl} alt={LOGGED_USER.name} />
-                <AvatarFallback>{LOGGED_USER.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+                <AvatarImage src={loggedUser.avatarUrl} alt={loggedUser.name} />
+                <AvatarFallback>{loggedUser.name.slice(0, 2).toUpperCase()}</AvatarFallback>
               </Avatar>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-slate-900">{LOGGED_USER.name}</p>
-                <p className="truncate text-xs text-slate-500">{LOGGED_USER.role}</p>
-                <p className="truncate text-xs text-[#067138]/80">{LOGGED_USER.email}</p>
+                <p className="truncate text-sm font-semibold text-slate-900">{loggedUser.name}</p>
+                <p className="truncate text-xs text-slate-500">{loggedUser.role}</p>
+                <p className="truncate text-xs text-[#067138]/80">{loggedUser.email}</p>
               </div>
               <Button
                 variant="outline"
@@ -279,7 +283,7 @@ export function Dashboard() {
               </Button>
             </div>
             <Button
-              onClick={() => setShowForm(true)}
+              onClick={() => handleOpenForm()}
               className="gap-2 rounded-full bg-[#067138] px-6 py-5 text-base font-semibold text-white shadow-xl shadow-emerald-200/60 transition hover:bg-[#05592d]"
             >
               <Plus className="h-4 w-4" />
@@ -456,11 +460,15 @@ export function Dashboard() {
                     )}
 
                     {!isLoadingLessons && !fetchError &&
-                      filteredLessons.map((lesson) => (
-                        <div
-                          key={lesson.id}
-                          className="flex flex-col gap-4 rounded-2xl border border-emerald-100 bg-white/90 p-5 shadow-sm transition-all duration-200 hover:border-[#067138]/40 hover:shadow-lg lg:flex-row lg:items-start lg:justify-between"
-                        >
+                      filteredLessons.map((lesson) => {
+                        const fullLesson = rawLessons.find((item) => item.proyecto?.id === lesson.id)
+                        const isEditable = canEditLesson(fullLesson, loggedUser)
+
+                        return (
+                          <div
+                            key={lesson.id}
+                            className="flex flex-col gap-4 rounded-2xl border border-emerald-100 bg-white/90 p-5 shadow-sm transition-all duration-200 hover:border-[#067138]/40 hover:shadow-lg lg:flex-row lg:items-start lg:justify-between"
+                          >
                           <div className="flex-1 space-y-3">
                             {/* Proyecto o Situación - Main title */}
                             <div>
@@ -527,6 +535,20 @@ export function Dashboard() {
                             <Button
                               variant="ghost"
                               size="sm"
+                              className={`text-[#065f46] hover:bg-[#e0f3e8] ${!isEditable ? "cursor-not-allowed opacity-60" : ""}`}
+                              onClick={() => isEditable && fullLesson && handleOpenForm(fullLesson)}
+                              title={
+                                isEditable
+                                  ? "Editar lección"
+                                  : "Solo el autor en borrador, el responsable en revisión o un administrador pueden editar"
+                              }
+                              disabled={!isEditable || !fullLesson}
+                            >
+                              <Edit3 className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
                               className="text-[#b45309] hover:bg-orange-50"
                               onClick={() => handleGeneratePPTX(lesson)}
                               title="Generar presentación PPTX"
@@ -544,7 +566,8 @@ export function Dashboard() {
                             </Button>
                           </div>
                         </div>
-                      ))}
+                        )
+                      })}
                   </div>
                 </CardContent>
               </Card>
@@ -692,7 +715,17 @@ export function Dashboard() {
       </main>
 
       {/* Lesson Form Modal */}
-      {showForm && <LessonForm onClose={() => setShowForm(false)} onSaved={handleFormSaved} />}
+      {showForm && (
+        <LessonForm
+          onClose={() => {
+            setLessonToEdit(null)
+            setShowForm(false)
+          }}
+          onSaved={handleFormSaved}
+          initialData={lessonToEdit ?? undefined}
+          loggedUser={loggedUser}
+        />
+      )}
       {selectedLesson && <LessonViewer lesson={selectedLesson} onClose={handleCloseViewer} />}
     </div>
   )

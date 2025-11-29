@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,12 +14,17 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { toast } from "@/hooks/use-toast"
+import type { ProyectoSituacionDto, ProyectoSituacionEventoDto } from "@/types/lessons"
+import type { SimulatedUser } from "@/lib/user-context"
+import { canEditLesson } from "@/lib/permissions"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:7043/api"
 
 interface LessonFormProps {
   onClose: () => void
   onSaved: () => void
+  initialData?: ProyectoSituacionDto
+  loggedUser: SimulatedUser
 }
 
 interface Attachment {
@@ -63,6 +68,20 @@ interface DirectoryUser {
   name: string
   email?: string
   title?: string
+}
+
+interface FormDataState {
+  autorNombre: string
+  autorCorreo: string
+  estado: string
+  fecha: string
+  proceso: string
+  compania: string
+  sede: string
+  responsable: string
+  responsableCorreo: string
+  proyectoOSituacion: string
+  aplicacionPractica: string
 }
 
 const isDefined = <T,>(value: T | undefined | null): value is T => value !== undefined && value !== null
@@ -172,16 +191,142 @@ const normalizeUserSuggestions = (payload: unknown): DirectoryUser[] => {
   })
 }
 
-export function LessonForm({ onClose, onSaved }: LessonFormProps) {
-  const [formData, setFormData] = useState({
-    autor: "",
+const getEstadoDescripcionFromEntity = (estado: RemoteEntity): string => {
+  const descripcion = estado.descripcion ?? estado.description ?? estado.nombre ?? estado.Nombre ?? estado.name ?? estado.Name
+  return typeof descripcion === "string" ? descripcion : ""
+}
+
+const mergeUsers = (current: DirectoryUser[], incoming: DirectoryUser[]): DirectoryUser[] => {
+  const registry = new Map(current.map((user) => [user.id, user]))
+  incoming.forEach((user) => registry.set(user.id, user))
+  return Array.from(registry.values())
+}
+
+const normalizeStatus = (value?: string | null): string => {
+  if (!value) return ""
+  return value
+    .toString()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .trim()
+}
+
+const extractEstadoFromProyecto = (proyecto: ProyectoSituacionDto["proyecto"] | undefined): string => {
+  const estadoData = proyecto?.estado as { descripcion?: string; name?: string; value?: string; data?: { descripcion?: string } }
+  return (
+    estadoData?.data?.descripcion ??
+    estadoData?.descripcion ??
+    estadoData?.name ??
+    estadoData?.value ??
+    "Borrador"
+  )
+}
+
+const mapEventoDtoToState = (eventoDto: ProyectoSituacionEventoDto, eventIndex: number): Event => {
+  const impactosState = (eventoDto.impactos ?? []).map((impactoDto, impactoIndex) => {
+    const impactoId = String(
+      impactoDto.impacto?.id ?? impactoDto.impacto?.identificador ?? `impacto-${eventIndex}-${impactoIndex}`,
+    )
+
+    return {
+      id: impactoId,
+      description: impactoDto.impacto?.descripcion ?? impactoDto.impacto?.titulo ?? "",
+    }
+  })
+
+  const accionesMap = new Map<string, { id: string; description: string; relatedImpactos: Set<string> }>()
+  const resultadosMap = new Map<string, { id: string; description: string; relatedAcciones: Set<string> }>()
+  const leccionesMap = new Map<string, { id: string; description: string; relatedResultados: Set<string> }>()
+
+  ;(eventoDto.impactos ?? []).forEach((impactoDto, impactoIndex) => {
+    const impactoId = impactosState[impactoIndex]?.id ?? `impacto-${eventIndex}-${impactoIndex}`
+
+    ;(impactoDto.acciones ?? []).forEach((accionDto, accionIndex) => {
+      const accionId = String(
+        accionDto.accion?.id ?? accionDto.accion?.identificador ?? `accion-${eventIndex}-${impactoIndex}-${accionIndex}`,
+      )
+      const accionDescription = accionDto.accion?.descripcion ?? accionDto.accion?.titulo ?? ""
+      const accionState =
+        accionesMap.get(accionId) ?? { id: accionId, description: accionDescription, relatedImpactos: new Set<string>() }
+
+      if (impactoId) {
+        accionState.relatedImpactos.add(impactoId)
+      }
+      if (!accionState.description) {
+        accionState.description = accionDescription
+      }
+
+      accionesMap.set(accionId, accionState)
+
+      ;(accionDto.resultados ?? []).forEach((resultadoDto, resultadoIndex) => {
+        const resultadoId = String(
+          resultadoDto.resultado?.id ??
+            resultadoDto.resultado?.identificador ??
+            `resultado-${eventIndex}-${accionIndex}-${resultadoIndex}`,
+        )
+        const resultadoDescription = resultadoDto.resultado?.descripcion ?? resultadoDto.resultado?.titulo ?? ""
+        const resultadoState =
+          resultadosMap.get(resultadoId) ?? { id: resultadoId, description: resultadoDescription, relatedAcciones: new Set<string>() }
+
+        resultadoState.relatedAcciones.add(accionId)
+        if (!resultadoState.description) {
+          resultadoState.description = resultadoDescription
+        }
+
+        resultadosMap.set(resultadoId, resultadoState)
+
+        ;(resultadoDto.lecciones ?? []).forEach((leccionDto, leccionIndex) => {
+          const leccionId = String(leccionDto.leccion?.id ?? `leccion-${eventIndex}-${resultadoIndex}-${leccionIndex}`)
+          const leccionDescription = leccionDto.leccion?.descripcion ?? leccionDto.leccion?.titulo ?? ""
+          const leccionState =
+            leccionesMap.get(leccionId) ?? {
+              id: leccionId,
+              description: leccionDescription,
+              relatedResultados: new Set<string>(),
+            }
+
+          leccionState.relatedResultados.add(resultadoId)
+          if (!leccionState.description) {
+            leccionState.description = leccionDescription
+          }
+
+          leccionesMap.set(leccionId, leccionState)
+        })
+      })
+    })
+  })
+
+  return {
+    id: String(eventoDto.evento?.id ?? `evento-${eventIndex}`),
+    evento: eventoDto.evento?.descripcion ?? eventoDto.evento?.titulo ?? "",
+    impactos: impactosState.length > 0 ? impactosState : [{ id: `${eventIndex}-impacto-1`, description: "" }],
+    accionesImplementadas: Array.from(accionesMap.values()).map((accion) => ({
+      ...accion,
+      relatedImpactos: Array.from(accion.relatedImpactos),
+    })),
+    resultados: Array.from(resultadosMap.values()).map((resultado) => ({
+      ...resultado,
+      relatedAcciones: Array.from(resultado.relatedAcciones),
+    })),
+    leccionesAprendidas: Array.from(leccionesMap.values()).map((leccion) => ({
+      ...leccion,
+      relatedResultados: Array.from(leccion.relatedResultados),
+    })),
+  }
+}
+
+export function LessonForm({ onClose, onSaved, initialData, loggedUser }: LessonFormProps) {
+  const [formData, setFormData] = useState<FormDataState>({
+    autorNombre: loggedUser.name,
+    autorCorreo: loggedUser.email,
     estado: "Borrador",
     fecha: "",
     proceso: "",
     compania: "",
     sede: "",
-    responsable: "",
-    responsableCorreo: "",
+    responsable: loggedUser.name,
+    responsableCorreo: loggedUser.email,
     proyectoOSituacion: "",
     aplicacionPractica: "",
   })
@@ -207,6 +352,9 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
   const [isLoadingLectores, setIsLoadingLectores] = useState(false)
   const [showResponsableDropdown, setShowResponsableDropdown] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const isEditing = useMemo(() => Boolean(initialData?.proyecto?.id), [initialData])
+  const isEditable = useMemo(() => canEditLesson(initialData ?? null, loggedUser), [initialData, loggedUser])
+  const [editBlockedReason, setEditBlockedReason] = useState<string | null>(null)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -341,6 +489,69 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [showUserDropdown])
 
+  useEffect(() => {
+    if (initialData && !isEditable) {
+      setEditBlockedReason(
+        "Solo el autor con estado Borrador, el responsable cuando está en revisión o un administrador pueden editar este registro.",
+      )
+    } else {
+      setEditBlockedReason(null)
+    }
+  }, [initialData, isEditable])
+
+  useEffect(() => {
+    if (!initialData) {
+      setFormData({
+        autorNombre: loggedUser.name,
+        autorCorreo: loggedUser.email,
+        estado: "Borrador",
+        fecha: "",
+        proceso: "",
+        compania: "",
+        sede: "",
+        responsable: loggedUser.name,
+        responsableCorreo: loggedUser.email,
+        proyectoOSituacion: "",
+        aplicacionPractica: "",
+      })
+      setNivelAcceso("Público")
+      setSelectedUsers([])
+      setEventos([])
+      setResponsableQuery(loggedUser.name)
+      return
+    }
+
+    const proyecto = initialData.proyecto ?? {}
+    const lectores = (initialData.lectores ?? []).map((lector, index) => ({
+      id: lector.correoLector ?? `lector-${index}`,
+      name: lector.nombreLector ?? lector.titulo ?? lector.correoLector ?? `Lector ${index + 1}`,
+      email: lector.correoLector ?? undefined,
+      title: lector.titulo ?? undefined,
+    }))
+
+    setFormData({
+      autorNombre: proyecto.nombreAutor ?? loggedUser.name,
+      autorCorreo: proyecto.correoAutor ?? loggedUser.email,
+      estado: extractEstadoFromProyecto(proyecto),
+      fecha: proyecto.fecha ? proyecto.fecha.split("T")[0] : "",
+      proceso: String((proyecto.proceso as { id?: string })?.id ?? proyecto.proceso?.data?.id ?? ""),
+      compania: String(
+        (proyecto.sede?.data as { compania?: { data?: { id?: string } } })?.compania?.data?.id ?? "",
+      ),
+      sede: String(proyecto.sede?.data?.id ?? (proyecto.sede as { id?: string })?.id ?? ""),
+      responsable: proyecto.nombreResponsable ?? "",
+      responsableCorreo: proyecto.correoResponsable ?? "",
+      proyectoOSituacion: proyecto.descripcion ?? "",
+      aplicacionPractica: proyecto.aplicacionPractica ?? "",
+    })
+
+    setResponsableQuery(proyecto.nombreResponsable ?? "")
+    setNivelAcceso(proyecto.isPrivate ? "Privado" : "Público")
+    setAvailableUsers((prev) => mergeUsers(prev, lectores))
+    setSelectedUsers(lectores.map((lector) => lector.id))
+    setEventos((initialData.eventos ?? []).map(mapEventoDtoToState))
+  }, [initialData, loggedUser])
+
   const [eventos, setEventos] = useState<Event[]>([])
   const [showEventDialog, setShowEventDialog] = useState(false)
   const [editingEventId, setEditingEventId] = useState<string | null>(null)
@@ -446,6 +657,7 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
   }
 
   const openAddEventDialog = () => {
+    if (!isEditable) return
     setEditingEventId(null)
     setCurrentEvent({ evento: "" })
     setCurrentImpactos([{ id: "1", description: "" }])
@@ -456,6 +668,7 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
   }
 
   const openEditEventDialog = (event: Event) => {
+    if (!isEditable) return
     setEditingEventId(event.id)
     setCurrentEvent({ evento: event.evento })
     setCurrentImpactos(event.impactos)
@@ -786,6 +999,16 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!isEditable) {
+      toast({
+        title: "Edición no permitida",
+        description:
+          editBlockedReason ??
+          "Solo el autor en borrador, el responsable en revisión o un administrador pueden modificar esta información.",
+        variant: "destructive",
+      })
+      return
+    }
     if (!formData.compania || !formData.sede || !formData.proceso || !formData.fecha) {
       toast({
         title: "Campos obligatorios",
@@ -809,17 +1032,19 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
     const selectedProceso = procesos.find((proceso) => proceso.id === formData.proceso)
     const selectedLectores = availableUsers.filter((user) => selectedUsers.includes(user.id))
 
-    const estadoBorrador = estados.find((estado) => {
-      const descripcion =
-        estado.descripcion ?? estado.description ?? estado.nombre ?? estado.Nombre ?? estado.name ?? estado.Name
-      return typeof descripcion === "string" && descripcion.toLowerCase() === "borrador"
-    })
-
-    const estadoId = Number(
-      estadoBorrador?.id ?? estadoBorrador?.Id ?? estadoBorrador?.codigo ?? estadoBorrador?.Codigo ?? null,
+    const desiredEstadoDescripcion = isEditing ? formData.estado : "Borrador"
+    const estadoCoincidente = estados.find(
+      (estado) => normalizeStatus(getEstadoDescripcionFromEntity(estado)) === normalizeStatus(desiredEstadoDescripcion),
     )
 
-    if (!estadoBorrador || !Number.isFinite(estadoId)) {
+    const estadoIdCandidate =
+      estadoCoincidente?.id ?? estadoCoincidente?.Id ?? estadoCoincidente?.codigo ?? estadoCoincidente?.Codigo
+    const estadoId = Number(estadoIdCandidate)
+    const estadoDescripcion = estadoCoincidente
+      ? getEstadoDescripcionFromEntity(estadoCoincidente)
+      : desiredEstadoDescripcion || "Borrador"
+
+    if (!isEditing && (!estadoCoincidente || !Number.isFinite(estadoId))) {
       toast({
         title: "No se pudo guardar",
         description: "No se encontró el estado 'Borrador'. Inténtalo nuevamente más tarde.",
@@ -828,27 +1053,19 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
       return
     }
 
-    const estadoDescripcion =
-      estadoBorrador.descripcion ??
-      estadoBorrador.description ??
-      estadoBorrador.nombre ??
-      estadoBorrador.Nombre ??
-      estadoBorrador.name ??
-      estadoBorrador.Name ??
-      "Borrador"
-
     const payload = {
       proyecto: {
+        id: initialData?.proyecto?.id,
         titulo: formData.proyectoOSituacion,
         fecha: fechaIso,
         descripcion: formData.proyectoOSituacion,
         aplicacionPractica: formData.aplicacionPractica,
-        correoAutor: formData.autor,
-        nombreAutor: formData.autor,
+        correoAutor: formData.autorCorreo || loggedUser.email,
+        nombreAutor: formData.autorNombre || loggedUser.name,
         correoResponsable: formData.responsableCorreo || formData.responsable,
-        nombreResponsable: formData.responsable,
+        nombreResponsable: formData.responsable || formData.responsableCorreo || formData.autorNombre,
         estado: {
-          id: estadoId,
+          id: Number.isFinite(estadoId) ? estadoId : undefined,
           value: estadoDescripcion,
           data: estadoDescripcion,
         },
@@ -877,11 +1094,22 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
 
     setIsSubmitting(true)
     try {
-      const response = await fetch(`${API_BASE_URL}/ProyectoSituacion/complete`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+      const endpointUrl =
+        isEditing && initialData?.proyecto?.id
+          ? `${API_BASE_URL}/ProyectoSituacion/complete/${initialData.proyecto.id}`
+          : `${API_BASE_URL}/ProyectoSituacion/complete`
+
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+      }
+
+      if (isEditing) {
+        headers.correoUsuario = loggedUser.email
+      }
+
+      const response = await fetch(endpointUrl, {
+        method: isEditing ? "PUT" : "POST",
+        headers,
         body: JSON.stringify(payload),
       })
 
@@ -890,7 +1118,7 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
       }
 
       toast({
-        title: "Proyecto guardado",
+        title: isEditing ? "Proyecto actualizado" : "Proyecto guardado",
         description: "El proyecto o situación se guardó correctamente.",
         className: "bg-emerald-50 border-emerald-200 text-emerald-900",
       })
@@ -908,6 +1136,7 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
   }
 
   const selectedUserObjects = availableUsers.filter((user) => selectedUsers.includes(user.id))
+  const autorDisplay = [formData.autorNombre, formData.autorCorreo].filter(Boolean).join(" - ")
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
@@ -937,8 +1166,14 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
           </div>
         </div>
 
+        {!isEditable && editBlockedReason && (
+          <div className="mx-6 mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            {editBlockedReason}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit}>
-          <fieldset disabled={isSubmitting} className="border-0 p-0 m-0">
+          <fieldset disabled={isSubmitting || !isEditable} className="border-0 p-0 m-0">
             <CardContent className="space-y-8 p-8">
               {/* ENCABEZADO - Información General hasta Anexos */}
               <div className="space-y-6">
@@ -953,7 +1188,7 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
                   </Label>
                   <Input
                     id="autor"
-                    value={formData.autor}
+                    value={autorDisplay}
                     readOnly
                     placeholder="Se asignará automáticamente"
                     className="border-slate-200 bg-slate-50 text-slate-600 cursor-not-allowed"
@@ -1401,9 +1636,10 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
                     ))}
                   </div>
                 )}
-              </div>
             </div>
-          </CardContent>
+          </div>
+        </CardContent>
+          </fieldset>
 
           <div className="flex flex-col gap-3 border-t border-emerald-100 bg-[#f4fff9] p-6 text-right sm:flex-row sm:justify-end">
             <Button
@@ -1416,7 +1652,7 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
             </Button>
             <Button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || !isEditable}
               className="gap-2 rounded-full bg-[#067138] px-6 py-5 text-base font-semibold text-white shadow-lg shadow-emerald-200/60 hover:bg-[#05592d] disabled:opacity-70"
             >
               {isSubmitting ? (
@@ -1427,16 +1663,15 @@ export function LessonForm({ onClose, onSaved }: LessonFormProps) {
               ) : (
                 <>
                   <Save className="h-4 w-4" />
-                  Guardar
+                  {isEditing ? "Actualizar" : "Guardar"}
                 </>
               )}
             </Button>
           </div>
-          </fieldset>
         </form>
       </Card>
 
-      <Dialog open={showEventDialog} onOpenChange={(open) => !isSubmitting && setShowEventDialog(open)}>
+      <Dialog open={showEventDialog && isEditable} onOpenChange={(open) => !isSubmitting && isEditable && setShowEventDialog(open)}>
         <DialogContent
           className={`w-screen max-w-none p-0 m-0 rounded-none h-[90vh] overflow-y-auto min-w-full ${isSubmitting ? "pointer-events-none opacity-70" : ""}`}
         >

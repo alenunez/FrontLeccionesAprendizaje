@@ -52,6 +52,12 @@ export const flattenEventoDto = (
     }
 
     impactos.set(impactoId, normalized)
+
+    const rawId = asString(impactoDto.impacto?.id)
+    if (rawId && rawId !== impactoId) {
+      impactos.set(rawId, normalized)
+    }
+
     return normalized
   }
 
@@ -76,6 +82,12 @@ export const flattenEventoDto = (
     }
 
     acciones.set(accionId, normalized)
+
+    const rawId = asString(accionDto.accion?.id)
+    if (rawId && rawId !== accionId) {
+      acciones.set(rawId, normalized)
+    }
+
     return normalized
   }
 
@@ -100,6 +112,12 @@ export const flattenEventoDto = (
     }
 
     resultados.set(resultadoId, normalized)
+
+    const rawId = asString(resultadoDto.resultado?.id)
+    if (rawId && rawId !== resultadoId) {
+      resultados.set(rawId, normalized)
+    }
+
     return normalized
   }
 
@@ -122,6 +140,12 @@ export const flattenEventoDto = (
     }
 
     lecciones.set(leccionId, normalized)
+
+    const rawId = asString(leccionDto.leccion?.id)
+    if (rawId && rawId !== leccionId) {
+      lecciones.set(rawId, normalized)
+    }
+
     return normalized
   }
 

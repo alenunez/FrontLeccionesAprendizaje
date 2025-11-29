@@ -63,7 +63,7 @@ const normalizeEntities = (entities: NormalizableEntity[]): NormalizedEntity[] =
     return {
       ...entity,
       id: String(entity.id),
-      descripcion: safeText(entity.descripcion ?? String(entity.id)),
+      descripcion: safeText(entity.descripcion),
       lookupIds: Array.from(lookupIds),
     }
   })
@@ -92,7 +92,7 @@ const getRelatedDescriptions = (ids: (string | number)[] | undefined, dataset: N
     .map((rawId) => {
       const normalizedId = String(rawId ?? "").trim()
       if (!normalizedId) return null
-      return lookupMap.get(normalizedId) ?? `ID: ${normalizedId}`
+      return lookupMap.get(normalizedId) ?? null
     })
     .filter((value): value is string => Boolean(value))
 }

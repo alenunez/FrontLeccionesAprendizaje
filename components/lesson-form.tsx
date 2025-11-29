@@ -1262,12 +1262,12 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
           ? `${API_BASE_URL}/ProyectoSituacion/complete/${initialData.proyecto.id}`
           : `${API_BASE_URL}/ProyectoSituacion/complete`
 
-      const headers: HeadersInit = {
+      const headers: Record<string, string> = {
         "Content-Type": "application/json",
       }
 
-      if (isEditing) {
-        headers.correoUsuario = loggedUser.email
+      if (loggedUser?.email) {
+        headers.correousuario = loggedUser.email
       }
 
       const response = await fetch(endpointUrl, {

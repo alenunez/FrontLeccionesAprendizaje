@@ -26,6 +26,7 @@ export interface LectorDto {
 export interface ProyectoSituacionEventoDto {
   evento?: {
     id?: string
+    titulo?: string | null
     descripcion?: string | null
   }
   impactos?: ProyectoSituacionImpactoDto[]
@@ -35,23 +36,29 @@ export interface ProyectoSituacionEventoDto {
 }
 
 export interface ProyectoSituacionImpactoDto {
-  impacto?: { id?: string; descripcion?: string | null; identificador?: string | null }
+  impacto?: { id?: string; titulo?: string | null; descripcion?: string | null; identificador?: string | number | null }
+  acciones?: ProyectoSituacionAccionDto[]
   accionIds?: string[]
 }
 
 export interface ProyectoSituacionAccionDto {
-  accion?: { id?: string; descripcion?: string | null; identificador?: string | null }
+  accion?: { id?: string; titulo?: string | null; descripcion?: string | null; identificador?: string | number | null }
+  impactos?: (string | number)[]
   impactoIds?: string[]
+  resultados?: ProyectoSituacionResultadoDto[]
   resultadoIds?: string[]
 }
 
 export interface ProyectoSituacionResultadoDto {
-  resultado?: { id?: string; descripcion?: string | null; identificador?: string | null }
+  resultado?: { id?: string; titulo?: string | null; descripcion?: string | null; identificador?: string | number | null }
+  acciones?: (string | number)[]
   accionIds?: string[]
+  lecciones?: ProyectoSituacionLeccionDto[]
   leccionIds?: string[]
 }
 
 export interface ProyectoSituacionLeccionDto {
-  leccion?: { id?: string; descripcion?: string | null }
+  leccion?: { id?: string; titulo?: string | null; descripcion?: string | null; identificador?: string | number | null }
+  resultados?: (string | number)[]
   resultadoIds?: string[]
 }

@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import type { ProyectoSituacionDto } from "@/types/lessons"
+import { flattenEventoDto } from "@/lib/event-normalizer"
 import {
   CalendarDays,
   Lock,
@@ -182,31 +183,42 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
             )}
 
             {eventos.map((eventoDto, index) => {
+              const flattened = flattenEventoDto(eventoDto, index)
+
               const impactos = normalizeEntities(
-                (eventoDto.impactos ?? []).map((impacto, impactoIndex) => ({
-                  id: impacto.impacto?.id ?? `impacto-${impactoIndex}`,
-                  descripcion: impacto.impacto?.descripcion ?? "Sin descripción",
+                (flattened.impactos ?? []).map((impacto, impactoIndex) => ({
+                  id: impacto.impacto?.identificador ?? impacto.impacto?.id ?? `impacto-${impactoIndex}`,
+                  descripcion:
+                    impacto.impacto?.descripcion ?? (impacto.impacto as { titulo?: string })?.titulo ?? "Sin descripción",
                 })),
               )
 
               const acciones = normalizeEntities(
-                (eventoDto.acciones ?? []).map((accion, accionIndex) => ({
-                  id: accion.accion?.id ?? `accion-${accionIndex}`,
-                  descripcion: accion.accion?.descripcion ?? "Sin descripción",
+                (flattened.acciones ?? []).map((accion, accionIndex) => ({
+                  id: accion.accion?.identificador ?? accion.accion?.id ?? `accion-${accionIndex}`,
+                  descripcion:
+                    accion.accion?.descripcion ?? (accion.accion as { titulo?: string })?.titulo ?? "Sin descripción",
                 })),
               )
 
               const resultados = normalizeEntities(
-                (eventoDto.resultados ?? []).map((resultado, resultadoIndex) => ({
-                  id: resultado.resultado?.id ?? `resultado-${resultadoIndex}`,
-                  descripcion: resultado.resultado?.descripcion ?? "Sin descripción",
+                (flattened.resultados ?? []).map((resultado, resultadoIndex) => ({
+                  id: resultado.resultado?.identificador ?? resultado.resultado?.id ?? `resultado-${resultadoIndex}`,
+                  descripcion:
+                    resultado.resultado?.descripcion ??
+                    (resultado.resultado as { titulo?: string })?.titulo ??
+                    "Sin descripción",
                 })),
               )
 
               const lecciones = normalizeEntities(
-                (eventoDto.lecciones ?? []).map((leccion, leccionIndex) => ({
-                  id: leccion.leccion?.id ?? `leccion-${leccionIndex}`,
-                  descripcion: leccion.leccion?.descripcion ?? "Sin descripción",
+                (flattened.lecciones ?? []).map((leccion, leccionIndex) => ({
+                  id:
+                    (leccion.leccion as { identificador?: string })?.identificador ??
+                    leccion.leccion?.id ??
+                    `leccion-${leccionIndex}`,
+                  descripcion:
+                    leccion.leccion?.descripcion ?? (leccion.leccion as { titulo?: string })?.titulo ?? "Sin descripción",
                 })),
               )
 
@@ -215,7 +227,9 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Evento #{index + 1}</p>
-                      <p className="text-lg font-semibold text-slate-900">{safeText(eventoDto.evento?.descripcion)}</p>
+                      <p className="text-lg font-semibold text-slate-900">
+                        {safeText(eventoDto.evento?.descripcion ?? eventoDto.evento?.titulo)}
+                      </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <Badge variant="outline" className="rounded-full border-emerald-200 text-[#067138]">
@@ -237,9 +251,11 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
                     <EventColumn
                       title="Impactos"
                       subtitle="Cómo nos afectó"
-                      items={eventoDto.impactos?.map((impacto, impactoIndex) => ({
-                        id: impacto.impacto?.id ?? `impacto-${impactoIndex}`,
-                        descripcion: safeText(impacto.impacto?.descripcion),
+                      items={flattened.impactos?.map((impacto, impactoIndex) => ({
+                        id: impacto.impacto?.identificador ?? impacto.impacto?.id ?? `impacto-${impactoIndex}`,
+                        descripcion: safeText(
+                          impacto.impacto?.descripcion ?? (impacto.impacto as { titulo?: string })?.titulo,
+                        ),
                         relations: getRelatedDescriptions(impacto.accionIds, acciones),
                         relationLabel: "Acciones relacionadas",
                       })) ?? []}
@@ -247,9 +263,11 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
                     <EventColumn
                       title="Acciones implementadas"
                       subtitle="Qué se ejecutó"
-                      items={eventoDto.acciones?.map((accion, accionIndex) => ({
-                        id: accion.accion?.id ?? `accion-${accionIndex}`,
-                        descripcion: safeText(accion.accion?.descripcion),
+                      items={flattened.acciones?.map((accion, accionIndex) => ({
+                        id: accion.accion?.identificador ?? accion.accion?.id ?? `accion-${accionIndex}`,
+                        descripcion: safeText(
+                          accion.accion?.descripcion ?? (accion.accion as { titulo?: string })?.titulo,
+                        ),
                         relations: [
                           ...getRelatedDescriptions(accion.impactoIds, impactos).map((value) => `Impacto: ${value}`),
                           ...getRelatedDescriptions(accion.resultadoIds, resultados).map((value) => `Resultado: ${value}`),
@@ -260,9 +278,11 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
                     <EventColumn
                       title="Resultados"
                       subtitle="Efecto de las acciones"
-                      items={eventoDto.resultados?.map((resultado, resultadoIndex) => ({
-                        id: resultado.resultado?.id ?? `resultado-${resultadoIndex}`,
-                        descripcion: safeText(resultado.resultado?.descripcion),
+                      items={flattened.resultados?.map((resultado, resultadoIndex) => ({
+                        id: resultado.resultado?.identificador ?? resultado.resultado?.id ?? `resultado-${resultadoIndex}`,
+                        descripcion: safeText(
+                          resultado.resultado?.descripcion ?? (resultado.resultado as { titulo?: string })?.titulo,
+                        ),
                         relations: [
                           ...getRelatedDescriptions(resultado.accionIds, acciones).map((value) => `Acción: ${value}`),
                           ...getRelatedDescriptions(resultado.leccionIds, lecciones).map((value) => `Lección: ${value}`),
@@ -273,9 +293,14 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
                     <EventColumn
                       title="Lecciones aprendidas"
                       subtitle="Qué se aprendió"
-                      items={eventoDto.lecciones?.map((leccion, leccionIndex) => ({
-                        id: leccion.leccion?.id ?? `leccion-${leccionIndex}`,
-                        descripcion: safeText(leccion.leccion?.descripcion),
+                      items={flattened.lecciones?.map((leccion, leccionIndex) => ({
+                        id:
+                          (leccion.leccion as { identificador?: string })?.identificador ??
+                          leccion.leccion?.id ??
+                          `leccion-${leccionIndex}`,
+                        descripcion: safeText(
+                          leccion.leccion?.descripcion ?? (leccion.leccion as { titulo?: string })?.titulo,
+                        ),
                         relations: getRelatedDescriptions(leccion.resultadoIds, resultados).map((value) => `Resultado: ${value}`),
                         relationLabel: "Resultados relacionados",
                       })) ?? []}

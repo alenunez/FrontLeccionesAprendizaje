@@ -9,14 +9,14 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { X, Save, Plus, Trash2, Upload, FileText, Edit, Loader2, Check } from "lucide-react"
+import { X, Save, Plus, Trash2, Upload, FileText, Edit, Loader2, Check, Send, Globe2, Undo2, RefreshCcw } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { toast } from "@/hooks/use-toast"
 import type { ProyectoSituacionDto, ProyectoSituacionEventoDto } from "@/types/lessons"
 import type { SimulatedUser } from "@/lib/user-context"
-import { canEditLesson } from "@/lib/permissions"
+import { canEditLesson, getWorkflowActions, type WorkflowAction } from "@/lib/permissions"
 import { flattenEventoDto } from "@/lib/event-normalizer"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:7043/api"
@@ -424,6 +424,7 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
   const [isLoadingLectores, setIsLoadingLectores] = useState(false)
   const [showResponsableDropdown, setShowResponsableDropdown] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isChangingStatus, setIsChangingStatus] = useState(false)
   const isEditing = useMemo(() => Boolean(initialData?.proyecto?.id), [initialData])
   const isEditable = useMemo(() => canEditLesson(initialData ?? null, loggedUser), [initialData, loggedUser])
   const [editBlockedReason, setEditBlockedReason] = useState<string | null>(null)
@@ -432,6 +433,32 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
     sede: "",
     proceso: "",
   })
+  const workflowActions = useMemo(
+    () => getWorkflowActions(initialData ?? null, loggedUser, { overrideEstado: formData.estado }),
+    [formData.estado, initialData, loggedUser],
+  )
+  const workflowActionConfig: Record<WorkflowAction, { label: string; icon: React.ReactNode; targetEstado: string }> = {
+    sendToReview: {
+      label: "Enviar a revisión",
+      icon: <Send className="h-4 w-4" />,
+      targetEstado: "En Revisión",
+    },
+    publish: {
+      label: "Publicar",
+      icon: <Globe2 className="h-4 w-4" />,
+      targetEstado: "Publicada",
+    },
+    returnToDraft: {
+      label: "Devolver a borrador",
+      icon: <Undo2 className="h-4 w-4" />,
+      targetEstado: "Borrador",
+    },
+    returnToReview: {
+      label: "Devolver a revisión",
+      icon: <RefreshCcw className="h-4 w-4" />,
+      targetEstado: "En Revisión",
+    },
+  }
 
   useEffect(() => {
     const controller = new AbortController()
@@ -1157,6 +1184,86 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
   }
 }
 
+  const findEstadoByDescripcion = (descripcion: string): RemoteEntity | undefined =>
+    estados.find(
+      (estado) => normalizeStatus(getEstadoDescripcionFromEntity(estado)) === normalizeStatus(descripcion),
+    )
+
+  const handleWorkflowAction = async (action: WorkflowAction) => {
+    if (!initialData?.proyecto?.id) {
+      toast({
+        title: "Acción no disponible",
+        description: "Guarda el borrador antes de moverlo de estado.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    const targetEstado = workflowActionConfig[action].targetEstado
+    const estadoCoincidente = findEstadoByDescripcion(targetEstado)
+    const estadoIdCandidate =
+      estadoCoincidente?.id ??
+      estadoCoincidente?.Id ??
+      (estadoCoincidente as { codigo?: string | number })?.codigo ??
+      (estadoCoincidente as { Codigo?: string | number })?.Codigo
+
+    const estadoId = Number(estadoIdCandidate)
+    const proyectoId = Number(initialData.proyecto.id)
+
+    if (!estadoCoincidente || !Number.isFinite(estadoId)) {
+      toast({
+        title: "Estado no encontrado",
+        description: `No fue posible obtener el estado objetivo (${targetEstado}).`,
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!Number.isFinite(proyectoId)) {
+      toast({
+        title: "Proyecto no válido",
+        description: "No se pudo identificar el proyecto para actualizar el estado.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsChangingStatus(true)
+    try {
+      const headers: Record<string, string> = { "Content-Type": "application/json" }
+      if (loggedUser.email) {
+        headers.correousuario = loggedUser.email
+      }
+
+      const response = await fetch(`${API_BASE_URL}/ProyectoSituacion/estado`, {
+        method: "PUT",
+        headers,
+        body: JSON.stringify({ IdProyectoSituacion: proyectoId, IdEstado: estadoId }),
+      })
+
+      if (!response.ok) {
+        throw new Error("No se pudo actualizar el estado")
+      }
+
+      setFormData((prev) => ({ ...prev, estado: targetEstado }))
+      toast({
+        title: "Estado actualizado",
+        description: `El proyecto pasó a ${targetEstado}.`,
+        className: "bg-emerald-50 border-emerald-200 text-emerald-900",
+      })
+      onSaved()
+    } catch (error) {
+      console.error(error)
+      toast({
+        title: "No se pudo actualizar",
+        description: "Inténtalo nuevamente más tarde.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsChangingStatus(false)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!isEditable) {
@@ -1322,10 +1429,48 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
           </Button>
         </CardHeader>
 
-        <div className="flex flex-col gap-2 border-b border-emerald-100 bg-[#f4fff9] px-6 py-4 md:flex-row md:items-center md:justify-between">
-          <div className="text-sm font-medium text-slate-700">Acciones de Flujo de Trabajo</div>
-          <div className="text-xs text-slate-500">
-            Las acciones de revisión se habilitarán después de crear el borrador.
+        <div className="flex flex-col gap-3 border-b border-emerald-100 bg-[#f4fff9] px-6 py-4">
+          <div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
+            <div className="text-sm font-medium text-slate-700">Acciones de Flujo de Trabajo</div>
+            <div className="text-xs text-slate-500">
+              Las acciones disponibles dependen de tu rol, el estado y tu relación con el proyecto.
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {initialData?.proyecto?.id ? (
+              workflowActions.length > 0 ? (
+                workflowActions.map((action) => {
+                  const config = workflowActionConfig[action]
+
+                  return (
+                    <Button
+                      key={action}
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleWorkflowAction(action)}
+                      disabled={isChangingStatus || isSubmitting}
+                      className="gap-2 border-[#8fd0ab] text-[#065f46] hover:bg-[#e0f3e8]"
+                    >
+                      {isChangingStatus ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        config.icon
+                      )}
+                      <span>{config.label}</span>
+                    </Button>
+                  )
+                })
+              ) : (
+                <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700">
+                  No hay acciones disponibles para tu rol en este estado.
+                </Badge>
+              )
+            ) : (
+              <Badge variant="outline" className="border-slate-200 bg-white text-slate-600">
+                Guarda el borrador para habilitar las acciones de flujo.
+              </Badge>
+            )}
           </div>
         </div>
 

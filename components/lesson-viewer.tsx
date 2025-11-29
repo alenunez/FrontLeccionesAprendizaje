@@ -42,11 +42,18 @@ const safeText = (value?: string | null): string => {
 }
 
 const normalizeEntities = (entities: NormalizedEntity[]): NormalizedEntity[] =>
-  entities.map((entity) => ({ ...entity, descripcion: safeText(entity.descripcion) }))
+  entities.map((entity) => ({
+    ...entity,
+    id: String(entity.id),
+    descripcion: safeText(entity.descripcion),
+  }))
 
 const getRelatedDescriptions = (ids: string[] | undefined, dataset: NormalizedEntity[]): string[] => {
   if (!ids || ids.length === 0) return []
-  return ids
+
+  const normalizedIds = ids.map(String)
+
+  return normalizedIds
     .map((id) => dataset.find((item) => item.id === id)?.descripcion)
     .filter((value): value is string => Boolean(value))
 }
@@ -252,7 +259,7 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
                       title="Impactos"
                       subtitle="Cómo nos afectó"
                       items={flattened.impactos?.map((impacto, impactoIndex) => ({
-                        id: impacto.impacto?.identificador ?? impacto.impacto?.id ?? `impacto-${impactoIndex}`,
+                        id: String(impacto.impacto?.identificador ?? impacto.impacto?.id ?? `impacto-${impactoIndex}`),
                         descripcion: safeText(
                           impacto.impacto?.descripcion ?? (impacto.impacto as { titulo?: string })?.titulo,
                         ),
@@ -264,7 +271,7 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
                       title="Acciones implementadas"
                       subtitle="Qué se ejecutó"
                       items={flattened.acciones?.map((accion, accionIndex) => ({
-                        id: accion.accion?.identificador ?? accion.accion?.id ?? `accion-${accionIndex}`,
+                        id: String(accion.accion?.identificador ?? accion.accion?.id ?? `accion-${accionIndex}`),
                         descripcion: safeText(
                           accion.accion?.descripcion ?? (accion.accion as { titulo?: string })?.titulo,
                         ),
@@ -279,7 +286,11 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
                       title="Resultados"
                       subtitle="Efecto de las acciones"
                       items={flattened.resultados?.map((resultado, resultadoIndex) => ({
-                        id: resultado.resultado?.identificador ?? resultado.resultado?.id ?? `resultado-${resultadoIndex}`,
+                        id: String(
+                          resultado.resultado?.identificador ??
+                            resultado.resultado?.id ??
+                            `resultado-${resultadoIndex}`,
+                        ),
                         descripcion: safeText(
                           resultado.resultado?.descripcion ?? (resultado.resultado as { titulo?: string })?.titulo,
                         ),
@@ -294,10 +305,11 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
                       title="Lecciones aprendidas"
                       subtitle="Qué se aprendió"
                       items={flattened.lecciones?.map((leccion, leccionIndex) => ({
-                        id:
+                        id: String(
                           (leccion.leccion as { identificador?: string })?.identificador ??
-                          leccion.leccion?.id ??
-                          `leccion-${leccionIndex}`,
+                            leccion.leccion?.id ??
+                            `leccion-${leccionIndex}`,
+                        ),
                         descripcion: safeText(
                           leccion.leccion?.descripcion ?? (leccion.leccion as { titulo?: string })?.titulo,
                         ),

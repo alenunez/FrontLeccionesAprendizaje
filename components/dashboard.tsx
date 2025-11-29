@@ -118,6 +118,22 @@ const mapLessons = (payload: ProyectoSituacionDto[]): LessonSummary[] =>
     }
   })
 
+const normalizeEstadoKey = (value?: string | null): string | null => {
+  if (!value) return null
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+}
+
+const normalizeEstadoPayload = (payload: unknown): Array<{ id?: string | number; descripcion?: string; titulo?: string }> => {
+  const record = (payload ?? {}) as { items?: Array<{ id?: string | number; descripcion?: string; titulo?: string }>; data?: unknown }
+  if (Array.isArray(record.items)) return record.items
+  if (Array.isArray(record.data)) return record.data as Array<{ id?: string | number; descripcion?: string; titulo?: string }>
+  if (Array.isArray(payload)) return payload as Array<{ id?: string | number; descripcion?: string; titulo?: string }>
+  return []
+}
+
 export function Dashboard() {
   const loggedUser = useSimulatedUser()
   const [activeTab, setActiveTab] = useState("lessons")
@@ -142,6 +158,39 @@ export function Dashboard() {
   const [totalCount, setTotalCount] = useState(0)
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc")
   const [estadoFilterId, setEstadoFilterId] = useState<string | number | null>(null)
+
+  useEffect(() => {
+    const controller = new AbortController()
+
+    const fetchEstados = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/Estado`, { signal: controller.signal })
+        if (!response.ok) {
+          throw new Error(`Error al cargar los estados: ${response.status}`)
+        }
+        const payload = await response.json()
+        const estados = normalizeEstadoPayload(payload)
+        setEstadoIds((prev) => {
+          const next = { ...prev }
+          estados.forEach((estado) => {
+            const normalizedKey = normalizeEstadoKey(estado.descripcion ?? estado.titulo)
+            if (normalizedKey && estado.id !== undefined && next[normalizedKey] === undefined) {
+              next[normalizedKey] = estado.id
+            }
+          })
+          return next
+        })
+      } catch (error) {
+        if ((error as Error).name !== "AbortError") {
+          console.error("No fue posible cargar los estados", error)
+        }
+      }
+    }
+
+    fetchEstados()
+
+    return () => controller.abort()
+  }, [])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -182,10 +231,12 @@ export function Dashboard() {
         setEstadoIds((prev) => {
           const next = { ...prev }
           items.forEach((item) => {
-            const descripcion = item.proyecto?.estado?.data?.descripcion
+            const descripcion = item.proyecto?.estado?.data?.descripcion ?? item.proyecto?.estado?.descripcion
+            const titulo = item.proyecto?.estado?.data?.titulo ?? item.proyecto?.estado?.titulo
             const id = item.proyecto?.estado?.id
-            if (descripcion && id !== undefined && next[descripcion] === undefined) {
-              next[descripcion] = id
+            const normalizedKey = normalizeEstadoKey(descripcion ?? titulo)
+            if (normalizedKey && id !== undefined && next[normalizedKey] === undefined) {
+              next[normalizedKey] = id
             }
           })
           return next
@@ -232,7 +283,9 @@ export function Dashboard() {
     () => {
       if (estadoFilterId !== null) return lessons
       if (!workflowFilter) return lessons
-      return lessons.filter((lesson) => lesson.status === workflowFilter)
+      const normalizedFilter = normalizeEstadoKey(workflowFilter)
+      if (!normalizedFilter) return lessons
+      return lessons.filter((lesson) => normalizeEstadoKey(lesson.status) === normalizedFilter)
     },
     [estadoFilterId, lessons, workflowFilter],
   )
@@ -245,8 +298,9 @@ export function Dashboard() {
 
   const handleWorkflowStageClick = (status: string) => {
     const nextStatus = workflowFilter === status ? null : status
+    const normalizedKey = normalizeEstadoKey(nextStatus)
     setWorkflowFilter(nextStatus)
-    setEstadoFilterId(nextStatus ? estadoIds[nextStatus] ?? null : null)
+    setEstadoFilterId(nextStatus && normalizedKey ? estadoIds[normalizedKey] ?? null : null)
     setPageNumber(1)
   }
 

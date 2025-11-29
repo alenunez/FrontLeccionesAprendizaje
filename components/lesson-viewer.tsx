@@ -72,6 +72,7 @@ const getRelatedDescriptions = (ids: (string | number)[] | undefined, dataset: N
   if (!ids || ids.length === 0) return []
 
   const lookupMap = new Map<string, string>()
+  const seen = new Set<string>()
 
   dataset.forEach((item, index) => {
     const candidateIds = [
@@ -88,13 +89,17 @@ const getRelatedDescriptions = (ids: (string | number)[] | undefined, dataset: N
     })
   })
 
-  return ids
-    .map((rawId) => {
-      const normalizedId = String(rawId ?? "").trim()
-      if (!normalizedId) return null
-      return lookupMap.get(normalizedId) ?? null
-    })
-    .filter((value): value is string => Boolean(value))
+  return ids.reduce<string[]>((matches, rawId) => {
+    const normalizedId = String(rawId ?? "").trim()
+    if (!normalizedId) return matches
+
+    const description = lookupMap.get(normalizedId)
+    if (!description || seen.has(description)) return matches
+
+    seen.add(description)
+    matches.push(description)
+    return matches
+  }, [])
 }
 
 const normalizeAccessLevel = (value: unknown): "Público" | "Privado" | null => {

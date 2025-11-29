@@ -24,6 +24,38 @@ const asString = (value: string | number | undefined): string | undefined =>
 const buildId = (candidate: string | number | undefined, fallback: string): string =>
   asString(candidate) ?? fallback
 
+const extractEntityId = (record: unknown): string | null => {
+  if (!record || typeof record !== "object") return null
+
+  const candidate =
+    (record as { impacto?: unknown }).impacto ??
+    (record as { accion?: unknown }).accion ??
+    (record as { resultado?: unknown }).resultado ??
+    (record as { leccion?: unknown }).leccion ??
+    record
+
+  if (!candidate || typeof candidate !== "object") return null
+
+  const withId = candidate as { id?: string | number; identificador?: string | number }
+  return asString(withId.identificador ?? withId.id) ?? null
+}
+
+const uniqueRecords = <T>(collection: Map<string, NormalizedEntity<T>>): T[] => {
+  const seen = new Set<string>()
+
+  return Array.from(collection.values()).reduce<T[]>((records, item) => {
+    const uniqueId = extractEntityId(item.record)
+
+    if (uniqueId) {
+      if (seen.has(uniqueId)) return records
+      seen.add(uniqueId)
+    }
+
+    records.push(item.record)
+    return records
+  }, [])
+}
+
 export const flattenEventoDto = (
   eventoDto: ProyectoSituacionEventoDto,
   eventIndex = 0,
@@ -291,9 +323,9 @@ export const flattenEventoDto = (
   })
 
   return {
-    impactos: Array.from(impactos.values()).map((item) => item.record),
-    acciones: Array.from(acciones.values()).map((item) => item.record),
-    resultados: Array.from(resultados.values()).map((item) => item.record),
-    lecciones: Array.from(lecciones.values()).map((item) => item.record),
+    impactos: uniqueRecords(impactos),
+    acciones: uniqueRecords(acciones),
+    resultados: uniqueRecords(resultados),
+    lecciones: uniqueRecords(lecciones),
   }
 }

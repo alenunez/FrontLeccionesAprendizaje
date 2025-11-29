@@ -50,10 +50,30 @@ const getRelatedDescriptions = (ids: string[] | undefined, dataset: NormalizedEn
     .filter((value): value is string => Boolean(value))
 }
 
+const normalizeAccessLevel = (value: unknown): "Público" | "Privado" | null => {
+  if (typeof value === "boolean") {
+    return value ? "Privado" : "Público"
+  }
+
+  if (typeof value === "string") {
+    const normalized = value
+      .normalize("NFD")
+      .replace(/\p{Diacritic}/gu, "")
+      .toLowerCase()
+      .replace(/\s+/g, "")
+
+    if (normalized === "privado") return "Privado"
+    if (normalized === "publico") return "Público"
+  }
+
+  return null
+}
+
 export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
   const proyecto = lesson.proyecto ?? {}
   const eventos = lesson.eventos ?? []
-  const privacyLabel = proyecto.isPrivate === undefined ? "No especificado" : proyecto.isPrivate ? "Privado" : "Público"
+  const normalizedAccess = normalizeAccessLevel(proyecto.isPrivate)
+  const privacyLabel = normalizedAccess ?? "No especificado"
   const lectores = lesson.lectores ?? []
   const responsableNombre = safeText(proyecto.nombreResponsable ?? proyecto.nombreAutor ?? undefined)
   const autorNombre = safeText(proyecto.nombreAutor ?? proyecto.nombreResponsable ?? undefined)

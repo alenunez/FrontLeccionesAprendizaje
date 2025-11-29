@@ -202,6 +202,25 @@ const mergeUsers = (current: DirectoryUser[], incoming: DirectoryUser[]): Direct
   return Array.from(registry.values())
 }
 
+const normalizeAccessLevel = (value: unknown): "Público" | "Privado" => {
+  if (typeof value === "boolean") {
+    return value ? "Privado" : "Público"
+  }
+
+  if (typeof value === "string") {
+    const normalized = value
+      .normalize("NFD")
+      .replace(/\p{Diacritic}/gu, "")
+      .toLowerCase()
+      .replace(/\s+/g, "")
+
+    if (normalized === "privado") return "Privado"
+    if (normalized === "publico") return "Público"
+  }
+
+  return "Público"
+}
+
 const normalizeStatus = (value?: string | null): string => {
   if (!value) return ""
   return value
@@ -292,7 +311,9 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
     aplicacionPractica: "",
   })
 
-  const [nivelAcceso, setNivelAcceso] = useState<"Público" | "Privado">("Público")
+  const [nivelAcceso, setNivelAcceso] = useState<"Público" | "Privado">(() =>
+    normalizeAccessLevel(initialData?.proyecto?.isPrivate),
+  )
 
   const [selectedUsers, setSelectedUsers] = useState<string[]>([])
   const [showUserDropdown, setShowUserDropdown] = useState(false)
@@ -524,7 +545,7 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
     })
 
     setResponsableQuery(proyecto.nombreResponsable ?? "")
-    setNivelAcceso(proyecto.isPrivate ? "Privado" : "Público")
+    setNivelAcceso(normalizeAccessLevel(proyecto.isPrivate))
     setAvailableUsers((prev) => mergeUsers(prev, lectores))
     setSelectedUsers(lectores.map((lector) => lector.id))
     setEventos((initialData.eventos ?? []).map(mapEventoDtoToState))

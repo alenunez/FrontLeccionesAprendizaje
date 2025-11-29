@@ -243,6 +243,15 @@ const extractEstadoFromProyecto = (proyecto: ProyectoSituacionDto["proyecto"] | 
   )
 }
 
+const toNumericId = (value: string | number | undefined, fallback: number): number => {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value
+  }
+
+  const numeric = Number(value)
+  return Number.isFinite(numeric) ? numeric : fallback
+}
+
 const mapEventoDtoToState = (eventoDto: ProyectoSituacionEventoDto, eventIndex: number): Event => {
   const flattened = flattenEventoDto(eventoDto, eventIndex)
 
@@ -965,66 +974,85 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
     </div>
   )
 
-  const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
-    const impactosDto = event.impactos.map((impacto, impactoIndex) => {
-      const impactoIdentificador = impacto.id || `impacto-${impactoIndex}`
+const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
+  const impactoIdMap = new Map<string, number>()
+  const accionIdMap = new Map<string, number>()
+  const resultadoIdMap = new Map<string, number>()
 
-      const accionesDto = event.accionesImplementadas
-        .filter((accion) => accion.relatedImpactos.includes(impacto.id))
-        .map((accion, accionIndex) => {
-          const accionIdentificador = accion.id || `accion-${impactoIndex}-${accionIndex}`
+  event.impactos.forEach((impacto, index) => {
+    impactoIdMap.set(impacto.id, toNumericId(impacto.id, index + 1))
+  })
 
-          const impactoIds =
-            accion.relatedImpactos.length > 0 ? accion.relatedImpactos.map(String) : [impactoIdentificador]
+  event.accionesImplementadas.forEach((accion, index) => {
+    accionIdMap.set(accion.id, toNumericId(accion.id, index + 1))
+  })
 
-          const resultadosDto = event.resultados
-            .filter((resultado) => resultado.relatedAcciones.includes(accion.id))
-            .map((resultado, resultadoIndex) => {
-              const resultadoIdentificador =
-                resultado.id || `resultado-${impactoIndex}-${accionIndex}-${resultadoIndex}`
+  event.resultados.forEach((resultado, index) => {
+    resultadoIdMap.set(resultado.id, toNumericId(resultado.id, index + 1))
+  })
 
-              const leccionesDto = event.leccionesAprendidas
-                .filter((leccion) => leccion.relatedResultados.includes(resultado.id))
-                .map((leccion, leccionIndex) => ({
-                  leccion: {
-                    titulo: leccion.description,
-                    descripcion: leccion.description,
-                    identificador: leccion.id || `leccion-${impactoIndex}-${accionIndex}-${resultadoIndex}-${leccionIndex}`,
-                  },
-                  resultados: [resultadoIdentificador],
-                }))
+  const impactosDto = event.impactos.map((impacto, impactoIndex) => {
+    const impactoIdentificador = impactoIdMap.get(impacto.id) ?? toNumericId(impacto.id, impactoIndex + 1)
 
-              return {
-                resultado: {
-                  titulo: resultado.description,
-                  descripcion: resultado.description,
-                  identificador: resultadoIdentificador,
+    const accionesDto = event.accionesImplementadas
+      .filter((accion) => accion.relatedImpactos.includes(impacto.id))
+      .map((accion, accionIndex) => {
+        const accionIdentificador = accionIdMap.get(accion.id) ?? toNumericId(accion.id, accionIndex + 1)
+
+        const impactoIds =
+          accion.relatedImpactos.length > 0
+            ? accion.relatedImpactos.map((id, relationIndex) =>
+                impactoIdMap.get(id) ?? toNumericId(id, relationIndex + 1),
+              )
+            : [impactoIdentificador]
+
+        const resultadosDto = event.resultados
+          .filter((resultado) => resultado.relatedAcciones.includes(accion.id))
+          .map((resultado, resultadoIndex) => {
+            const resultadoIdentificador =
+              resultadoIdMap.get(resultado.id) ?? toNumericId(resultado.id, resultadoIndex + 1)
+
+            const leccionesDto = event.leccionesAprendidas
+              .filter((leccion) => leccion.relatedResultados.includes(resultado.id))
+              .map((leccion, leccionIndex) => ({
+                leccion: {
+                  titulo: leccion.description,
+                  descripcion: leccion.description,
                 },
-                acciones: [accionIdentificador],
-                lecciones: leccionesDto,
-              }
-            })
+                resultados: [resultadoIdentificador],
+              }))
 
-          return {
-            accion: {
-              titulo: accion.description,
-              descripcion: accion.description,
-              identificador: accionIdentificador,
-            },
-            impactos: impactoIds,
-            resultados: resultadosDto,
-          }
-        })
+            return {
+              resultado: {
+                titulo: resultado.description,
+                descripcion: resultado.description,
+                identificador: resultadoIdentificador,
+              },
+              acciones: [accionIdentificador],
+              lecciones: leccionesDto,
+            }
+          })
 
-      return {
-        impacto: {
-          titulo: impacto.description,
-          descripcion: impacto.description,
-          identificador: impactoIdentificador,
-        },
-        acciones: accionesDto,
-      }
-    })
+        return {
+          accion: {
+            titulo: accion.description,
+            descripcion: accion.description,
+            identificador: accionIdentificador,
+          },
+          impactos: impactoIds,
+          resultados: resultadosDto,
+        }
+      })
+
+    return {
+      impacto: {
+        titulo: impacto.description,
+        descripcion: impacto.description,
+        identificador: impactoIdentificador,
+      },
+      acciones: accionesDto,
+    }
+  })
 
     return {
       evento: {
@@ -1082,6 +1110,9 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
       ? getEstadoDescripcionFromEntity(estadoCoincidente)
       : desiredEstadoDescripcion || "Borrador"
 
+    const sedeId = Number(formData.sede)
+    const procesoId = Number(formData.proceso)
+
     if (!isEditing && (!estadoCoincidente || !Number.isFinite(estadoId))) {
       toast({
         title: "No se pudo guardar",
@@ -1108,12 +1139,12 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
           data: estadoDescripcion,
         },
         sede: {
-          id: formData.sede,
+          id: Number.isFinite(sedeId) ? sedeId : formData.sede,
           value: selectedSede?.nombre ?? formData.sede,
           data: selectedSede?.nombre ?? formData.sede,
         },
         proceso: {
-          id: formData.proceso,
+          id: Number.isFinite(procesoId) ? procesoId : formData.proceso,
           value: selectedProceso?.nombre ?? formData.proceso,
           data: selectedProceso?.nombre ?? formData.proceso,
         },

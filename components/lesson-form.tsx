@@ -275,29 +275,29 @@ const mapEventoDtoToState = (eventoDto: ProyectoSituacionEventoDto, eventIndex: 
       }
 
       return (
-        record.identificador ??
         record.id ??
-        record.impacto?.identificador ??
+        record.identificador ??
         record.impacto?.id ??
-        record.accion?.identificador ??
+        record.impacto?.identificador ??
         record.accion?.id ??
-        record.resultado?.identificador ??
+        record.accion?.identificador ??
         record.resultado?.id ??
-        record.leccion?.identificador ??
+        record.resultado?.identificador ??
         record.leccion?.id ??
+        record.leccion?.identificador ??
         null
       )
         ? String(
-            record.identificador ??
-              record.id ??
-              record.impacto?.identificador ??
+            record.id ??
+              record.identificador ??
               record.impacto?.id ??
-              record.accion?.identificador ??
+              record.impacto?.identificador ??
               record.accion?.id ??
-              record.resultado?.identificador ??
+              record.accion?.identificador ??
               record.resultado?.id ??
-              record.leccion?.identificador ??
-              record.leccion?.id,
+              record.resultado?.identificador ??
+              record.leccion?.id ??
+              record.leccion?.identificador,
           )
         : null
     }
@@ -310,7 +310,7 @@ const mapEventoDtoToState = (eventoDto: ProyectoSituacionEventoDto, eventIndex: 
 
   const impactosState = (flattened.impactos ?? []).map((impactoDto, impactoIndex) => {
     const impactoId = normalizeId(
-      impactoDto.impacto?.identificador ?? impactoDto.impacto?.id,
+      impactoDto.impacto?.id ?? impactoDto.impacto?.identificador,
       `impacto-${eventIndex}-${impactoIndex}`,
     )
 
@@ -326,7 +326,7 @@ const mapEventoDtoToState = (eventoDto: ProyectoSituacionEventoDto, eventIndex: 
 
   const accionesState = (flattened.acciones ?? []).map((accionDto, accionIndex) => {
     const accionId = normalizeId(
-      accionDto.accion?.identificador ?? accionDto.accion?.id,
+      accionDto.accion?.id ?? accionDto.accion?.identificador,
       `accion-${eventIndex}-${accionIndex}`,
     )
 
@@ -343,7 +343,7 @@ const mapEventoDtoToState = (eventoDto: ProyectoSituacionEventoDto, eventIndex: 
 
   const resultadosState = (flattened.resultados ?? []).map((resultadoDto, resultadoIndex) => {
     const resultadoId = normalizeId(
-      resultadoDto.resultado?.identificador ?? resultadoDto.resultado?.id,
+      resultadoDto.resultado?.id ?? resultadoDto.resultado?.identificador,
       `resultado-${eventIndex}-${resultadoIndex}`,
     )
 
@@ -360,7 +360,7 @@ const mapEventoDtoToState = (eventoDto: ProyectoSituacionEventoDto, eventIndex: 
 
   const leccionesState = (flattened.lecciones ?? []).map((leccionDto, leccionIndex) => {
     const leccionId = normalizeId(
-      (leccionDto.leccion as { identificador?: string | number })?.identificador ?? leccionDto.leccion?.id,
+      leccionDto.leccion?.id ?? (leccionDto.leccion as { identificador?: string | number })?.identificador,
       `leccion-${eventIndex}-${leccionIndex}`,
     )
 

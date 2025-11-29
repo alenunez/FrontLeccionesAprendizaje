@@ -246,58 +246,139 @@ const extractEstadoFromProyecto = (proyecto: ProyectoSituacionDto["proyecto"] | 
 const mapEventoDtoToState = (eventoDto: ProyectoSituacionEventoDto, eventIndex: number): Event => {
   const flattened = flattenEventoDto(eventoDto, eventIndex)
 
+  const normalizeId = (candidate: string | number | undefined, fallback: string) =>
+    String(candidate ?? fallback)
+
+  const normalizeDescription = (
+    primary?: string | null,
+    secondary?: string | null,
+    fallbackLabel?: string,
+  ) => {
+    const normalized = primary?.toString().trim() || secondary?.toString().trim()
+    if (normalized && normalized.length > 0) return normalized
+    return fallbackLabel ?? ""
+  }
+
+  const extractId = (value: unknown): string | null => {
+    if (typeof value === "string" || typeof value === "number") {
+      return String(value)
+    }
+
+    if (value && typeof value === "object") {
+      const record = value as {
+        id?: string | number
+        identificador?: string | number
+        impacto?: { id?: string | number; identificador?: string | number }
+        accion?: { id?: string | number; identificador?: string | number }
+        resultado?: { id?: string | number; identificador?: string | number }
+        leccion?: { id?: string | number; identificador?: string | number }
+      }
+
+      return (
+        record.identificador ??
+        record.id ??
+        record.impacto?.identificador ??
+        record.impacto?.id ??
+        record.accion?.identificador ??
+        record.accion?.id ??
+        record.resultado?.identificador ??
+        record.resultado?.id ??
+        record.leccion?.identificador ??
+        record.leccion?.id ??
+        null
+      )
+        ? String(
+            record.identificador ??
+              record.id ??
+              record.impacto?.identificador ??
+              record.impacto?.id ??
+              record.accion?.identificador ??
+              record.accion?.id ??
+              record.resultado?.identificador ??
+              record.resultado?.id ??
+              record.leccion?.identificador ??
+              record.leccion?.id,
+          )
+        : null
+    }
+
+    return null
+  }
+
+  const normalizeIds = (values?: unknown[]) =>
+    Array.from(new Set((values ?? []).map(extractId).filter((value): value is string => Boolean(value))))
+
   const impactosState = (flattened.impactos ?? []).map((impactoDto, impactoIndex) => {
-    const impactoId = String(
-      impactoDto.impacto?.identificador ?? impactoDto.impacto?.id ?? `impacto-${eventIndex}-${impactoIndex}`,
+    const impactoId = normalizeId(
+      impactoDto.impacto?.identificador ?? impactoDto.impacto?.id,
+      `impacto-${eventIndex}-${impactoIndex}`,
     )
 
     return {
       id: impactoId,
-      description: impactoDto.impacto?.descripcion ?? impactoDto.impacto?.titulo ?? "",
+      description: normalizeDescription(
+        impactoDto.impacto?.descripcion,
+        (impactoDto.impacto as { titulo?: string })?.titulo,
+        `Impacto ${impactoId}`,
+      ),
     }
   })
 
   const accionesState = (flattened.acciones ?? []).map((accionDto, accionIndex) => {
-    const accionId = String(
-      accionDto.accion?.identificador ?? accionDto.accion?.id ?? `accion-${eventIndex}-${accionIndex}`,
+    const accionId = normalizeId(
+      accionDto.accion?.identificador ?? accionDto.accion?.id,
+      `accion-${eventIndex}-${accionIndex}`,
     )
 
     return {
       id: accionId,
-      description: accionDto.accion?.descripcion ?? accionDto.accion?.titulo ?? "",
-      relatedImpactos: (accionDto.impactoIds ?? accionDto.impactos ?? []).map(String),
+      description: normalizeDescription(
+        accionDto.accion?.descripcion,
+        (accionDto.accion as { titulo?: string })?.titulo,
+        `Acción ${accionId}`,
+      ),
+      relatedImpactos: normalizeIds(accionDto.impactoIds ?? accionDto.impactos),
     }
   })
 
   const resultadosState = (flattened.resultados ?? []).map((resultadoDto, resultadoIndex) => {
-    const resultadoId = String(
-      resultadoDto.resultado?.identificador ?? resultadoDto.resultado?.id ?? `resultado-${eventIndex}-${resultadoIndex}`,
+    const resultadoId = normalizeId(
+      resultadoDto.resultado?.identificador ?? resultadoDto.resultado?.id,
+      `resultado-${eventIndex}-${resultadoIndex}`,
     )
 
     return {
       id: resultadoId,
-      description: resultadoDto.resultado?.descripcion ?? resultadoDto.resultado?.titulo ?? "",
-      relatedAcciones: (resultadoDto.accionIds ?? resultadoDto.acciones ?? []).map(String),
+      description: normalizeDescription(
+        resultadoDto.resultado?.descripcion,
+        (resultadoDto.resultado as { titulo?: string })?.titulo,
+        `Resultado ${resultadoId}`,
+      ),
+      relatedAcciones: normalizeIds(resultadoDto.accionIds ?? resultadoDto.acciones),
     }
   })
 
   const leccionesState = (flattened.lecciones ?? []).map((leccionDto, leccionIndex) => {
-    const leccionId = String(
-      (leccionDto.leccion as { identificador?: string | number })?.identificador ??
-        leccionDto.leccion?.id ??
-        `leccion-${eventIndex}-${leccionIndex}`,
+    const leccionId = normalizeId(
+      (leccionDto.leccion as { identificador?: string | number })?.identificador ?? leccionDto.leccion?.id,
+      `leccion-${eventIndex}-${leccionIndex}`,
     )
 
     return {
       id: leccionId,
-      description: leccionDto.leccion?.descripcion ?? leccionDto.leccion?.titulo ?? "",
-      relatedResultados: (leccionDto.resultadoIds ?? leccionDto.resultados ?? []).map(String),
+      description: normalizeDescription(
+        leccionDto.leccion?.descripcion,
+        (leccionDto.leccion as { titulo?: string })?.titulo,
+        `Lección ${leccionId}`,
+      ),
+      relatedResultados: normalizeIds(leccionDto.resultadoIds ?? leccionDto.resultados),
     }
   })
 
   return {
     id: String(eventoDto.evento?.id ?? `evento-${eventIndex}`),
-    evento: eventoDto.evento?.descripcion ?? eventoDto.evento?.titulo ?? "",
+    evento:
+      eventoDto.evento?.descripcion ?? eventoDto.evento?.titulo ?? `Evento ${eventIndex + 1}` ?? "",
     impactos: impactosState.length > 0 ? impactosState : [{ id: `${eventIndex}-impacto-1`, description: "" }],
     accionesImplementadas: accionesState,
     resultados: resultadosState,

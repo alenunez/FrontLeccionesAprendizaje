@@ -364,8 +364,8 @@ export function Dashboard() {
                           icon: "👀",
                         },
                         {
-                          status: "Publicada",
-                          count: statusCounts["Publicada"] ?? 0,
+                          status: "Publicado",
+                          count: statusCounts["Publicado"] ?? 0,
                           color: "bg-[#e0f3e8] hover:bg-[#d1ecde] border-emerald-200",
                           textColor: "text-[#067138]",
                           icon: "🚀",
@@ -516,14 +516,14 @@ export function Dashboard() {
                           <div className="flex flex-wrap items-center gap-3">
                             <Badge
                               variant={
-                                lesson.status === "Publicada"
+                                lesson.status === "Publicado"
                                   ? "default"
                                   : lesson.status === "En Revisión"
                                     ? "secondary"
                                     : "outline"
                               }
                               className={
-                                lesson.status === "Publicada"
+                                lesson.status === "Publicado"
                                   ? "rounded-full bg-[#e0f3e8] text-[#067138] border-emerald-200"
                                   : lesson.status === "En Revisión"
                                     ? "bg-amber-100 text-amber-800 border-amber-200"

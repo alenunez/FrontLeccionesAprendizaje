@@ -24,7 +24,7 @@ export function LessonsList({ searchQuery }: LessonsListProps) {
       impact: "Alto",
       severity: "Alto",
       date: "2024-01-15",
-      status: "Publicada",
+      status: "Publicado",
       owner: "Juan Pérez",
       project: "SAP S/4HANA Implementation",
       applicability: "Alta",
@@ -76,7 +76,7 @@ export function LessonsList({ searchQuery }: LessonsListProps) {
       impact: "Medio",
       severity: "Medio",
       date: "2024-01-05",
-      status: "Publicada",
+      status: "Publicado",
       owner: "Roberto Silva",
       project: "CRM Implementation",
       applicability: "Alta",
@@ -96,7 +96,7 @@ export function LessonsList({ searchQuery }: LessonsListProps) {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "Publicada":
+      case "Publicado":
         return "bg-green-100 text-green-800 border-green-200"
       case "Aprobada":
         return "bg-[#e0f3e8] text-[#067138] border-emerald-200"
@@ -164,7 +164,7 @@ export function LessonsList({ searchQuery }: LessonsListProps) {
                   <SelectItem value="Borrador">Borrador</SelectItem>
                   <SelectItem value="En Revisión">En Revisión</SelectItem>
                   <SelectItem value="Aprobada">Aprobada</SelectItem>
-                  <SelectItem value="Publicada">Publicada</SelectItem>
+                  <SelectItem value="Publicado">Publicado</SelectItem>
                 </SelectContent>
               </Select>
             </div>

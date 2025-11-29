@@ -45,7 +45,7 @@ const normalizeEntities = (entities: NormalizedEntity[]): NormalizedEntity[] =>
   entities.map((entity) => ({
     ...entity,
     id: String(entity.id),
-    descripcion: safeText(entity.descripcion),
+    descripcion: safeText(entity.descripcion ?? String(entity.id)),
   }))
 
 const getRelatedDescriptions = (ids: string[] | undefined, dataset: NormalizedEntity[]): string[] => {
@@ -53,9 +53,7 @@ const getRelatedDescriptions = (ids: string[] | undefined, dataset: NormalizedEn
 
   const normalizedIds = ids.map(String)
 
-  return normalizedIds
-    .map((id) => dataset.find((item) => item.id === id)?.descripcion)
-    .filter((value): value is string => Boolean(value))
+  return normalizedIds.map((id) => dataset.find((item) => item.id === id)?.descripcion ?? `ID: ${id}`)
 }
 
 const normalizeAccessLevel = (value: unknown): "Público" | "Privado" | null => {

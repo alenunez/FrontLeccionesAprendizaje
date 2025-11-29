@@ -1,11 +1,15 @@
 export interface ProyectoSituacionDto {
   proyecto?: {
-    id?: string
+    id?: string | number
     fecha?: string
     descripcion?: string
     aplicacionPractica?: string
     isPrivate?: boolean
-    estado?: { data?: { descripcion?: string | null; isActive?: boolean } }
+    estado?: {
+      id?: string | number
+      value?: string | null
+      data?: { descripcion?: string | null; isActive?: boolean }
+    }
     nombreResponsable?: string | null
     correoResponsable?: string | null
     nombreAutor?: string | null
@@ -61,4 +65,18 @@ export interface ProyectoSituacionLeccionDto {
   leccion?: { id?: string; titulo?: string | null; descripcion?: string | null; identificador?: string | number | null }
   resultados?: (string | number)[]
   resultadoIds?: string[]
+}
+
+export interface ProyectoSituacionEstadoCounts {
+  borrador?: number
+  enRevision?: number
+  publicado?: number
+}
+
+export interface ProyectoSituacionPaginatedResponse {
+  items?: ProyectoSituacionDto[]
+  totalCount?: number
+  pageNumber?: number
+  pageSize?: number
+  estadoCounts?: ProyectoSituacionEstadoCounts
 }

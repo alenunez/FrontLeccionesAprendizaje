@@ -316,6 +316,11 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
   const isEditing = useMemo(() => Boolean(initialData?.proyecto?.id), [initialData])
   const isEditable = useMemo(() => canEditLesson(initialData ?? null, loggedUser), [initialData, loggedUser])
   const [editBlockedReason, setEditBlockedReason] = useState<string | null>(null)
+  const [initialSelectionNames, setInitialSelectionNames] = useState({
+    compania: "",
+    sede: "",
+    proceso: "",
+  })
 
   useEffect(() => {
     const controller = new AbortController()
@@ -483,6 +488,7 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
       setSelectedUsers([])
       setEventos([])
       setResponsableQuery(loggedUser.name)
+      setInitialSelectionNames({ compania: "", sede: "", proceso: "" })
       return
     }
 
@@ -493,6 +499,13 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
       email: lector.correoLector ?? undefined,
       title: lector.titulo ?? undefined,
     }))
+
+    setInitialSelectionNames({
+      compania:
+        (proyecto.sede?.data as { compania?: { data?: { nombre?: string } } })?.compania?.data?.nombre ?? "",
+      sede: proyecto.sede?.data?.nombre ?? "",
+      proceso: proyecto.proceso?.data?.nombre ?? "",
+    })
 
     setFormData({
       autorNombre: proyecto.nombreAutor ?? loggedUser.name,
@@ -516,6 +529,40 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
     setSelectedUsers(lectores.map((lector) => lector.id))
     setEventos((initialData.eventos ?? []).map(mapEventoDtoToState))
   }, [initialData, loggedUser])
+
+  useEffect(() => {
+    const normalize = (value: string) =>
+      value
+        .normalize("NFD")
+        .replace(/\p{Diacritic}/gu, "")
+        .toLowerCase()
+        .trim()
+
+    if (!formData.compania && initialSelectionNames.compania && companias.length > 0) {
+      const matchedCompania = companias.find(
+        (compania) => normalize(compania.nombre) === normalize(initialSelectionNames.compania),
+      )
+      if (matchedCompania) {
+        setFormData((prev) => ({ ...prev, compania: matchedCompania.id }))
+      }
+    }
+
+    if (!formData.proceso && initialSelectionNames.proceso && procesos.length > 0) {
+      const matchedProceso = procesos.find(
+        (proceso) => normalize(proceso.nombre) === normalize(initialSelectionNames.proceso),
+      )
+      if (matchedProceso) {
+        setFormData((prev) => ({ ...prev, proceso: matchedProceso.id }))
+      }
+    }
+
+    if (!formData.sede && initialSelectionNames.sede && allSedes.length > 0) {
+      const matchedSede = allSedes.find((sede) => normalize(sede.nombre) === normalize(initialSelectionNames.sede))
+      if (matchedSede) {
+        setFormData((prev) => ({ ...prev, sede: matchedSede.id, compania: prev.compania || matchedSede.companiaId || "" }))
+      }
+    }
+  }, [allSedes, companias, formData.compania, formData.proceso, formData.sede, initialSelectionNames, procesos])
 
   const [eventos, setEventos] = useState<Event[]>([])
   const [showEventDialog, setShowEventDialog] = useState(false)

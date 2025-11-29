@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { X, Save, Plus, Trash2, Upload, FileText, Edit, Loader2 } from "lucide-react"
+import { X, Save, Plus, Trash2, Upload, FileText, Edit, Loader2, Check } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -868,31 +868,36 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
             </div>
 
             {relationOptions && relationKey && relationLabel && (
-              <div className="ml-2 pl-4 border-l-2 border-slate-200">
-                <Label className="text-xs font-semibold text-slate-600 mb-2 block">{relationLabel}</Label>
+              <div className="ml-2 space-y-2 border-l-2 border-slate-200 pl-4">
+                <Label className="text-xs font-semibold text-slate-600 mb-1 block">{relationLabel}</Label>
                 <div className="flex flex-wrap gap-2">
                   {relationOptions
                     .filter((opt) => opt.description.trim())
                     .map((option) => {
                       const originalIndex = relationOptions.findIndex((o) => o.id === option.id)
                       const isSelected = row[relationKey]?.includes(option.id)
+
                       return (
-                        <Badge
+                        <button
                           key={option.id}
-                          variant={isSelected ? "default" : "outline"}
-                          className={`cursor-pointer text-xs ${
+                          type="button"
+                          className={`group flex items-center gap-2 rounded-full border px-3 py-2 text-left text-xs transition ${
                             isSelected
-                              ? "bg-[#067138] text-white hover:bg-[#05592d]"
-                              : "bg-white text-slate-600 hover:bg-slate-50"
+                              ? "border-emerald-500 bg-emerald-50 text-emerald-800 shadow-[0_0_0_1px] shadow-emerald-100"
+                              : "border-slate-200 bg-white text-slate-600 hover:border-emerald-200 hover:bg-emerald-50"
                           }`}
                           onClick={() => toggleRelation(row.id, option.id, relationKey, setter)}
                         >
-                          {originalIndex + 1}
-                        </Badge>
+                          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-[11px] font-semibold text-slate-700 transition group-hover:bg-emerald-100 group-hover:text-emerald-800">
+                            {originalIndex + 1}
+                          </span>
+                          <span className="whitespace-normal text-left leading-snug">{option.description}</span>
+                          {isSelected && <Check className="h-4 w-4 shrink-0 text-emerald-600" />}
+                        </button>
                       )
                     })}
                   {relationOptions.filter((opt) => opt.description.trim()).length === 0 && (
-                    <span className="text-xs text-slate-400 italic">Agregue {relationLabel.toLowerCase()} primero</span>
+                    <span className="text-xs italic text-slate-400">Agregue {relationLabel.toLowerCase()} primero</span>
                   )}
                 </div>
               </div>

@@ -17,6 +17,7 @@ import { toast } from "@/hooks/use-toast"
 import type { ProyectoSituacionDto, ProyectoSituacionEventoDto } from "@/types/lessons"
 import type { SimulatedUser } from "@/lib/user-context"
 import { canEditLesson } from "@/lib/permissions"
+import { flattenEventoDto } from "@/lib/event-normalizer"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:7043/api"
 
@@ -243,9 +244,11 @@ const extractEstadoFromProyecto = (proyecto: ProyectoSituacionDto["proyecto"] | 
 }
 
 const mapEventoDtoToState = (eventoDto: ProyectoSituacionEventoDto, eventIndex: number): Event => {
-  const impactosState = (eventoDto.impactos ?? []).map((impactoDto, impactoIndex) => {
+  const flattened = flattenEventoDto(eventoDto, eventIndex)
+
+  const impactosState = (flattened.impactos ?? []).map((impactoDto, impactoIndex) => {
     const impactoId = String(
-      impactoDto.impacto?.id ?? impactoDto.impacto?.identificador ?? `impacto-${eventIndex}-${impactoIndex}`,
+      impactoDto.impacto?.identificador ?? impactoDto.impacto?.id ?? `impacto-${eventIndex}-${impactoIndex}`,
     )
 
     return {
@@ -254,35 +257,41 @@ const mapEventoDtoToState = (eventoDto: ProyectoSituacionEventoDto, eventIndex: 
     }
   })
 
-  const accionesState = (eventoDto.acciones ?? []).map((accionDto, accionIndex) => {
-    const accionId = String(accionDto.accion?.id ?? accionDto.accion?.identificador ?? `accion-${eventIndex}-${accionIndex}`)
+  const accionesState = (flattened.acciones ?? []).map((accionDto, accionIndex) => {
+    const accionId = String(
+      accionDto.accion?.identificador ?? accionDto.accion?.id ?? `accion-${eventIndex}-${accionIndex}`,
+    )
 
     return {
       id: accionId,
       description: accionDto.accion?.descripcion ?? accionDto.accion?.titulo ?? "",
-      relatedImpactos: (accionDto.impactoIds ?? []).map(String),
+      relatedImpactos: (accionDto.impactoIds ?? accionDto.impactos ?? []).map(String),
     }
   })
 
-  const resultadosState = (eventoDto.resultados ?? []).map((resultadoDto, resultadoIndex) => {
+  const resultadosState = (flattened.resultados ?? []).map((resultadoDto, resultadoIndex) => {
     const resultadoId = String(
-      resultadoDto.resultado?.id ?? resultadoDto.resultado?.identificador ?? `resultado-${eventIndex}-${resultadoIndex}`,
+      resultadoDto.resultado?.identificador ?? resultadoDto.resultado?.id ?? `resultado-${eventIndex}-${resultadoIndex}`,
     )
 
     return {
       id: resultadoId,
       description: resultadoDto.resultado?.descripcion ?? resultadoDto.resultado?.titulo ?? "",
-      relatedAcciones: (resultadoDto.accionIds ?? []).map(String),
+      relatedAcciones: (resultadoDto.accionIds ?? resultadoDto.acciones ?? []).map(String),
     }
   })
 
-  const leccionesState = (eventoDto.lecciones ?? []).map((leccionDto, leccionIndex) => {
-    const leccionId = String(leccionDto.leccion?.id ?? `leccion-${eventIndex}-${leccionIndex}`)
+  const leccionesState = (flattened.lecciones ?? []).map((leccionDto, leccionIndex) => {
+    const leccionId = String(
+      (leccionDto.leccion as { identificador?: string | number })?.identificador ??
+        leccionDto.leccion?.id ??
+        `leccion-${eventIndex}-${leccionIndex}`,
+    )
 
     return {
       id: leccionId,
       description: leccionDto.leccion?.descripcion ?? leccionDto.leccion?.titulo ?? "",
-      relatedResultados: (leccionDto.resultadoIds ?? []).map(String),
+      relatedResultados: (leccionDto.resultadoIds ?? leccionDto.resultados ?? []).map(String),
     }
   })
 
@@ -956,100 +965,73 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
     </div>
   )
 
-  const mapEventToDto = (event: Event) => {
-    const impactoIdentifiers = event.impactos.map((impacto, index) => impacto.id || `impacto-${index}`)
-    const accionIdentifiers = event.accionesImplementadas.map((accion, index) => accion.id || `accion-${index}`)
-    const resultadoIdentifiers = event.resultados.map((resultado, index) => resultado.id || `resultado-${index}`)
-
-    const accionesDto = event.accionesImplementadas.map((accion, accionIndex) => {
-      const accionId = accionIdentifiers[accionIndex]
-      const impactoIds = accion.relatedImpactos
-        .map((impactoId) => {
-          const index = event.impactos.findIndex((impacto) => impacto.id === impactoId)
-          return index >= 0 ? impactoIdentifiers[index] : impactoId
-        })
-        .map(String)
-
-      const resultadoIds = event.resultados
-        .map((resultado, resultadoIndex) => ({ resultado, resultadoIndex }))
-        .filter(({ resultado }) => resultado.relatedAcciones.includes(accion.id))
-        .map(({ resultadoIndex, resultado }) => resultadoIdentifiers[resultadoIndex] ?? resultado.id ?? String(resultadoIndex))
-
-      return {
-        accion: {
-          id: accion.id,
-          titulo: accion.description,
-          descripcion: accion.description,
-          identificador: accionId,
-        },
-        impactoIds,
-        resultadoIds,
-      }
-    })
-
-    const resultadosDto = event.resultados.map((resultado, resultadoIndex) => {
-      const resultadoId = resultadoIdentifiers[resultadoIndex]
-
-      const accionIds = resultado.relatedAcciones.map((accionId) => {
-        const index = event.accionesImplementadas.findIndex((accion) => accion.id === accionId)
-        return index >= 0 ? accionIdentifiers[index] : accionId
-      })
-
-      const leccionIds = event.leccionesAprendidas
-        .filter((leccion) => leccion.relatedResultados.includes(resultado.id))
-        .map((leccion) => leccion.id)
-
-      return {
-        resultado: {
-          id: resultado.id,
-          titulo: resultado.description,
-          descripcion: resultado.description,
-          identificador: resultadoId,
-        },
-        accionIds,
-        leccionIds,
-      }
-    })
-
-    const leccionesDto = event.leccionesAprendidas.map((leccion, leccionIndex) => ({
-      leccion: {
-        id: leccion.id,
-        titulo: leccion.description,
-        descripcion: leccion.description,
-        identificador: leccion.id || `leccion-${leccionIndex}`,
-      },
-      resultadoIds: leccion.relatedResultados.map((resultadoId) => {
-        const index = event.resultados.findIndex((resultado) => resultado.id === resultadoId)
-        return index >= 0 ? resultadoIdentifiers[index] : String(resultadoId)
-      }),
-    }))
-
+  const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
     const impactosDto = event.impactos.map((impacto, impactoIndex) => {
-      const accionesRelacionadas = accionesDto
-        .filter((accionDto, accionIndex) => event.accionesImplementadas[accionIndex]?.relatedImpactos.includes(impacto.id))
-        .map((accionDto) => accionDto.accion.id ?? accionDto.accion.identificador)
+      const impactoIdentificador = impacto.id || `impacto-${impactoIndex}`
+
+      const accionesDto = event.accionesImplementadas
+        .filter((accion) => accion.relatedImpactos.includes(impacto.id))
+        .map((accion, accionIndex) => {
+          const accionIdentificador = accion.id || `accion-${impactoIndex}-${accionIndex}`
+
+          const impactoIds =
+            accion.relatedImpactos.length > 0 ? accion.relatedImpactos.map(String) : [impactoIdentificador]
+
+          const resultadosDto = event.resultados
+            .filter((resultado) => resultado.relatedAcciones.includes(accion.id))
+            .map((resultado, resultadoIndex) => {
+              const resultadoIdentificador =
+                resultado.id || `resultado-${impactoIndex}-${accionIndex}-${resultadoIndex}`
+
+              const leccionesDto = event.leccionesAprendidas
+                .filter((leccion) => leccion.relatedResultados.includes(resultado.id))
+                .map((leccion, leccionIndex) => ({
+                  leccion: {
+                    titulo: leccion.description,
+                    descripcion: leccion.description,
+                    identificador: leccion.id || `leccion-${impactoIndex}-${accionIndex}-${resultadoIndex}-${leccionIndex}`,
+                  },
+                  resultados: [resultadoIdentificador],
+                }))
+
+              return {
+                resultado: {
+                  titulo: resultado.description,
+                  descripcion: resultado.description,
+                  identificador: resultadoIdentificador,
+                },
+                acciones: [accionIdentificador],
+                lecciones: leccionesDto,
+              }
+            })
+
+          return {
+            accion: {
+              titulo: accion.description,
+              descripcion: accion.description,
+              identificador: accionIdentificador,
+            },
+            impactos: impactoIds,
+            resultados: resultadosDto,
+          }
+        })
 
       return {
         impacto: {
-          id: impactoIdentifiers[impactoIndex],
           titulo: impacto.description,
           descripcion: impacto.description,
-          identificador: impactoIdentifiers[impactoIndex],
+          identificador: impactoIdentificador,
         },
-        accionIds: accionesRelacionadas.map(String),
+        acciones: accionesDto,
       }
     })
 
     return {
       evento: {
-        id: event.id,
         titulo: event.evento,
         descripcion: event.evento,
       },
       impactos: impactosDto,
-      acciones: accionesDto,
-      resultados: resultadosDto,
-      lecciones: leccionesDto,
     }
   }
 

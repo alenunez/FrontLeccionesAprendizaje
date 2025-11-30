@@ -2325,45 +2325,44 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                   )}
                 </div>
               )}
-            </div>
-          </div>
-        </CardContent>
-          </fieldset>
+              </div>
+          </CardContent>
+      </fieldset>
 
-          <div className="flex flex-col gap-3 border-t border-emerald-100 bg-[#f4fff9] p-6 text-right sm:flex-row sm:justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              className="border-slate-300 bg-transparent hover:bg-slate-100"
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              disabled={isSubmitting || !isEditable}
-              className="gap-2 rounded-full bg-[#067138] px-6 py-5 text-base font-semibold text-white shadow-lg shadow-emerald-200/60 hover:bg-[#05592d] disabled:opacity-70"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Guardando...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4" />
-                  {isEditing ? "Actualizar" : "Guardar"}
-                </>
-              )}
-            </Button>
-          </div>
-        </form>
-      </Card>
-
-      <Dialog open={showEventDialog && isEditable} onOpenChange={(open) => !isSubmitting && isEditable && setShowEventDialog(open)}>
-        <DialogContent
-          className={`w-screen max-w-none p-0 m-0 rounded-none h-[90vh] overflow-y-auto min-w-full ${isSubmitting ? "pointer-events-none opacity-70" : ""}`}
+      <div className="flex flex-col gap-3 border-t border-emerald-100 bg-[#f4fff9] p-6 text-right sm:flex-row sm:justify-end">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onClose}
+          className="border-slate-300 bg-transparent hover:bg-slate-100"
         >
+          Cancelar
+        </Button>
+        <Button
+          type="submit"
+          disabled={isSubmitting || !isEditable}
+          className="gap-2 rounded-full bg-[#067138] px-6 py-5 text-base font-semibold text-white shadow-lg shadow-emerald-200/60 hover:bg-[#05592d] disabled:opacity-70"
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Guardando...
+            </>
+          ) : (
+            <>
+              <Save className="h-4 w-4" />
+              {isEditing ? "Actualizar" : "Guardar"}
+            </>
+          )}
+        </Button>
+      </div>
+    </form>
+  </Card>
+
+  <Dialog open={showEventDialog && isEditable} onOpenChange={(open) => !isSubmitting && isEditable && setShowEventDialog(open)}>
+    <DialogContent
+      className={`w-screen max-w-none p-0 m-0 rounded-none h-[90vh] overflow-y-auto min-w-full ${isSubmitting ? "pointer-events-none opacity-70" : ""}`}
+    >
           <div className="space-y-6 px-6 pt-6 pb-4">
             <div className="space-y-3">
               <div className="border-l-4 border-[#067138] pl-4">

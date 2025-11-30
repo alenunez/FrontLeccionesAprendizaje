@@ -214,9 +214,9 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-8">
-      <Card className="w-full max-w-6xl max-h-[95vh] rounded-3xl border border-emerald-100 shadow-2xl break-words flex flex-col overflow-hidden text-[15px] leading-relaxed sm:text-base">
-        <CardHeader className="sticky top-0 z-20 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-gradient-to-r from-[#0b7c4a] via-[#199a59] to-[#3f8f68] px-6 py-6 sm:px-8 sm:py-7 text-white shadow-lg rounded-b-[28px]">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 px-3 py-6 sm:px-4 sm:py-8">
+      <Card className="w-full max-w-6xl max-h-[calc(100vh-2rem)] sm:max-h-[95vh] rounded-3xl border border-emerald-100 shadow-2xl break-words flex flex-col overflow-hidden text-[15px] leading-relaxed sm:text-base">
+        <CardHeader className="sticky top-0 z-20 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-gradient-to-r from-[#0b7c4a] via-[#199a59] to-[#3f8f68] px-5 py-5 sm:px-8 sm:py-7 text-white shadow-lg rounded-b-[28px]">
           <div className="space-y-1">
             <CardTitle className="text-2xl font-bold text-white">Visualización del Proyecto</CardTitle>
             <CardDescription className="text-base text-emerald-50">

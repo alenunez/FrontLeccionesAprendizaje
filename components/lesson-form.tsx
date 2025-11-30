@@ -99,6 +99,8 @@ interface DirectoryUser {
   name: string
   email?: string
   title?: string
+  isGroup?: boolean
+  members?: DirectoryUser[]
 }
 
 interface FormDataState {
@@ -206,24 +208,51 @@ const fetchSedes = async (
   }
 }
 
+const mapDirectoryEntityToUser = (
+  entity: RemoteEntity,
+  index: number,
+  options?: { isGroup?: boolean },
+): DirectoryUser => {
+  const identifier = entity.id ?? entity.Id ?? entity.userPrincipalName ?? entity.UserPrincipalName ?? entity.oid ?? index
+  const displayName =
+    entity.displayName ?? entity.DisplayName ?? entity.nombre ?? entity.Nombre ?? entity.name ?? "Sin nombre"
+  const email = entity.mail ?? entity.email ?? entity.userPrincipalName ?? entity.UserPrincipalName
+  const title = entity.jobTitle ?? entity.cargo ?? entity.title
+
+  return {
+    id: String(identifier),
+    name: String(displayName),
+    email: email ? String(email) : undefined,
+    title: title ? String(title) : undefined,
+    isGroup: options?.isGroup,
+  }
+}
+
 const normalizeUserSuggestions = (payload: unknown): DirectoryUser[] => {
-  const entities = normalizePayload(payload)
+  if (payload && typeof payload === "object") {
+    const recordPayload = payload as { users?: unknown; groups?: unknown }
+    const hasCombined = Array.isArray(recordPayload.users) || Array.isArray(recordPayload.groups)
 
-  return entities.map((entity, index) => {
-    const identifier =
-      entity.id ?? entity.Id ?? entity.userPrincipalName ?? entity.UserPrincipalName ?? entity.oid ?? index
-    const displayName =
-      entity.displayName ?? entity.DisplayName ?? entity.nombre ?? entity.Nombre ?? entity.name ?? "Sin nombre"
-    const email = entity.mail ?? entity.email ?? entity.userPrincipalName ?? entity.UserPrincipalName
-    const title = entity.jobTitle ?? entity.cargo ?? entity.title
+    if (hasCombined) {
+      const normalizedUsers = normalizePayload(recordPayload.users).map((entity, index) =>
+        mapDirectoryEntityToUser(entity, index),
+      )
 
-    return {
-      id: String(identifier),
-      name: String(displayName),
-      email: email ? String(email) : undefined,
-      title: title ? String(title) : undefined,
+      const normalizedGroups = normalizePayload(recordPayload.groups).map((entity, index) => {
+        const group = mapDirectoryEntityToUser(entity, index, { isGroup: true })
+        const members = normalizePayload((entity as { members?: unknown }).members).map((member, memberIndex) =>
+          mapDirectoryEntityToUser(member, memberIndex),
+        )
+
+        return { ...group, members }
+      })
+
+      return [...normalizedUsers, ...normalizedGroups]
     }
-  })
+  }
+
+  const entities = normalizePayload(payload)
+  return entities.map((entity, index) => mapDirectoryEntityToUser(entity, index))
 }
 
 const getEstadoDescripcionFromEntity = (estado: RemoteEntity): string => {
@@ -619,9 +648,12 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
       setIsLoadingLectores(true)
       try {
         const params = new URLSearchParams({ query: lectorQuery })
-        const response = await authorizedFetch(`${API_BASE_URL}/DirectorioActivo/suggestions?${params.toString()}`, {
-          signal: controller.signal,
-        })
+        const response = await authorizedFetch(
+          `${API_BASE_URL}/DirectorioActivo/suggestions/combined-with-members?${params.toString()}`,
+          {
+            signal: controller.signal,
+          },
+        )
         if (!response.ok) {
           throw new Error("No fue posible obtener lectores")
         }
@@ -1577,6 +1609,26 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
     }
   }
 
+  const selectedDirectoryEntities = useMemo(
+    () => availableUsers.filter((user) => selectedUsers.includes(user.id)),
+    [availableUsers, selectedUsers],
+  )
+
+  const expandedSelectedLectores = useMemo(() => {
+    const registry = new Map<string, DirectoryUser>()
+
+    selectedDirectoryEntities.forEach((entity) => {
+      if (entity.isGroup && entity.members?.length) {
+        entity.members.forEach((member) => registry.set(member.id, member))
+        return
+      }
+
+      registry.set(entity.id, entity)
+    })
+
+    return Array.from(registry.values())
+  }, [selectedDirectoryEntities])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!isEditable) {
@@ -1598,7 +1650,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
       return
     }
 
-    if (nivelAcceso === "Privado" && selectedUsers.length === 0) {
+    if (nivelAcceso === "Privado" && expandedSelectedLectores.length === 0) {
       toast({
         title: "Lectores requeridos",
         description: "Agrega al menos un lector para un nivel de acceso privado.",
@@ -1610,7 +1662,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
     const fechaIso = formData.fecha ? new Date(formData.fecha).toISOString() : new Date().toISOString()
     const selectedSede = allSedes.find((sede) => sede.id === formData.sede)
     const selectedProceso = procesos.find((proceso) => proceso.id === formData.proceso)
-    const selectedLectores = availableUsers.filter((user) => selectedUsers.includes(user.id))
+    const selectedLectores = expandedSelectedLectores
 
     const desiredEstadoDescripcion = isEditing ? formData.estado : "Borrador"
     const estadoCoincidente = estados.find(
@@ -1722,7 +1774,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
     }
   }
 
-  const selectedUserObjects = availableUsers.filter((user) => selectedUsers.includes(user.id))
+  const selectedUserObjects = selectedDirectoryEntities
   const autorDisplay = [formData.autorNombre, formData.autorCorreo].filter(Boolean).join(" - ")
   const todayIso = useMemo(() => new Date().toISOString().split("T")[0], [])
 
@@ -2036,9 +2088,9 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                             className="w-full justify-between border-slate-200 focus:border-[#067138]"
                           >
                             <span className="text-slate-600">
-                              {selectedUsers.length === 0
-                                ? "Seleccionar usuarios..."
-                                : `${selectedUsers.length} usuario(s) seleccionado(s)`}
+                              {expandedSelectedLectores.length === 0
+                                ? "Seleccionar lectores..."
+                                : `${expandedSelectedLectores.length} lector(es) agregado(s)`}
                             </span>
                             <Plus className="h-4 w-4" />
                           </Button>
@@ -2074,8 +2126,8 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                                     />
                                     <div className="flex-1">
                                       <div className="font-medium text-slate-900">{user.name}</div>
-                                      {(user.email || user.title) && (
-                                        <div className="text-sm text-slate-500">{user.email ?? user.title}</div>
+                                      {user.isGroup && (
+                                        <div className="text-xs font-semibold text-emerald-700">Grupo</div>
                                       )}
                                     </div>
                                   </div>

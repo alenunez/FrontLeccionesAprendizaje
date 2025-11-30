@@ -20,8 +20,8 @@ const defaultUser: SimulatedUser = {
 
 const UserContext = createContext<SimulatedUser>(defaultUser)
 
-export function UserProvider({ children }: { children: React.ReactNode }) {
-  return <UserContext.Provider value={defaultUser}>{children}</UserContext.Provider>
+export function UserProvider({ children, user }: { children: React.ReactNode; user?: SimulatedUser }) {
+  return <UserContext.Provider value={user ?? defaultUser}>{children}</UserContext.Provider>
 }
 
 export const useSimulatedUser = () => useContext(UserContext)

@@ -4,6 +4,7 @@ import { Plus_Jakarta_Sans, Public_Sans } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 import { Toaster } from '@/components/ui/toaster'
+import { AuthProvider } from '@/components/auth-provider'
 
 const publicSans = Public_Sans({
   subsets: ['latin'],
@@ -38,7 +39,7 @@ export default function RootLayout({
       <body
         className={`font-sans antialiased ${publicSans.variable} ${plusJakarta.variable} ${GeistMono.variable}`}
       >
-        {children}
+        <AuthProvider>{children}</AuthProvider>
         <Analytics />
         <Toaster />
       </body>

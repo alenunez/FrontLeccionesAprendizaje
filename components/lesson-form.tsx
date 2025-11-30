@@ -420,8 +420,8 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
     proceso: "",
     compania: "",
     sede: "",
-    responsable: loggedUser.name,
-    responsableCorreo: loggedUser.email,
+    responsable: "",
+    responsableCorreo: "",
     proyectoOSituacion: "",
     aplicacionPractica: "",
   })
@@ -651,15 +651,15 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
         proceso: "",
         compania: "",
         sede: "",
-        responsable: loggedUser.name,
-        responsableCorreo: loggedUser.email,
+        responsable: "",
+        responsableCorreo: "",
         proyectoOSituacion: "",
         aplicacionPractica: "",
       })
       setNivelAcceso("Público")
       setSelectedUsers([])
       setEventos([])
-      setResponsableQuery(loggedUser.name)
+      setResponsableQuery("")
       setInitialSelectionNames({ compania: "", sede: "", proceso: "" })
       return
     }
@@ -1662,11 +1662,12 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
 
   const selectedUserObjects = availableUsers.filter((user) => selectedUsers.includes(user.id))
   const autorDisplay = [formData.autorNombre, formData.autorCorreo].filter(Boolean).join(" - ")
+  const todayIso = useMemo(() => new Date().toISOString().split("T")[0], [])
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <Card className="w-[90%] max-h-[90vh] overflow-y-auto border border-emerald-100 bg-white shadow-2xl">
-        <CardHeader className="flex flex-row items-center justify-between rounded-t-lg bg-gradient-to-r from-[#067138] via-[#0fa958] to-[#45a06c] text-white">
+      <Card className="w-full max-w-6xl max-h-[92vh] border border-emerald-100 bg-white shadow-2xl rounded-3xl overflow-hidden flex flex-col">
+        <CardHeader className="sticky top-0 z-20 flex flex-row items-center justify-between bg-gradient-to-r from-[#067138] via-[#0fa958] to-[#45a06c] px-6 py-5 sm:px-8 sm:py-6 text-white shadow-md">
           <div>
             <CardTitle className="text-xl text-white">Proyecto o Situación</CardTitle>
             <CardDescription className="text-emerald-100">
@@ -1684,7 +1685,8 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
           </Button>
         </CardHeader>
 
-        <div className="flex flex-col gap-3 border-b border-emerald-100 bg-[#f4fff9] px-6 py-4">
+        <div className="flex-1 overflow-y-auto">
+          <div className="flex flex-col gap-3 border-b border-emerald-100 bg-[#f4fff9] px-5 py-4 sm:px-6">
           <div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
             <div className="text-sm font-medium text-slate-700">Acciones de Flujo de Trabajo</div>
             <div className="text-xs text-slate-500">
@@ -1737,14 +1739,14 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
 
         <form onSubmit={handleSubmit}>
           <fieldset disabled={isSubmitting || !isEditable} className="border-0 p-0 m-0">
-            <CardContent className="space-y-8 p-8">
+            <CardContent className="space-y-8 p-6 sm:p-8">
               {/* ENCABEZADO - Información General hasta Anexos */}
               <div className="space-y-6">
-              <div className="border-l-4 border-[#067138] pl-4">
-                <h3 className="text-xl font-bold text-slate-900">Información General</h3>
-                <p className="text-sm text-slate-600">Datos básicos del evento o situación</p>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="border-l-4 border-[#067138] pl-4">
+                  <h3 className="text-xl font-bold text-slate-900">Información General</h3>
+                  <p className="text-sm text-slate-600">Datos básicos del evento o situación</p>
+                </div>
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div className="space-y-3">
                   <Label htmlFor="autor" className="text-sm font-semibold text-slate-700">
                     Autor
@@ -1777,6 +1779,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                     type="date"
                     value={formData.fecha}
                     onChange={(e) => setFormData({ ...formData, fecha: e.target.value })}
+                    max={todayIso}
                     className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30"
                     required
                   />
@@ -2325,39 +2328,40 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                   )}
                 </div>
               )}
-              </div>
+            </div>
           </CardContent>
-      </fieldset>
+        </fieldset>
 
-      <div className="flex flex-col gap-3 border-t border-emerald-100 bg-[#f4fff9] p-6 text-right sm:flex-row sm:justify-end">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onClose}
-          className="border-slate-300 bg-transparent hover:bg-slate-100"
-        >
-          Cancelar
-        </Button>
-        <Button
-          type="submit"
-          disabled={isSubmitting || !isEditable}
-          className="gap-2 rounded-full bg-[#067138] px-6 py-5 text-base font-semibold text-white shadow-lg shadow-emerald-200/60 hover:bg-[#05592d] disabled:opacity-70"
-        >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Guardando...
-            </>
-          ) : (
-            <>
-              <Save className="h-4 w-4" />
-              {isEditing ? "Actualizar" : "Guardar"}
-            </>
-          )}
-        </Button>
+          <div className="flex flex-col gap-3 border-t border-emerald-100 bg-[#f4fff9] p-6 text-right sm:flex-row sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              className="border-slate-300 bg-transparent hover:bg-slate-100"
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSubmitting || !isEditable}
+              className="gap-2 rounded-full bg-[#067138] px-6 py-5 text-base font-semibold text-white shadow-lg shadow-emerald-200/60 hover:bg-[#05592d] disabled:opacity-70"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Guardando...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4" />
+                  {isEditing ? "Actualizar" : "Guardar"}
+                </>
+              )}
+            </Button>
+          </div>
+        </form>
       </div>
-    </form>
-  </Card>
+    </Card>
 
   <Dialog open={showEventDialog && isEditable} onOpenChange={(open) => !isSubmitting && isEditable && setShowEventDialog(open)}>
     <DialogContent

@@ -9,6 +9,7 @@ export interface SimulatedUser {
   email: string
   role: UserRole
   avatarUrl?: string
+  isUsuarioCreate?: boolean
 }
 
 const defaultUser: SimulatedUser = {
@@ -16,6 +17,7 @@ const defaultUser: SimulatedUser = {
   email: "laura.mejia@solla.com",
   role: "Administrador",
   avatarUrl: "",
+  isUsuarioCreate: true,
 }
 
 const UserContext = createContext<SimulatedUser>(defaultUser)

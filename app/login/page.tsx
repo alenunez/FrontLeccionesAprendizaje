@@ -5,7 +5,7 @@ import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/card"
-import { AlertCircle, ShieldCheck } from "lucide-react"
+import { AlertCircle, ShieldCheck, Mail, Lock } from "lucide-react"
 import { useAuth } from "@/components/auth-provider"
 
 export default function LoginPage() {
@@ -19,42 +19,77 @@ export default function LoginPage() {
   }, [session, loading, router])
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-gradient-to-b from-primary/10 via-background to-secondary/10 px-4 py-12 text-foreground">
-      <div
-        className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?auto=format&fit=crop&w=1600&q=80')] bg-cover bg-center opacity-10"
-        aria-hidden
-      />
-      <div className="relative z-10 flex w-full max-w-4xl flex-col items-center gap-10 rounded-3xl bg-white/70 p-8 shadow-2xl backdrop-blur-sm sm:p-10">
-        <div className="flex flex-col items-center gap-4 text-center">
-          <div className="flex items-center gap-3">
-            <div className="relative h-14 w-14 overflow-hidden rounded-2xl border border-primary/10 bg-white p-2 shadow-sm">
-              <Image src="https://www.solla.com/wp-content/uploads/2022/01/logo-solla-1.png" alt="Solla" fill className="object-contain" />
-            </div>
-            <div className="text-left">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Gestor de lecciones aprendidas</p>
-              <h1 className="text-3xl font-bold sm:text-4xl">Acceso seguro</h1>
-            </div>
-          </div>
-          <p className="max-w-2xl text-lg text-muted-foreground">
-            Ingresa con tus credenciales corporativas para continuar. Usamos Azure Active Directory para autenticarte directamente en nuestro directorio.
-          </p>
-        </div>
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#f2f9f4] via-white to-[#d7ede2]">
+      <div className="pointer-events-none absolute inset-0 opacity-40">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,_rgba(6,113,56,0.12)_0,_transparent_35%),_radial-gradient(circle_at_80%_0%,_rgba(15,169,88,0.12)_0,_transparent_30%)]" />
+        <Image
+          src="https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?auto=format&fit=crop&w=1600&q=80"
+          alt="Fondo"
+          fill
+          className="object-cover object-center"
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-white via-white/90 to-[#f2f9f4]/80" />
+      </div>
 
-        <Card className="w-full max-w-xl border-none bg-white/90 shadow-xl">
-          <div className="flex items-center gap-3 bg-gradient-to-r from-primary to-secondary px-6 py-4 text-primary-foreground">
-            <div className="rounded-full bg-white/20 p-2">
-              <ShieldCheck className="h-5 w-5" />
+      <div className="relative mx-auto flex min-h-screen max-w-6xl flex-col gap-10 px-6 py-12 lg:flex-row lg:items-center">
+        <div className="flex-1 space-y-8 text-slate-800">
+          <div className="flex items-center gap-4">
+            <div className="relative h-16 w-16 overflow-hidden rounded-2xl bg-white shadow-lg ring-1 ring-emerald-100">
+              <Image src="/solla-favicon.svg" alt="Solla" fill className="p-3 object-contain" />
             </div>
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.2em]">Ingreso corporativo</p>
-              <p className="text-sm text-primary-foreground/90">Autenticación con Azure Active Directory</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Gestor de accesos autorizados</p>
+              <h1 className="text-3xl font-bold leading-tight text-slate-900 sm:text-4xl">Portal de Lecciones Aprendidas</h1>
             </div>
           </div>
+
+          <p className="max-w-2xl text-lg text-slate-700">
+            Ingresa de forma segura con tus credenciales corporativas. El acceso está protegido con Azure Active Directory y cumple con las políticas de seguridad de Solla.
+          </p>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="flex items-center gap-3 rounded-2xl bg-white/80 p-4 shadow-sm ring-1 ring-emerald-50 backdrop-blur">
+              <div className="rounded-full bg-emerald-50 p-2 text-emerald-700 ring-1 ring-emerald-100">
+                <ShieldCheck className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-900">Identidad verificada</p>
+                <p className="text-sm text-slate-600">Autenticación directa con Azure AD</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 rounded-2xl bg-white/80 p-4 shadow-sm ring-1 ring-emerald-50 backdrop-blur">
+              <div className="rounded-full bg-emerald-50 p-2 text-emerald-700 ring-1 ring-emerald-100">
+                <Lock className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-900">Sesión protegida</p>
+                <p className="text-sm text-slate-600">Tokens cifrados y controlados</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-emerald-100 bg-white/80 p-5 shadow-sm backdrop-blur">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Ingreso corporativo</p>
+            <p className="mt-2 text-base text-slate-700">Usa tu correo @solla.com para continuar con la autenticación.</p>
+            <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-600">
+              <div className="flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-emerald-800 ring-1 ring-emerald-100">
+                <Mail className="h-4 w-4" />
+                <span>soporte-ti@solla.com</span>
+              </div>
+              <span className="rounded-full bg-white px-3 py-1 text-emerald-800 ring-1 ring-emerald-100">Operación 24/7</span>
+            </div>
+          </div>
+        </div>
+
+        <Card className="w-full max-w-md border-none bg-white/90 shadow-2xl ring-1 ring-emerald-100 backdrop-blur">
           <CardContent className="space-y-6 p-8">
-            <div className="space-y-2">
-              <CardTitle className="text-xl">Inicia sesión</CardTitle>
+            <div className="space-y-2 text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
+                <ShieldCheck className="h-5 w-5" />
+              </div>
+              <CardTitle className="text-2xl">Acceso seguro</CardTitle>
               <CardDescription className="text-base">
-                Conecta tu cuenta del directorio activo para continuar. No mostramos información sensible del inquilino ni de la aplicación.
+                Conecta tu cuenta del directorio activo. No almacenamos credenciales, solo validamos tu identidad para habilitar el portal.
               </CardDescription>
             </div>
 
@@ -71,19 +106,19 @@ export default function LoginPage() {
             <div className="space-y-3">
               <Button
                 size="lg"
-                className="w-full gap-2 rounded-xl bg-primary text-primary-foreground shadow-md transition hover:bg-primary/90"
+                className="w-full gap-2 rounded-xl bg-[#067138] text-white shadow-lg shadow-emerald-200/70 transition hover:bg-[#05592d]"
                 onClick={signIn}
                 disabled={loading}
               >
                 {loading ? "Preparando autenticación..." : "Ingresar con Azure AD"}
               </Button>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-slate-600">
                 Solo solicitaremos los permisos básicos (openid, profile y email) para validar tu identidad en el directorio activo.
               </p>
             </div>
 
-            <p className="text-center text-xs text-muted-foreground">
-              IDs de cliente y tenant se mantienen protegidos. Si necesitas ayuda, contacta a soporte corporativo.
+            <p className="text-center text-xs text-slate-500">
+              Si tienes problemas con tu cuenta, escribe a <span className="font-semibold text-emerald-700">soporte-ti@solla.com</span> indicando tu usuario corporativo.
             </p>
           </CardContent>
         </Card>

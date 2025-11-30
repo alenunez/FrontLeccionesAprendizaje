@@ -10,6 +10,8 @@ export interface AuthSession {
   user?: {
     name?: string
     email?: string
+    role?: string
+    isUsuarioCreate?: boolean
   }
 }
 
@@ -18,14 +20,22 @@ const STATE_KEY = "solla.auth.state"
 
 const baseAuthScopes = ["openid", "profile", "email", "offline_access", SOLLA_API_SCOPE]
 
+const decodeBase64Payload = (value: string) => {
+  const normalized = value.replace(/-/g, "+").replace(/_/g, "/")
+  const binary =
+    typeof atob === "function" ? atob(normalized) : Buffer.from(normalized, "base64").toString("binary")
+  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0))
+  const decoder = new TextDecoder()
+  return decoder.decode(bytes)
+}
+
 const decodeJwtPayload = (token?: string) => {
   if (!token) return undefined
   const parts = token.split(".")
   if (parts.length !== 3) return undefined
   try {
     const payload = parts[1]
-    const normalized = payload.replace(/-/g, "+").replace(/_/g, "/")
-    const decoded = atob(normalized)
+    const decoded = decodeBase64Payload(payload)
     return JSON.parse(decoded) as { name?: string; preferred_username?: string; email?: string }
   } catch (error) {
     console.error("No se pudo decodificar el id_token", error)
@@ -33,7 +43,7 @@ const decodeJwtPayload = (token?: string) => {
   }
 }
 
-const isExpired = (expiresAt?: number) => !expiresAt || Date.now() > expiresAt
+export const isExpired = (expiresAt?: number) => !expiresAt || Date.now() > expiresAt
 
 export const buildLoginUrl = (redirectUri: string, state: string, nonce: string) => {
   const url = new URL(`https://login.microsoftonline.com/${SOLLA_TENANT_ID}/oauth2/v2.0/authorize`)

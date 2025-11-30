@@ -12,7 +12,8 @@ export default function Home() {
     ? {
         name: session.user?.name ?? "Usuario Solla",
         email: session.user?.email ?? "sesion@solla.com",
-        role: "Gestor de conocimiento",
+        role: session.user?.role ?? "Gestor de conocimiento",
+        isUsuarioCreate: session.user?.isUsuarioCreate,
         avatarUrl: "",
       }
     : undefined

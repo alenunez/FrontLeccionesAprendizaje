@@ -136,7 +136,7 @@ const normalizeEstadoPayload = (payload: unknown): Array<{ id?: string | number;
 }
 
 export function Dashboard() {
-  const { session } = useAuth()
+  const { session, signOut } = useAuth()
   const loggedUser = useSimulatedUser()
   const [activeTab, setActiveTab] = useState("lessons")
   const [showForm, setShowForm] = useState(false)
@@ -160,6 +160,8 @@ export function Dashboard() {
   const [totalCount, setTotalCount] = useState(0)
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc")
   const [estadoFilterId, setEstadoFilterId] = useState<string | number | null>(null)
+  const isViewerOnly = loggedUser.isUsuarioCreate === false
+  const showAnalyticsTab = !isViewerOnly
 
   const authHeaders = useMemo<HeadersInit>(
     () => (session?.accessToken ? { Authorization: `${session.tokenType ?? "Bearer"} ${session.accessToken}` } : {}),
@@ -347,6 +349,12 @@ export function Dashboard() {
     }
   }, [pageNumber, pageSize, totalCount])
 
+  useEffect(() => {
+    if (isViewerOnly && activeTab !== "lessons") {
+      setActiveTab("lessons")
+    }
+  }, [activeTab, isViewerOnly])
+
   const handleGeneratePPTX = (lesson: any) => {
     // Simulate PPTX generation
     console.log(`Generando presentación PPTX para: ${lesson.projectOrSituation}`)
@@ -376,7 +384,7 @@ export function Dashboard() {
   }
 
   const handleLogout = () => {
-    console.log("Cerrando sesión")
+    signOut()
   }
 
   const eventsByProject = [
@@ -453,7 +461,7 @@ export function Dashboard() {
               </Avatar>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold text-slate-900">{loggedUser.name}</p>
-                <p className="truncate text-xs text-slate-500">{loggedUser.role}</p>
+                {!isViewerOnly ? <p className="truncate text-xs text-slate-500">{loggedUser.role}</p> : null}
                 <p className="truncate text-xs text-[#067138]/80">{loggedUser.email}</p>
               </div>
               <Button
@@ -466,20 +474,24 @@ export function Dashboard() {
                 Cerrar sesión
               </Button>
             </div>
-            <Button
-              onClick={() => handleOpenForm()}
-              className="gap-2 rounded-full bg-[#067138] px-6 py-5 text-base font-semibold text-white shadow-xl shadow-emerald-200/60 transition hover:bg-[#05592d]"
-            >
-              <Plus className="h-4 w-4" />
-              Nueva Lección
-            </Button>
+            {!isViewerOnly ? (
+              <Button
+                onClick={() => handleOpenForm()}
+                className="gap-2 rounded-full bg-[#067138] px-6 py-5 text-base font-semibold text-white shadow-xl shadow-emerald-200/60 transition hover:bg-[#05592d]"
+              >
+                <Plus className="h-4 w-4" />
+                Nueva Lección
+              </Button>
+            ) : null}
           </div>
         </div>
       </header>
 
       <main className="mx-auto w-full max-w-screen-2xl px-4 py-8 sm:px-6 lg:px-10 xl:px-16 2xl:px-24">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-          <TabsList className="grid w-full grid-cols-1 gap-2 rounded-2xl border border-emerald-100 bg-white/90 shadow-sm sm:grid-cols-2">
+          <TabsList
+            className={`grid w-full grid-cols-1 gap-2 rounded-2xl border border-emerald-100 bg-white/90 shadow-sm ${showAnalyticsTab ? "sm:grid-cols-2" : "sm:grid-cols-1"}`}
+          >
             <TabsTrigger
               value="lessons"
               className="flex items-center gap-2 rounded-xl data-[state=active]:bg-[#067138] data-[state=active]:text-white data-[state=active]:shadow-lg"
@@ -487,13 +499,15 @@ export function Dashboard() {
               <BookOpen className="h-4 w-4" />
               Lecciones
             </TabsTrigger>
-            <TabsTrigger
-              value="analytics"
-              className="flex items-center gap-2 rounded-xl data-[state=active]:bg-[#067138] data-[state=active]:text-white data-[state=active]:shadow-lg"
-            >
-              <BarChart3 className="h-4 w-4" />
-              Analíticas
-            </TabsTrigger>
+            {showAnalyticsTab ? (
+              <TabsTrigger
+                value="analytics"
+                className="flex items-center gap-2 rounded-xl data-[state=active]:bg-[#067138] data-[state=active]:text-white data-[state=active]:shadow-lg"
+              >
+                <BarChart3 className="h-4 w-4" />
+                Analíticas
+              </TabsTrigger>
+            ) : null}
           </TabsList>
 
           <TabsContent value="lessons">
@@ -739,15 +753,16 @@ export function Dashboard() {
                             >
                               <Edit3 className="h-4 w-4" />
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-[#b45309] hover:bg-orange-50"
-                              onClick={() => handleGeneratePPTX(lesson)}
-                              title="Generar presentación PPTX"
-                            >
-                              <Presentation className="h-4 w-4" />
-                            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={`text-[#b45309] hover:bg-orange-50 ${isViewerOnly ? "cursor-not-allowed opacity-60" : ""}`}
+              onClick={() => !isViewerOnly && handleGeneratePPTX(lesson)}
+              title={isViewerOnly ? "Acceso de solo lectura" : "Generar presentación PPTX"}
+              disabled={isViewerOnly}
+            >
+              <Presentation className="h-4 w-4" />
+            </Button>
                             <Button
                               variant="ghost"
                               size="sm"
@@ -814,8 +829,9 @@ export function Dashboard() {
             </div>
           </TabsContent>
 
-          <TabsContent value="analytics">
-            <div className="space-y-8">
+          {showAnalyticsTab ? (
+            <TabsContent value="analytics">
+              <div className="space-y-8">
               <Card className="border border-emerald-50 bg-white/80 shadow-sm backdrop-blur-sm">
                 <CardHeader className="pb-4">
                   <CardTitle className="flex items-center gap-3 text-xl">
@@ -951,6 +967,7 @@ export function Dashboard() {
               </div>
             </div>
           </TabsContent>
+          ) : null}
         </Tabs>
       </main>
 

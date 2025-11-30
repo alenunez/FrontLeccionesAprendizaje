@@ -488,6 +488,7 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
     sede: "",
     proceso: "",
   })
+  const hasAppliedInitialSelections = useRef(false)
   const workflowActionConfig: Record<WorkflowAction, { label: string; icon: React.ReactNode; targetEstado: string }> = {
     sendToReview: {
       label: "Enviar a revisión",
@@ -689,6 +690,7 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
       setEventos([])
       setResponsableQuery("")
       setInitialSelectionNames({ compania: "", sede: "", proceso: "" })
+      hasAppliedInitialSelections.current = false
       return
     }
 
@@ -706,6 +708,8 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
       sede: proyecto.sede?.data?.nombre ?? "",
       proceso: proyecto.proceso?.data?.nombre ?? "",
     })
+
+    hasAppliedInitialSelections.current = false
 
     setFormData({
       autorNombre: proyecto.nombreAutor ?? loggedUser.name,
@@ -731,6 +735,24 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
   }, [initialData, loggedUser])
 
   useEffect(() => {
+    if (hasAppliedInitialSelections.current) return
+
+    const hasSelections = Boolean(
+      initialSelectionNames.compania || initialSelectionNames.proceso || initialSelectionNames.sede,
+    )
+
+    const canAttemptRestore =
+      (initialSelectionNames.compania && companias.length > 0) ||
+      (initialSelectionNames.proceso && procesos.length > 0) ||
+      (initialSelectionNames.sede && allSedes.length > 0)
+
+    if (!hasSelections) {
+      hasAppliedInitialSelections.current = true
+      return
+    }
+
+    if (!canAttemptRestore) return
+
     const normalize = (value: string) =>
       value
         .normalize("NFD")
@@ -738,12 +760,15 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
         .toLowerCase()
         .trim()
 
+    let restored = false
+
     if (!formData.compania && initialSelectionNames.compania && companias.length > 0) {
       const matchedCompania = companias.find(
         (compania) => normalize(compania.nombre) === normalize(initialSelectionNames.compania),
       )
       if (matchedCompania) {
         setFormData((prev) => ({ ...prev, compania: matchedCompania.id }))
+        restored = true
       }
     }
 
@@ -753,6 +778,7 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
       )
       if (matchedProceso) {
         setFormData((prev) => ({ ...prev, proceso: matchedProceso.id }))
+        restored = true
       }
     }
 
@@ -760,7 +786,12 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
       const matchedSede = allSedes.find((sede) => normalize(sede.nombre) === normalize(initialSelectionNames.sede))
       if (matchedSede) {
         setFormData((prev) => ({ ...prev, sede: matchedSede.id, compania: prev.compania || matchedSede.companiaId || "" }))
+        restored = true
       }
+    }
+
+    if (restored || canAttemptRestore) {
+      hasAppliedInitialSelections.current = true
     }
   }, [allSedes, companias, formData.compania, formData.proceso, formData.sede, initialSelectionNames, procesos])
 

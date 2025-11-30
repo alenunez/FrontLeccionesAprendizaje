@@ -15,7 +15,11 @@ const normalize = (value?: string | null): string => {
 
 const extractEstadoDescripcion = (lesson?: ProyectoSituacionDto | null): string => {
   const estado = lesson?.proyecto?.estado
-  const estadoData = typeof estado === "object" ? (estado as { data?: { descripcion?: string; name?: string; value?: string } }) : undefined
+
+  if (!estado || typeof estado !== "object") return ""
+
+  const estadoData = (estado as { data?: { descripcion?: string; name?: string; value?: string } })?.data
+
   const descripcion =
     estadoData?.descripcion ??
     estadoData?.name ??

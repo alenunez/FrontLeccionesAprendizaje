@@ -1,5 +1,7 @@
 "use client"
 
+import { useEffect, useState } from "react"
+
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -7,6 +9,8 @@ import type { ProyectoSituacionDto } from "@/types/lessons"
 import { flattenEventoDto } from "@/lib/event-normalizer"
 import {
   CalendarDays,
+  Download,
+  Loader2,
   Lock,
   MapPin,
   ShieldCheck,
@@ -14,6 +18,8 @@ import {
   Users,
   X,
 } from "lucide-react"
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:7043/api"
 
 interface LessonViewerProps {
   lesson: ProyectoSituacionDto
@@ -30,6 +36,13 @@ interface NormalizableEntity {
   id: string | number
   descripcion: string
   lookupIds?: (string | number | undefined)[]
+}
+
+interface ProyectoAdjunto {
+  id?: number
+  idAdjunto?: number
+  proyectoSituacionId?: number
+  nombreArchivo?: string
 }
 
 const formatDate = (value?: string): string => {
@@ -131,6 +144,70 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
   const autorNombre = safeText(proyecto.nombreAutor ?? proyecto.nombreResponsable ?? undefined)
   const lectorNames = lectores.map((lector) => lector.nombreLector).filter((name): name is string => Boolean(name))
   const lectoresLabel = lectorNames.length ? lectorNames.join(", ") : "Sin lectores"
+
+  const [attachments, setAttachments] = useState<ProyectoAdjunto[]>([])
+  const [isLoadingAttachments, setIsLoadingAttachments] = useState(false)
+  const [attachmentsError, setAttachmentsError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!proyecto.id) return
+
+    const controller = new AbortController()
+
+    const fetchAttachments = async () => {
+      setIsLoadingAttachments(true)
+      setAttachmentsError(null)
+      try {
+        const response = await fetch(`${API_BASE_URL}/Adjuntos/proyecto/${proyecto.id}`, {
+          signal: controller.signal,
+        })
+        if (!response.ok) {
+          throw new Error("No fue posible cargar los adjuntos.")
+        }
+        const data = await response.json()
+        setAttachments(Array.isArray(data) ? data : [])
+      } catch (error) {
+        if ((error as Error).name === "AbortError") return
+        console.error("Error al cargar adjuntos", error)
+        setAttachmentsError("No fue posible cargar los adjuntos.")
+        setAttachments([])
+      } finally {
+        setIsLoadingAttachments(false)
+      }
+    }
+
+    fetchAttachments()
+
+    return () => controller.abort()
+  }, [proyecto.id])
+
+  const handleDownload = async (attachment: ProyectoAdjunto) => {
+    const downloadId = attachment.id ?? attachment.idAdjunto
+    if (!downloadId) {
+      alert("El adjunto seleccionado no tiene un identificador disponible para descargar.")
+      return
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/Adjuntos/${downloadId}/archivo`)
+      if (!response.ok) {
+        throw new Error("No se pudo descargar el archivo.")
+      }
+
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = url
+      link.download = attachment.nombreArchivo ?? `adjunto-${downloadId}`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error("Error al descargar adjunto", error)
+      alert("No se pudo descargar el adjunto. Inténtalo nuevamente.")
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-8">
@@ -372,6 +449,67 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
                 </div>
               )
             })}
+          </section>
+
+          <section className="space-y-4 rounded-3xl border border-emerald-100 bg-white/80 p-6 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#067138]/70">Adjuntos</p>
+                <h3 className="text-xl font-semibold text-slate-900">Archivos relacionados</h3>
+                <p className="text-sm text-slate-600">
+                  Consulta y descarga los archivos asociados a este proyecto o situación.
+                </p>
+              </div>
+              <Badge className="rounded-full bg-[#e0f3e8] text-[#067138]">
+                {attachments.length} adjunto{attachments.length === 1 ? "" : "s"}
+              </Badge>
+            </div>
+
+            {attachmentsError && <p className="text-sm text-red-600">{attachmentsError}</p>}
+
+            {isLoadingAttachments && (
+              <div className="flex items-center gap-2 text-sm text-slate-600">
+                <Loader2 className="h-4 w-4 animate-spin text-[#067138]" />
+                Cargando adjuntos...
+              </div>
+            )}
+
+            {!isLoadingAttachments && attachments.length === 0 && !attachmentsError && (
+              <p className="text-sm text-slate-500">No hay adjuntos disponibles para este proyecto.</p>
+            )}
+
+            {attachments.length > 0 && (
+              <div className="space-y-3">
+                {attachments.map((attachment, index) => {
+                  const downloadKey = attachment.id ?? attachment.idAdjunto ?? index
+                  return (
+                    <div
+                      key={downloadKey}
+                      className="flex flex-wrap items-center gap-3 rounded-2xl border border-emerald-50 bg-[#f8fdf9] p-4 shadow-inner"
+                    >
+                      <div className="flex-1 min-w-[200px]">
+                        <p className="font-medium text-slate-900 break-words">
+                          {attachment.nombreArchivo ?? "Archivo sin nombre"}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          ID de descarga: {attachment.id ?? attachment.idAdjunto ?? "N/D"}
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="gap-2 border-[#8fd0ab] text-[#065f46] hover:bg-[#e0f3e8]"
+                        onClick={() => handleDownload(attachment)}
+                      >
+                        <Download className="h-4 w-4" />
+                        Descargar
+                      </Button>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </section>
         </CardContent>
       </Card>

@@ -43,6 +43,7 @@ interface LessonSummary {
 interface ProjectsByCompanyReport {
   companiaId?: string | number
   companiaNombre?: string | null
+  totalProyectoSituaciones?: number
   totalProyectosSituaciones?: number
   nombre?: string | null
 }
@@ -75,6 +76,8 @@ interface ProjectsByYearCompanyReport {
   anio?: number
   companiaId?: string | number
   companiaNombre?: string | null
+  proyectosPorAnio?: Array<{ anio?: number; totalProyectosSituaciones?: number; totalProyectoSituaciones?: number }>
+  totalProyectoSituaciones?: number
   totalProyectosSituaciones?: number
   nombre?: string | null
 }
@@ -128,6 +131,11 @@ const normalizeReportArray = <T,>(payload: unknown): T[] => {
   }
 
   return []
+}
+
+const getTotalProjectsValue = (payload?: { totalProyectosSituaciones?: number; totalProyectoSituaciones?: number }): number => {
+  if (!payload) return 0
+  return payload.totalProyectosSituaciones ?? payload.totalProyectoSituaciones ?? 0
 }
 
 const getCompanyName = (item: { companiaNombre?: string | null; nombre?: string | null }): string =>
@@ -489,7 +497,7 @@ export function Dashboard() {
     () =>
       projectsByCompany.map((item) => ({
         compania: getCompanyName(item),
-        total: item.totalProyectosSituaciones ?? 0,
+        total: getTotalProjectsValue(item),
       })),
     [projectsByCompany],
   )
@@ -519,7 +527,7 @@ export function Dashboard() {
         const entry: Record<string, number | string> = { compania: getCompanyName(company) }
         statusKeys.forEach((status) => {
           const match = company.estados?.find((estado) => (estado.descripcion ?? "Sin estado") === status)
-          entry[status] = match?.totalProyectoSituaciones ?? 0
+          entry[status] = getTotalProjectsValue(match)
         })
         return entry
       }),
@@ -565,15 +573,20 @@ export function Dashboard() {
     const yearMap = new Map<number, Record<string, number | string>>()
 
     projectsByYearCompany.forEach((item) => {
-      const year = item.anio ?? 0
-      if (!yearMap.has(year)) {
-        yearMap.set(year, { anio: year })
-      }
-      const entry = yearMap.get(year)
-      if (entry) {
-        const companyName = getCompanyName(item)
-        entry[companyName] = item.totalProyectosSituaciones ?? 0
-      }
+      const companyName = getCompanyName(item)
+      const yearlyEntries =
+        item.proyectosPorAnio ?? (item.anio != null ? [{ anio: item.anio, totalProyectosSituaciones: getTotalProjectsValue(item) }] : [])
+
+      yearlyEntries.forEach((yearData) => {
+        const year = yearData.anio ?? 0
+        if (!yearMap.has(year)) {
+          yearMap.set(year, { anio: year })
+        }
+        const entry = yearMap.get(year)
+        if (entry) {
+          entry[companyName] = getTotalProjectsValue(yearData)
+        }
+      })
     })
 
     return Array.from(yearMap.values()).sort((a, b) => Number(a.anio) - Number(b.anio))

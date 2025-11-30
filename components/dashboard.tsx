@@ -10,18 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BookOpen, Plus, Search, Filter, Eye, BarChart3, Presentation, LogOut, Edit3 } from "lucide-react"
 import { LessonForm } from "./lesson-form"
 import { LessonViewer } from "./lesson-viewer"
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-} from "recharts"
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
 import type {
@@ -33,6 +22,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useSimulatedUser } from "@/lib/user-context"
 import { canEditLesson } from "@/lib/permissions"
 import { useAuth } from "@/components/auth-provider"
+import { Spinner } from "./spinner"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:7043/api"
 const BRAND_COLOR = "#067138"
@@ -48,6 +38,45 @@ interface LessonSummary {
   proceso: string
   compania: string
   sede: string
+}
+
+interface ProjectsByCompanyReport {
+  companiaId?: string | number
+  companiaNombre?: string | null
+  totalProyectosSituaciones?: number
+  nombre?: string | null
+}
+
+interface ProjectStatusByCompanyReport {
+  estados?: Array<{ id?: string | number; descripcion?: string | null; totalProyectoSituaciones?: number }>
+  id?: string | number
+  nombre?: string | null
+}
+
+interface AverageEventsByCompanyReport {
+  totalEventosProyecto?: number
+  totalProyectosSituaciones?: number
+  promedioEventosPorProyecto?: number
+  companiaId?: string | number
+  companiaNombre?: string | null
+  nombre?: string | null
+}
+
+interface AverageLessonsByCompanyReport {
+  totalLeccionesProyecto?: number
+  totalProyectosSituaciones?: number
+  promedioLeccionesPorProyecto?: number
+  companiaId?: string | number
+  companiaNombre?: string | null
+  nombre?: string | null
+}
+
+interface ProjectsByYearCompanyReport {
+  anio?: number
+  companiaId?: string | number
+  companiaNombre?: string | null
+  totalProyectosSituaciones?: number
+  nombre?: string | null
 }
 
 const normalizeLessonsResponse = (payload: unknown): ProyectoSituacionDto[] => {
@@ -88,6 +117,21 @@ const parseLessonsResponse = (
     estadoCounts: typedPayload.estadoCounts,
   }
 }
+
+const normalizeReportArray = <T,>(payload: unknown): T[] => {
+  if (Array.isArray(payload)) return payload as T[]
+
+  if (payload && typeof payload === "object") {
+    const record = payload as { items?: unknown; data?: unknown }
+    if (Array.isArray(record.items)) return record.items as T[]
+    if (Array.isArray(record.data)) return record.data as T[]
+  }
+
+  return []
+}
+
+const getCompanyName = (item: { companiaNombre?: string | null; nombre?: string | null }): string =>
+  item.companiaNombre ?? item.nombre ?? "Sin compañía"
 
 const formatDate = (value?: string): string => {
   if (!value) return "Sin fecha"
@@ -160,6 +204,14 @@ export function Dashboard() {
   const [totalCount, setTotalCount] = useState(0)
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc")
   const [estadoFilterId, setEstadoFilterId] = useState<string | number | null>(null)
+  const [projectsByCompany, setProjectsByCompany] = useState<ProjectsByCompanyReport[]>([])
+  const [projectsByStatusCompany, setProjectsByStatusCompany] = useState<ProjectStatusByCompanyReport[]>([])
+  const [averageEventsByCompany, setAverageEventsByCompany] = useState<AverageEventsByCompanyReport[]>([])
+  const [averageLessonsByCompany, setAverageLessonsByCompany] = useState<AverageLessonsByCompanyReport[]>([])
+  const [projectsByYearCompany, setProjectsByYearCompany] = useState<ProjectsByYearCompanyReport[]>([])
+  const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(false)
+  const [analyticsError, setAnalyticsError] = useState<string | null>(null)
+  const [analyticsReloadKey, setAnalyticsReloadKey] = useState(0)
   const isViewerOnly = loggedUser.isUsuarioCreate === false
   const showAnalyticsTab = !isViewerOnly
 
@@ -355,6 +407,52 @@ export function Dashboard() {
     }
   }, [activeTab, isViewerOnly])
 
+  useEffect(() => {
+    if (!showAnalyticsTab) return
+
+    const controller = new AbortController()
+
+    const fetchReport = async <T,>(url: string): Promise<T> => {
+      const response = await fetch(url, { headers: authHeaders, signal: controller.signal })
+      if (!response.ok) {
+        throw new Error(`Error al cargar el reporte: ${response.status}`)
+      }
+      return (await response.json()) as T
+    }
+
+    const fetchAnalytics = async () => {
+      setIsLoadingAnalytics(true)
+      setAnalyticsError(null)
+      try {
+        const [projectsCompanyPayload, statusByCompanyPayload, avgEventsPayload, avgLessonsPayload, projectsByYearPayload] =
+          await Promise.all([
+            fetchReport<unknown>(`${API_BASE_URL}/Reportes/proyectos-por-compania`),
+            fetchReport<unknown>(`${API_BASE_URL}/Reportes/proyectos-por-estado-compania`),
+            fetchReport<unknown>(`${API_BASE_URL}/Reportes/promedio-eventos-proyecto-compania`),
+            fetchReport<unknown>(`${API_BASE_URL}/Reportes/promedio-lecciones-proyecto-compania`),
+            fetchReport<unknown>(`${API_BASE_URL}/Reportes/proyectos-por-anio-compania`),
+          ])
+
+        setProjectsByCompany(normalizeReportArray<ProjectsByCompanyReport>(projectsCompanyPayload))
+        setProjectsByStatusCompany(normalizeReportArray<ProjectStatusByCompanyReport>(statusByCompanyPayload))
+        setAverageEventsByCompany(normalizeReportArray<AverageEventsByCompanyReport>(avgEventsPayload))
+        setAverageLessonsByCompany(normalizeReportArray<AverageLessonsByCompanyReport>(avgLessonsPayload))
+        setProjectsByYearCompany(normalizeReportArray<ProjectsByYearCompanyReport>(projectsByYearPayload))
+      } catch (error) {
+        if ((error as Error).name !== "AbortError") {
+          setAnalyticsError("No fue posible cargar las analíticas. Intenta nuevamente.")
+          console.error("Error al cargar analíticas", error)
+        }
+      } finally {
+        setIsLoadingAnalytics(false)
+      }
+    }
+
+    fetchAnalytics()
+
+    return () => controller.abort()
+  }, [authHeaders, showAnalyticsTab, analyticsReloadKey])
+
   const handleGeneratePPTX = (lesson: any) => {
     // Simulate PPTX generation
     console.log(`Generando presentación PPTX para: ${lesson.projectOrSituation}`)
@@ -387,37 +485,99 @@ export function Dashboard() {
     signOut()
   }
 
-  const eventsByProject = [
-    { proyecto: "SAP Implementation", eventos: 12 },
-    { proyecto: "Digital Transformation", eventos: 8 },
-    { proyecto: "Quality Improvement", eventos: 15 },
-    { proyecto: "Infrastructure Upgrade", eventos: 6 },
-    { proyecto: "Process Automation", eventos: 10 },
-  ]
+  const projectsByCompanyChartData = useMemo(
+    () =>
+      projectsByCompany.map((item) => ({
+        compania: getCompanyName(item),
+        total: item.totalProyectosSituaciones ?? 0,
+      })),
+    [projectsByCompany],
+  )
 
-  const lessonsByProject = [
-    { proyecto: "SAP Implementation", lecciones: 24 },
-    { proyecto: "Digital Transformation", lecciones: 18 },
-    { proyecto: "Quality Improvement", lecciones: 32 },
-    { proyecto: "Infrastructure Upgrade", lecciones: 14 },
-    { proyecto: "Process Automation", lecciones: 21 },
-  ]
+  const statusColorPalette = ["#94a3b8", "#fbbf24", "#34d399", "#0ea5e9", "#a78bfa", "#f472b6", "#7c3aed"]
 
-  const lessonsByLeader = [
-    { name: "María González", value: 28, color: BRAND_COLOR },
-    { name: "Carlos Ruiz", value: 22, color: BRAND_ACCENT },
-    { name: "Ana López", value: 19, color: "#45a06c" },
-    { name: "Juan Pérez", value: 16, color: "#8fd0ab" },
-    { name: "Luis Martín", value: 12, color: "#cbeed8" },
-  ]
+  const statusKeys = useMemo(() => {
+    const keys = new Set<string>()
+    projectsByStatusCompany.forEach((company) => {
+      company.estados?.forEach((estado) => keys.add(estado.descripcion ?? "Sin estado"))
+    })
+    return Array.from(keys)
+  }, [projectsByStatusCompany])
 
-  const lessonsByCompany = [
-    { compania: "Acme Corp", lecciones: 45 },
-    { compania: "Tech Solutions", lecciones: 38 },
-    { compania: "Global Industries", lecciones: 32 },
-    { compania: "Innovation Labs", lecciones: 28 },
-    { compania: "Future Systems", lecciones: 24 },
-  ]
+  const statusColorMap = useMemo(
+    () =>
+      statusKeys.reduce((acc, status, index) => {
+        acc[status] = statusColorPalette[index % statusColorPalette.length]
+        return acc
+      }, {} as Record<string, string>),
+    [statusKeys],
+  )
+
+  const projectStatusChartData = useMemo(
+    () =>
+      projectsByStatusCompany.map((company) => {
+        const entry: Record<string, number | string> = { compania: getCompanyName(company) }
+        statusKeys.forEach((status) => {
+          const match = company.estados?.find((estado) => (estado.descripcion ?? "Sin estado") === status)
+          entry[status] = match?.totalProyectoSituaciones ?? 0
+        })
+        return entry
+      }),
+    [projectsByStatusCompany, statusKeys],
+  )
+
+  const averageEventsChartData = useMemo(
+    () =>
+      averageEventsByCompany.map((item) => ({
+        compania: getCompanyName(item),
+        promedio: Number(item.promedioEventosPorProyecto ?? 0),
+      })),
+    [averageEventsByCompany],
+  )
+
+  const averageLessonsChartData = useMemo(
+    () =>
+      averageLessonsByCompany.map((item) => ({
+        compania: getCompanyName(item),
+        promedio: Number(item.promedioLeccionesPorProyecto ?? 0),
+      })),
+    [averageLessonsByCompany],
+  )
+
+  const projectYearCompanies = useMemo(() => {
+    const companies = new Set<string>()
+    projectsByYearCompany.forEach((item) => companies.add(getCompanyName(item)))
+    return Array.from(companies)
+  }, [projectsByYearCompany])
+
+  const companyColorPalette = ["#067138", "#0fa958", "#45a06c", "#7fc8a9", "#0ea5e9", "#a78bfa", "#f472b6", "#f97316"]
+
+  const companyColorMap = useMemo(
+    () =>
+      projectYearCompanies.reduce((acc, company, index) => {
+        acc[company] = companyColorPalette[index % companyColorPalette.length]
+        return acc
+      }, {} as Record<string, string>),
+    [projectYearCompanies],
+  )
+
+  const projectsByYearChartData = useMemo(() => {
+    const yearMap = new Map<number, Record<string, number | string>>()
+
+    projectsByYearCompany.forEach((item) => {
+      const year = item.anio ?? 0
+      if (!yearMap.has(year)) {
+        yearMap.set(year, { anio: year })
+      }
+      const entry = yearMap.get(year)
+      if (entry) {
+        const companyName = getCompanyName(item)
+        entry[companyName] = item.totalProyectosSituaciones ?? 0
+      }
+    })
+
+    return Array.from(yearMap.values()).sort((a, b) => Number(a.anio) - Number(b.anio))
+  }, [projectsByYearCompany])
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-[#f4fff9] via-white to-[#d8f5e6] text-slate-900">
@@ -832,141 +992,224 @@ export function Dashboard() {
           {showAnalyticsTab ? (
             <TabsContent value="analytics">
               <div className="space-y-8">
-              <Card className="border border-emerald-50 bg-white/80 shadow-sm backdrop-blur-sm">
-                <CardHeader className="pb-4">
-                  <CardTitle className="flex items-center gap-3 text-xl">
-                    <div className="rounded-xl bg-[#e0f3e8] p-2">
-                      <BarChart3 className="h-5 w-5 text-[#067138]" />
+                <Card className="border border-emerald-50 bg-white/80 shadow-sm backdrop-blur-sm">
+                  <CardHeader className="flex flex-col gap-3 pb-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-3 text-xl">
+                        <div className="rounded-xl bg-[#e0f3e8] p-2">
+                          <BarChart3 className="h-5 w-5 text-[#067138]" />
+                        </div>
+                        Analíticas del Repositorio
+                      </CardTitle>
+                      <CardDescription className="text-slate-600">
+                        Visualización de métricas y tendencias del sistema de lecciones aprendidas
+                      </CardDescription>
                     </div>
-                    Analíticas del Repositorio
-                  </CardTitle>
-                  <CardDescription className="text-slate-600">
-                    Visualización de métricas y tendencias del sistema de lecciones aprendidas
-                  </CardDescription>
-                </CardHeader>
-              </Card>
-
-              {/* Eventos por Proyecto */}
-              <Card className="shadow-sm border border-emerald-50 bg-white/80 backdrop-blur-sm">
-                <CardHeader>
-                  <CardTitle className="text-lg">Eventos por Proyecto</CardTitle>
-                  <CardDescription>Distribución de eventos registrados por proyecto</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-80">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={eventsByProject}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                        <XAxis dataKey="proyecto" tick={{ fontSize: 12 }} angle={-45} textAnchor="end" height={80} />
-                        <YAxis tick={{ fontSize: 12 }} />
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: "white",
-                            border: "1px solid #e2e8f0",
-                            borderRadius: "8px",
-                          }}
-                        />
-                        <Bar dataKey="eventos" fill={BRAND_COLOR} radius={[4, 4, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Lecciones por Proyecto */}
-              <Card className="shadow-sm border border-emerald-50 bg-white/80 backdrop-blur-sm">
-                <CardHeader>
-                  <CardTitle className="text-lg">Lecciones por Proyecto</CardTitle>
-                  <CardDescription>Número de lecciones aprendidas capturadas por proyecto</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-80">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={lessonsByProject}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                        <XAxis dataKey="proyecto" tick={{ fontSize: 12 }} angle={-45} textAnchor="end" height={80} />
-                        <YAxis tick={{ fontSize: 12 }} />
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: "white",
-                            border: "1px solid #e2e8f0",
-                            borderRadius: "8px",
-                          }}
-                        />
-                        <Bar dataKey="lecciones" fill={BRAND_ACCENT} radius={[4, 4, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Lecciones por Líder del Proyecto */}
-                <Card className="shadow-sm border border-emerald-50 bg-white/80 backdrop-blur-sm">
-                  <CardHeader>
-                    <CardTitle className="text-lg">Lecciones por Líder del Proyecto</CardTitle>
-                    <CardDescription>Distribución de lecciones por líder responsable</CardDescription>
+                    <Button
+                      variant="outline"
+                      className="border-emerald-200 text-[#067138] hover:bg-[#e0f3e8]"
+                      onClick={() => setAnalyticsReloadKey((prev) => prev + 1)}
+                    >
+                      Actualizar datos
+                    </Button>
                   </CardHeader>
-                  <CardContent>
-                    <div className="h-80">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={lessonsByLeader}
-                            cx="50%"
-                            cy="50%"
-                            outerRadius={80}
-                            fill={BRAND_COLOR}
-                            dataKey="value"
-                            label={({ name, value }) => `${name}: ${value}`}
-                            labelLine={false}
-                          >
-                            {lessonsByLeader.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                          <Tooltip
-                            contentStyle={{
-                              backgroundColor: "white",
-                              border: "1px solid #e2e8f0",
-                              borderRadius: "8px",
-                            }}
-                          />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </CardContent>
                 </Card>
 
-                {/* Lecciones por Compañía */}
-                <Card className="shadow-sm border border-emerald-50 bg-white/80 backdrop-blur-sm">
-                  <CardHeader>
-                    <CardTitle className="text-lg">Lecciones por Compañía</CardTitle>
-                    <CardDescription>Número de lecciones registradas por compañía</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-80">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={lessonsByCompany} layout="horizontal">
-                          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                          <XAxis type="number" tick={{ fontSize: 12 }} />
-                          <YAxis dataKey="compania" type="category" tick={{ fontSize: 12 }} width={120} />
-                          <Tooltip
-                            contentStyle={{
-                              backgroundColor: "white",
-                              border: "1px solid #e2e8f0",
-                              borderRadius: "8px",
-                            }}
-                          />
-                          <Bar dataKey="lecciones" fill="#45a06c" radius={[0, 4, 4, 0]} />
-                        </BarChart>
-                      </ResponsiveContainer>
+                {analyticsError ? (
+                  <Alert variant="destructive" className="border-red-200 bg-red-50">
+                    <AlertTitle>Ocurrió un problema</AlertTitle>
+                    <AlertDescription>
+                      {analyticsError} {" "}
+                      <button
+                        type="button"
+                        onClick={() => setAnalyticsReloadKey((prev) => prev + 1)}
+                        className="font-semibold text-[#067138] underline"
+                      >
+                        Reintentar
+                      </button>
+                    </AlertDescription>
+                  </Alert>
+                ) : null}
+
+                {isLoadingAnalytics ? (
+                  <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-emerald-100 bg-white/70 p-10 shadow-sm">
+                    <Spinner />
+                    <p className="text-sm text-slate-600">Cargando reportes, por favor espera...</p>
+                  </div>
+                ) : (
+                  <div className="space-y-8">
+                    <Card className="shadow-sm border border-emerald-50 bg-white/80 backdrop-blur-sm">
+                      <CardHeader>
+                        <CardTitle className="text-lg">Cantidad de proyectos por compañía</CardTitle>
+                        <CardDescription>Total de proyectos o situaciones registrados por empresa</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="h-80">
+                          {projectsByCompanyChartData.length === 0 ? (
+                            <p className="text-sm text-slate-600">No hay datos disponibles para mostrar.</p>
+                          ) : (
+                            <ResponsiveContainer width="100%" height="100%">
+                              <BarChart data={projectsByCompanyChartData}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                                <XAxis dataKey="compania" tick={{ fontSize: 12 }} />
+                                <YAxis tick={{ fontSize: 12 }} />
+                                <Tooltip
+                                  contentStyle={{
+                                    backgroundColor: "white",
+                                    border: "1px solid #e2e8f0",
+                                    borderRadius: "8px",
+                                  }}
+                                />
+                                <Bar dataKey="total" fill={BRAND_COLOR} radius={[4, 4, 0, 0]} />
+                              </BarChart>
+                            </ResponsiveContainer>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="shadow-sm border border-emerald-50 bg-white/80 backdrop-blur-sm">
+                      <CardHeader>
+                        <CardTitle className="text-lg">Cantidad de proyectos por estado y compañía</CardTitle>
+                        <CardDescription>Distribución de estados (borrador, en revisión, publicado) para cada empresa</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="h-96">
+                          {projectStatusChartData.length === 0 ? (
+                            <p className="text-sm text-slate-600">No hay datos disponibles para mostrar.</p>
+                          ) : (
+                            <ResponsiveContainer width="100%" height="100%">
+                              <BarChart data={projectStatusChartData}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                                <XAxis dataKey="compania" tick={{ fontSize: 12 }} />
+                                <YAxis tick={{ fontSize: 12 }} />
+                                <Tooltip
+                                  contentStyle={{
+                                    backgroundColor: "white",
+                                    border: "1px solid #e2e8f0",
+                                    borderRadius: "8px",
+                                  }}
+                                />
+                                <Legend wrapperStyle={{ fontSize: "12px" }} />
+                                {statusKeys.map((status) => (
+                                  <Bar
+                                    key={status}
+                                    dataKey={status}
+                                    stackId="estado"
+                                    fill={statusColorMap[status] ?? BRAND_ACCENT}
+                                    radius={[4, 4, 0, 0]}
+                                  />
+                                ))}
+                              </BarChart>
+                            </ResponsiveContainer>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+                      <Card className="shadow-sm border border-emerald-50 bg-white/80 backdrop-blur-sm">
+                        <CardHeader>
+                          <CardTitle className="text-lg">Promedio de eventos por proyecto y compañía</CardTitle>
+                          <CardDescription>Eventos registrados en promedio por cada proyecto o situación</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="h-72">
+                            {averageEventsChartData.length === 0 ? (
+                              <p className="text-sm text-slate-600">No hay datos disponibles para mostrar.</p>
+                            ) : (
+                              <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={averageEventsChartData}>
+                                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                                  <XAxis dataKey="compania" tick={{ fontSize: 12 }} />
+                                  <YAxis tick={{ fontSize: 12 }} />
+                                  <Tooltip
+                                    contentStyle={{
+                                      backgroundColor: "white",
+                                      border: "1px solid #e2e8f0",
+                                      borderRadius: "8px",
+                                    }}
+                                  />
+                                  <Bar dataKey="promedio" fill={BRAND_COLOR} radius={[4, 4, 0, 0]} />
+                                </BarChart>
+                              </ResponsiveContainer>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card className="shadow-sm border border-emerald-50 bg-white/80 backdrop-blur-sm">
+                        <CardHeader>
+                          <CardTitle className="text-lg">Promedio de lecciones por proyecto y compañía</CardTitle>
+                          <CardDescription>Lecciones aprendidas promedio registradas por proyecto</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="h-72">
+                            {averageLessonsChartData.length === 0 ? (
+                              <p className="text-sm text-slate-600">No hay datos disponibles para mostrar.</p>
+                            ) : (
+                              <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={averageLessonsChartData}>
+                                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                                  <XAxis dataKey="compania" tick={{ fontSize: 12 }} />
+                                  <YAxis tick={{ fontSize: 12 }} />
+                                  <Tooltip
+                                    contentStyle={{
+                                      backgroundColor: "white",
+                                      border: "1px solid #e2e8f0",
+                                      borderRadius: "8px",
+                                    }}
+                                  />
+                                  <Bar dataKey="promedio" fill={BRAND_ACCENT} radius={[4, 4, 0, 0]} />
+                                </BarChart>
+                              </ResponsiveContainer>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
                     </div>
-                  </CardContent>
-                </Card>
+
+                    <Card className="shadow-sm border border-emerald-50 bg-white/80 backdrop-blur-sm">
+                      <CardHeader>
+                        <CardTitle className="text-lg">Proyectos por año y compañía</CardTitle>
+                        <CardDescription>Evolución anual de proyectos o situaciones por empresa</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="h-96">
+                          {projectsByYearChartData.length === 0 ? (
+                            <p className="text-sm text-slate-600">No hay datos disponibles para mostrar.</p>
+                          ) : (
+                            <ResponsiveContainer width="100%" height="100%">
+                              <BarChart data={projectsByYearChartData}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                                <XAxis dataKey="anio" tick={{ fontSize: 12 }} />
+                                <YAxis tick={{ fontSize: 12 }} />
+                                <Tooltip
+                                  contentStyle={{
+                                    backgroundColor: "white",
+                                    border: "1px solid #e2e8f0",
+                                    borderRadius: "8px",
+                                  }}
+                                />
+                                <Legend wrapperStyle={{ fontSize: "12px" }} />
+                                {projectYearCompanies.map((company) => (
+                                  <Bar
+                                    key={company}
+                                    dataKey={company}
+                                    fill={companyColorMap[company] ?? BRAND_COLOR}
+                                    radius={[4, 4, 0, 0]}
+                                  />
+                                ))}
+                              </BarChart>
+                            </ResponsiveContainer>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                )}
               </div>
-            </div>
-          </TabsContent>
+            </TabsContent>
           ) : null}
         </Tabs>
       </main>

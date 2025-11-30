@@ -32,6 +32,7 @@ import type {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useSimulatedUser } from "@/lib/user-context"
 import { canEditLesson } from "@/lib/permissions"
+import { useAuth } from "@/components/auth-provider"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:7043/api"
 const BRAND_COLOR = "#067138"
@@ -135,6 +136,7 @@ const normalizeEstadoPayload = (payload: unknown): Array<{ id?: string | number;
 }
 
 export function Dashboard() {
+  const { session } = useAuth()
   const loggedUser = useSimulatedUser()
   const [activeTab, setActiveTab] = useState("lessons")
   const [showForm, setShowForm] = useState(false)
@@ -159,12 +161,17 @@ export function Dashboard() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc")
   const [estadoFilterId, setEstadoFilterId] = useState<string | number | null>(null)
 
+  const authHeaders = useMemo<HeadersInit>(
+    () => (session?.accessToken ? { Authorization: `${session.tokenType ?? "Bearer"} ${session.accessToken}` } : {}),
+    [session?.accessToken, session?.tokenType],
+  )
+
   useEffect(() => {
     const controller = new AbortController()
 
     const fetchEstados = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/Estado`, { signal: controller.signal })
+        const response = await fetch(`${API_BASE_URL}/Estado`, { signal: controller.signal, headers: authHeaders })
         if (!response.ok) {
           throw new Error(`Error al cargar los estados: ${response.status}`)
         }
@@ -212,6 +219,7 @@ export function Dashboard() {
         const response = await fetch(url, {
           signal: controller.signal,
           headers: {
+            ...authHeaders,
             correoUsuario: loggedUser.email,
           },
         })

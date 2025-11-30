@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -18,6 +18,7 @@ import {
   Users,
   X,
 } from "lucide-react"
+import { useAuth } from "@/components/auth-provider"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:7043/api"
 
@@ -144,6 +145,11 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
   const autorNombre = safeText(proyecto.nombreAutor ?? proyecto.nombreResponsable ?? undefined)
   const lectorNames = lectores.map((lector) => lector.nombreLector).filter((name): name is string => Boolean(name))
   const lectoresLabel = lectorNames.length ? lectorNames.join(", ") : "Sin lectores"
+  const { session } = useAuth()
+  const authHeaders = useMemo<HeadersInit>(
+    () => (session?.accessToken ? { Authorization: `${session.tokenType ?? "Bearer"} ${session.accessToken}` } : {}),
+    [session?.accessToken, session?.tokenType],
+  )
 
   const [attachments, setAttachments] = useState<ProyectoAdjunto[]>([])
   const [isLoadingAttachments, setIsLoadingAttachments] = useState(false)
@@ -161,6 +167,7 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
       try {
         const response = await fetch(`${API_BASE_URL}/Adjuntos/proyecto/${proyecto.id}`, {
           signal: controller.signal,
+          headers: authHeaders,
         })
         if (!response.ok) {
           throw new Error("No fue posible cargar los adjuntos.")
@@ -180,7 +187,7 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
     fetchAttachments()
 
     return () => controller.abort()
-  }, [proyecto.id])
+  }, [authHeaders, proyecto.id])
 
   const handleDownload = async (attachment: ProyectoAdjunto) => {
     const downloadId = attachment.id ?? attachment.idAdjunto
@@ -191,7 +198,7 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
 
     setDownloadingAttachmentId(downloadId)
     try {
-      const response = await fetch(`${API_BASE_URL}/Adjuntos/${downloadId}/archivo`)
+      const response = await fetch(`${API_BASE_URL}/Adjuntos/${downloadId}/archivo`, { headers: authHeaders })
       if (!response.ok) {
         throw new Error("No se pudo descargar el archivo.")
       }

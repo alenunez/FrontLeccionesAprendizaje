@@ -9,6 +9,7 @@ const normalize = (value?: string | null): string => {
     .toString()
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "")
+    .replace(/\s+/g, "")
     .toLowerCase()
     .trim()
 }
@@ -47,7 +48,7 @@ export const canEditLesson = (lesson: ProyectoSituacionDto | null | undefined, u
 
   const estadoDescripcion = normalize(extractEstadoDescripcion(lesson))
   const isBorrador = estadoDescripcion === "borrador"
-  const isEnRevision = estadoDescripcion === "en revision"
+  const isEnRevision = estadoDescripcion === "enrevision"
   const isPublicado = estadoDescripcion === "publicado" || estadoDescripcion === "publicada"
 
   const role = normalize(user.role)
@@ -84,7 +85,7 @@ export const getWorkflowActions = (
 
   const estadoDescripcion = normalize(options?.overrideEstado ?? extractEstadoDescripcion(lesson))
   const isBorrador = estadoDescripcion === "borrador"
-  const isEnRevision = estadoDescripcion === "en revision"
+  const isEnRevision = estadoDescripcion === "enrevision"
   const isPublicado = estadoDescripcion === "publicado" || estadoDescripcion === "publicada"
 
   const role = normalize(user.role)

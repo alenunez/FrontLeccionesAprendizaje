@@ -78,6 +78,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const payload = (await response.json()) as {
           isUsuarioCreate?: boolean
           rolName?: string
+          nombreRol?: string
           email?: string
           nombre?: string
         }
@@ -88,7 +89,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             ...currentSession.user,
             name: payload.nombre ?? currentSession.user?.name,
             email: payload.email ?? currentSession.user?.email,
-            role: payload.rolName ?? currentSession.user?.role,
+            role: payload.nombreRol ?? payload.rolName ?? currentSession.user?.role,
             isUsuarioCreate: payload.isUsuarioCreate ?? currentSession.user?.isUsuarioCreate,
           },
         }

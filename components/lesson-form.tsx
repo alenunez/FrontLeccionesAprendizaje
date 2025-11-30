@@ -2,14 +2,29 @@
 
 import type React from "react"
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { X, Save, Plus, Trash2, Upload, FileText, Edit, Loader2, Check, Send, Globe2, Undo2, RefreshCcw } from "lucide-react"
+import {
+  X,
+  Save,
+  Plus,
+  Trash2,
+  Upload,
+  FileText,
+  Edit,
+  Loader2,
+  Check,
+  Send,
+  Globe2,
+  Undo2,
+  RefreshCcw,
+  Download,
+} from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -34,6 +49,13 @@ interface Attachment {
   size: string
   type: string
   file: File
+}
+
+interface ProyectoAdjunto {
+  id?: number
+  idAdjunto?: number
+  proyectoSituacionId?: number
+  nombreArchivo?: string
 }
 
 interface Event {
@@ -411,7 +433,16 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
   const [selectedUsers, setSelectedUsers] = useState<string[]>([])
   const [showUserDropdown, setShowUserDropdown] = useState(false)
   const userDropdownRef = useRef<HTMLDivElement | null>(null)
+  const existingAttachmentInputRef = useRef<HTMLInputElement | null>(null)
   const [attachments, setAttachments] = useState<Attachment[]>([])
+  const [existingAttachments, setExistingAttachments] = useState<ProyectoAdjunto[]>([])
+  const [isLoadingExistingAttachments, setIsLoadingExistingAttachments] = useState(false)
+  const [existingAttachmentsError, setExistingAttachmentsError] = useState<string | null>(null)
+  const [downloadingExistingAttachmentId, setDownloadingExistingAttachmentId] = useState<
+    number | string | null
+  >(null)
+  const [deletingExistingAttachmentId, setDeletingExistingAttachmentId] = useState<number | string | null>(null)
+  const [isUploadingExistingAttachment, setIsUploadingExistingAttachment] = useState(false)
 
   const [procesos, setProcesos] = useState<SelectOption[]>([])
   const [companias, setCompanias] = useState<SelectOption[]>([])
@@ -740,6 +771,184 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
 
   const MAX_ATTACHMENTS = 3
   const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024
+  const projectId = initialData?.proyecto?.id
+
+  const fetchExistingAttachments = useCallback(
+    async (signal?: AbortSignal) => {
+      if (!projectId) return
+
+      setIsLoadingExistingAttachments(true)
+      setExistingAttachmentsError(null)
+      try {
+        const response = await fetch(`${API_BASE_URL}/Adjuntos/proyecto/${projectId}`, { signal })
+        if (!response.ok) {
+          throw new Error("No fue posible cargar los adjuntos.")
+        }
+        const data = await response.json()
+        setExistingAttachments(Array.isArray(data) ? data : [])
+      } catch (error) {
+        if ((error as Error).name === "AbortError") return
+        console.error("Error al cargar adjuntos", error)
+        setExistingAttachmentsError("No fue posible cargar los adjuntos.")
+        setExistingAttachments([])
+      } finally {
+        setIsLoadingExistingAttachments(false)
+      }
+    },
+    [projectId],
+  )
+
+  useEffect(() => {
+    if (!isEditing || !projectId) return
+    const controller = new AbortController()
+    fetchExistingAttachments(controller.signal)
+    return () => controller.abort()
+  }, [fetchExistingAttachments, isEditing, projectId])
+
+  const resolveAttachmentId = (attachment: ProyectoAdjunto) => attachment.id ?? attachment.idAdjunto
+
+  const handleExistingAttachmentDownload = async (attachment: ProyectoAdjunto) => {
+    const downloadId = resolveAttachmentId(attachment)
+    if (!downloadId) {
+      toast({
+        title: "Descarga no disponible",
+        description: "El adjunto seleccionado no tiene un identificador de descarga.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setDownloadingExistingAttachmentId(downloadId)
+    try {
+      const response = await fetch(`${API_BASE_URL}/Adjuntos/${downloadId}/archivo`)
+      if (!response.ok) {
+        throw new Error("No se pudo descargar el archivo.")
+      }
+
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = url
+      link.download = attachment.nombreArchivo ?? `adjunto-${downloadId}`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error("Error al descargar adjunto", error)
+      toast({
+        title: "No se pudo descargar",
+        description: "Inténtalo nuevamente más tarde.",
+        variant: "destructive",
+      })
+    } finally {
+      setDownloadingExistingAttachmentId(null)
+    }
+  }
+
+  const handleDeleteExistingAttachment = async (attachment: ProyectoAdjunto) => {
+    const deleteId = resolveAttachmentId(attachment)
+    if (!deleteId) {
+      toast({
+        title: "No se pudo eliminar",
+        description: "El adjunto seleccionado no tiene un identificador válido.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setDeletingExistingAttachmentId(deleteId)
+    try {
+      const response = await fetch(`${API_BASE_URL}/Adjuntos/${deleteId}`, { method: "DELETE" })
+      if (!response.ok) {
+        throw new Error("No fue posible eliminar el adjunto.")
+      }
+
+      toast({
+        title: "Adjunto eliminado",
+        description: "El archivo fue eliminado correctamente.",
+        className: "bg-emerald-50 border-emerald-200 text-emerald-900",
+      })
+      await fetchExistingAttachments()
+    } catch (error) {
+      console.error("Error al eliminar adjunto", error)
+      toast({
+        title: "No se pudo eliminar",
+        description: "Ocurrió un error al eliminar el archivo.",
+        variant: "destructive",
+      })
+    } finally {
+      setDeletingExistingAttachmentId(null)
+    }
+  }
+
+  const handleExistingAttachmentUpload = async (file: File) => {
+    if (!projectId) {
+      toast({
+        title: "Proyecto no disponible",
+        description: "No se encontró el identificador del proyecto a editar.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (existingAttachments.length >= MAX_ATTACHMENTS) {
+      toast({
+        title: "Límite alcanzado",
+        description: "Solo puedes tener hasta 3 adjuntos. Elimina uno para agregar otro.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      toast({
+        title: "Archivo demasiado grande",
+        description: "Cada adjunto debe pesar máximo 5 MB.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    const submission = new FormData()
+    submission.append("archivos", file)
+    submission.append("proyectoSituacionId", String(projectId))
+
+    setIsUploadingExistingAttachment(true)
+    try {
+      const response = await fetch(`${API_BASE_URL}/Adjuntos/multiples`, {
+        method: "POST",
+        body: submission,
+      })
+
+      if (!response.ok) {
+        throw new Error("No fue posible subir el archivo.")
+      }
+
+      toast({
+        title: "Adjunto agregado",
+        description: "El archivo se guardó correctamente.",
+        className: "bg-emerald-50 border-emerald-200 text-emerald-900",
+      })
+      await fetchExistingAttachments()
+    } catch (error) {
+      console.error("Error al subir adjunto", error)
+      toast({
+        title: "No se pudo subir el archivo",
+        description: "Inténtalo nuevamente más tarde.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsUploadingExistingAttachment(false)
+    }
+  }
+
+  const handleExistingAttachmentSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ""
+    if (!file) return
+    void handleExistingAttachmentUpload(file)
+  }
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
@@ -1941,55 +2150,181 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                 <p className="text-sm text-slate-600">Adjunte documentos, imágenes o archivos relacionados</p>
               </div>
 
-              <div className="space-y-4">
-                <div className="flex items-center gap-4">
+              {isEditing ? (
+                <div className="space-y-4">
                   <input
                     type="file"
-                    id="file-upload"
-                    multiple
-                    onChange={handleFileUpload}
+                    ref={existingAttachmentInputRef}
+                    onChange={handleExistingAttachmentSelection}
                     className="hidden"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.txt"
                   />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => document.getElementById("file-upload")?.click()}
-                  className="gap-2 border-green-200 text-green-700 hover:bg-green-50"
-                >
-                  <Upload className="h-4 w-4" />
-                  Subir archivos
-                </Button>
-                <span className="text-sm text-slate-500">
-                  Formatos soportados: PDF, Word, Excel, PowerPoint, imágenes, texto. Hasta 3 archivos de 5 MB cada uno.
-                </span>
-              </div>
 
-                {attachments.length > 0 && (
-                  <div className="space-y-2">
-                    {attachments.map((attachment) => (
-                      <div
-                        key={attachment.id}
-                        className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200"
-                      >
-                        <FileText className="h-5 w-5 text-slate-500" />
-                        <div className="flex-1">
-                          <div className="font-medium text-slate-900">{attachment.name}</div>
-                          <div className="text-sm text-slate-500">{attachment.size}</div>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeAttachment(attachment.id)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
+                  {existingAttachmentsError && (
+                    <p className="text-sm text-red-600">{existingAttachmentsError}</p>
+                  )}
+
+                  {isLoadingExistingAttachments && (
+                    <div className="flex items-center gap-2 text-sm text-slate-600">
+                      <Loader2 className="h-4 w-4 animate-spin text-[#067138]" /> Cargando adjuntos...
+                    </div>
+                  )}
+
+                  {!isLoadingExistingAttachments && existingAttachments.length === 0 && !existingAttachmentsError && (
+                    <p className="text-sm text-slate-500">No hay adjuntos asociados a este proyecto.</p>
+                  )}
+
+                  {existingAttachments.length > 0 && (
+                    <div className="space-y-3">
+                      {existingAttachments.map((attachment, index) => {
+                        const attachmentKey = resolveAttachmentId(attachment) ?? index
+                        return (
+                          <div
+                            key={attachmentKey}
+                            className="flex flex-wrap items-center gap-3 rounded-2xl border border-emerald-50 bg-[#f8fdf9] p-4 shadow-inner"
+                          >
+                            <div className="flex-1 min-w-[200px]">
+                              <p className="font-medium text-slate-900 break-words">
+                                {attachment.nombreArchivo ?? "Archivo sin nombre"}
+                              </p>
+                              <p className="text-xs text-slate-500">
+                                ID de descarga: {resolveAttachmentId(attachment) ?? "N/D"}
+                              </p>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="gap-2 border-[#8fd0ab] text-[#065f46] hover:bg-[#e0f3e8]"
+                                onClick={() => handleExistingAttachmentDownload(attachment)}
+                                disabled={downloadingExistingAttachmentId === attachmentKey}
+                              >
+                                {downloadingExistingAttachmentId === attachmentKey ? (
+                                  <>
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    Descargando...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Download className="h-4 w-4" />
+                                    Descargar
+                                  </>
+                                )}
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="gap-2 border-red-200 text-red-700 hover:bg-red-50"
+                                onClick={() => handleDeleteExistingAttachment(attachment)}
+                                disabled={
+                                  deletingExistingAttachmentId === attachmentKey || isSubmitting || !isEditable
+                                }
+                              >
+                                {deletingExistingAttachmentId === attachmentKey ? (
+                                  <>
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    Eliminando...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Trash2 className="h-4 w-4" />
+                                    Eliminar
+                                  </>
+                                )}
+                              </Button>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+
+                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-dashed border-emerald-200 bg-emerald-50/40 p-4">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-slate-800">Agregar un archivo</span>
+                      <span className="text-xs text-slate-600">Hasta 3 adjuntos de máximo 5 MB cada uno.</span>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="gap-2 border-green-200 text-green-700 hover:bg-green-50"
+                      disabled={!isEditable || isSubmitting || existingAttachments.length >= MAX_ATTACHMENTS}
+                      onClick={() => existingAttachmentInputRef.current?.click()}
+                    >
+                      {isUploadingExistingAttachment ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Subiendo...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="h-4 w-4" />
+                          Agregar archivo
+                        </>
+                      )}
+                    </Button>
                   </div>
-                )}
+
+                  {existingAttachments.length >= MAX_ATTACHMENTS && (
+                    <p className="text-sm text-red-600">
+                      Has alcanzado el máximo de 3 adjuntos. Elimina uno para poder cargar un nuevo archivo.
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-4">
+                    <input
+                      type="file"
+                      id="file-upload"
+                      multiple
+                      onChange={handleFileUpload}
+                      className="hidden"
+                      accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.txt"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => document.getElementById("file-upload")?.click()}
+                      className="gap-2 border-green-200 text-green-700 hover:bg-green-50"
+                    >
+                      <Upload className="h-4 w-4" />
+                      Subir archivos
+                    </Button>
+                    <span className="text-sm text-slate-500">
+                      Formatos soportados: PDF, Word, Excel, PowerPoint, imágenes, texto. Hasta 3 archivos de 5 MB cada uno.
+                    </span>
+                  </div>
+
+                  {attachments.length > 0 && (
+                    <div className="space-y-2">
+                      {attachments.map((attachment) => (
+                        <div
+                          key={attachment.id}
+                          className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200"
+                        >
+                          <FileText className="h-5 w-5 text-slate-500" />
+                          <div className="flex-1">
+                            <div className="font-medium text-slate-900">{attachment.name}</div>
+                            <div className="text-sm text-slate-500">{attachment.size}</div>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeAttachment(attachment.id)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </CardContent>

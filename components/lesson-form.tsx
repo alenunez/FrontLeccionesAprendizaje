@@ -1665,8 +1665,8 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
   const todayIso = useMemo(() => new Date().toISOString().split("T")[0], [])
 
   return (
-    <div className="fixed inset-0 z-50 flex items-stretch justify-center overflow-y-auto bg-black/60 p-0 backdrop-blur-sm sm:items-start sm:p-4 md:p-6">
-      <Card className="w-full h-full max-h-screen sm:h-auto sm:max-h-[92vh] sm:max-w-6xl border border-emerald-100 bg-white shadow-2xl rounded-none sm:rounded-3xl overflow-hidden flex flex-col text-[15px] leading-relaxed sm:text-base">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-3 backdrop-blur-sm sm:p-4 md:p-6">
+      <Card className="w-full h-full max-h-screen max-w-full sm:h-auto sm:max-h-[92vh] sm:max-w-6xl border border-emerald-100 bg-white shadow-2xl rounded-2xl sm:rounded-3xl overflow-hidden flex flex-col text-[15px] leading-relaxed sm:text-base">
         <CardHeader className="sticky top-0 z-20 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-gradient-to-r from-[#0b7c4a] via-[#199a59] to-[#3f8f68] px-5 py-5 sm:px-8 sm:py-7 text-white shadow-lg rounded-none sm:rounded-b-[28px]">
           <div className="space-y-1">
             <CardTitle className="text-2xl font-bold text-white">Proyecto o Situación</CardTitle>
@@ -2075,7 +2075,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
 
               {eventos.length > 0 ? (
                 <div className="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
-                  <Table className="min-w-[720px]">
+                  <Table className="min-w-full md:min-w-[720px]">
                     <TableHeader>
                       <TableRow className="bg-slate-50">
                         <TableHead className="font-semibold">Evento</TableHead>
@@ -2198,12 +2198,12 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                                 ID de descarga: {resolveAttachmentId(attachment) ?? "N/D"}
                               </p>
                             </div>
-                            <div className="flex flex-wrap gap-2">
+                            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
                               <Button
                                 type="button"
                                 variant="outline"
                                 size="sm"
-                                className="gap-2 border-[#8fd0ab] text-[#065f46] hover:bg-[#e0f3e8]"
+                                className="w-full gap-2 border-[#8fd0ab] text-[#065f46] hover:bg-[#e0f3e8] sm:w-auto"
                                 onClick={() => handleExistingAttachmentDownload(attachment)}
                                 disabled={downloadingExistingAttachmentId === attachmentKey}
                               >
@@ -2223,7 +2223,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                                 type="button"
                                 variant="outline"
                                 size="sm"
-                                className="gap-2 border-red-200 text-red-700 hover:bg-red-50"
+                                className="w-full gap-2 border-red-200 text-red-700 hover:bg-red-50 sm:w-auto"
                                 onClick={() => handleDeleteExistingAttachment(attachment)}
                                 disabled={
                                   deletingExistingAttachmentId === attachmentKey || isSubmitting || !isEditable
@@ -2248,15 +2248,15 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                     </div>
                   )}
 
-                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-dashed border-emerald-200 bg-emerald-50/40 p-4">
-                    <div className="flex flex-col">
-                      <span className="text-sm font-medium text-slate-800">Agregar un archivo</span>
+                  <div className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-dashed border-emerald-200 bg-emerald-50/40 p-4">
+                    <div className="flex flex-col gap-1 text-sm text-slate-700">
+                      <span className="font-medium text-slate-800">Agregar un archivo</span>
                       <span className="text-xs text-slate-600">Hasta 3 adjuntos de máximo 5 MB cada uno.</span>
                     </div>
                     <Button
                       type="button"
                       variant="outline"
-                      className="gap-2 border-green-200 text-green-700 hover:bg-green-50"
+                      className="w-full gap-2 border-green-200 text-green-700 hover:bg-green-50 sm:w-auto"
                       disabled={!isEditable || isSubmitting || existingAttachments.length >= MAX_ATTACHMENTS}
                       onClick={() => existingAttachmentInputRef.current?.click()}
                     >
@@ -2282,7 +2282,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <div className="flex items-center gap-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
                     <input
                       type="file"
                       id="file-upload"
@@ -2295,12 +2295,12 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                       type="button"
                       variant="outline"
                       onClick={() => document.getElementById("file-upload")?.click()}
-                      className="gap-2 border-green-200 text-green-700 hover:bg-green-50"
+                      className="w-full gap-2 border-green-200 text-green-700 hover:bg-green-50 sm:w-auto"
                     >
                       <Upload className="h-4 w-4" />
                       Subir archivos
                     </Button>
-                    <span className="text-sm text-slate-500">
+                    <span className="text-sm text-slate-500 text-justify sm:text-left">
                       Formatos soportados: PDF, Word, Excel, PowerPoint, imágenes, texto. Hasta 3 archivos de 5 MB cada uno.
                     </span>
                   </div>
@@ -2310,10 +2310,10 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                       {attachments.map((attachment) => (
                         <div
                           key={attachment.id}
-                          className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200"
+                          className="flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3"
                         >
                           <FileText className="h-5 w-5 text-slate-500" />
-                          <div className="flex-1">
+                          <div className="flex-1 min-w-[180px]">
                             <div className="font-medium text-slate-900">{attachment.name}</div>
                             <div className="text-sm text-slate-500">{attachment.size}</div>
                           </div>
@@ -2322,7 +2322,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                             variant="ghost"
                             size="sm"
                             onClick={() => removeAttachment(attachment.id)}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            className="w-full text-red-600 hover:bg-red-50 hover:text-red-700 sm:w-auto"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>

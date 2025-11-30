@@ -198,16 +198,16 @@ export function LessonsList({ searchQuery }: LessonsListProps) {
                 key={lesson.id}
                 className="rounded-2xl border border-emerald-100 bg-white/90 p-6 transition-all duration-200 hover:border-[#067138]/40 hover:shadow-lg"
               >
-                <div className="flex items-start justify-between">
-                  <div className="space-y-3 flex-1">
-                    <div className="flex items-center gap-3 flex-wrap">
+                <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                  <div className="space-y-3 flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-3">
                       <h3 className="font-bold text-lg text-slate-900 text-balance">{lesson.title}</h3>
                       <Badge variant="outline" className="rounded-full border-emerald-200 bg-[#e0f3e8] text-[#067138] font-medium">
                         {lesson.category}
                       </Badge>
                     </div>
-                    <p className="text-slate-600 leading-relaxed">{lesson.description}</p>
-                    <div className="flex items-center gap-6 text-sm text-slate-500">
+                    <p className="text-slate-600 leading-relaxed text-pretty">{lesson.description}</p>
+                    <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500">
                       <span className="font-semibold text-slate-700">{lesson.id}</span>
                       <span className="flex items-center gap-1">
                         <FolderOpen className="h-3 w-3" />
@@ -223,7 +223,7 @@ export function LessonsList({ searchQuery }: LessonsListProps) {
                       </span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 ml-4">
+                  <div className="flex flex-wrap items-center gap-2 md:ml-4">
                     <Button variant="ghost" size="sm" className="text-[#067138] hover:bg-[#e0f3e8]">
                       <Eye className="h-4 w-4" />
                     </Button>
@@ -232,8 +232,8 @@ export function LessonsList({ searchQuery }: LessonsListProps) {
                     </Button>
                   </div>
                 </div>
-                <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                  <div className="flex items-center gap-3 flex-wrap">
+                <div className="flex flex-col gap-3 border-t border-slate-100 pt-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex flex-wrap items-center gap-3">
                     <Badge variant="default" className={getStatusColor(lesson.status)}>
                       {lesson.status}
                     </Badge>

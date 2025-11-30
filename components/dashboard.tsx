@@ -406,7 +406,7 @@ export function Dashboard() {
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-[#f4fff9] via-white to-[#d8f5e6] text-slate-900">
       <header className="border-b border-emerald-100 bg-white/90 shadow-sm backdrop-blur-md">
-        <div className="mx-auto flex w-full flex-col gap-6 px-4 py-8 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-10 xl:px-16 2xl:px-24">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-10 xl:px-16 2xl:px-24">
           <div className="flex w-full flex-1 flex-col gap-4">
             <div className="flex flex-wrap items-center gap-6">
               <div className="flex min-w-[260px] flex-1 items-start gap-4">
@@ -438,7 +438,7 @@ export function Dashboard() {
             </div>
           </div>
           <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-end lg:w-auto">
-            <div className="flex items-center gap-3 rounded-3xl border border-emerald-100 bg-white/80 px-4 py-3 shadow-sm sm:w-auto">
+            <div className="flex flex-wrap items-center gap-3 rounded-3xl border border-emerald-100 bg-white/80 px-4 py-3 shadow-sm sm:w-auto">
               <Avatar className="border-2 border-[#e0f3e8]">
                 <AvatarImage src={loggedUser.avatarUrl} alt={loggedUser.name} />
                 <AvatarFallback>{loggedUser.name.slice(0, 2).toUpperCase()}</AvatarFallback>
@@ -469,7 +469,7 @@ export function Dashboard() {
         </div>
       </header>
 
-      <main className="mx-auto w-full px-4 py-8 sm:px-6 lg:px-10 xl:px-16 2xl:px-24">
+      <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-10 xl:px-16 2xl:px-24">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
           <TabsList className="grid w-full grid-cols-1 gap-2 rounded-2xl border border-emerald-100 bg-white/90 shadow-sm sm:grid-cols-2">
             <TabsTrigger

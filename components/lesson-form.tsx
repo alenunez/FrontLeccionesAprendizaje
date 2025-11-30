@@ -1665,9 +1665,9 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
   const todayIso = useMemo(() => new Date().toISOString().split("T")[0], [])
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <Card className="w-full max-w-6xl max-h-[92vh] border border-emerald-100 bg-white shadow-2xl rounded-3xl overflow-hidden flex flex-col text-[15px] leading-relaxed sm:text-base">
-        <CardHeader className="sticky top-0 z-20 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-gradient-to-r from-[#0b7c4a] via-[#199a59] to-[#3f8f68] px-6 py-6 sm:px-8 sm:py-7 text-white shadow-lg rounded-b-[28px]">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-3 backdrop-blur-sm sm:p-4">
+      <Card className="w-full max-w-6xl max-h-[calc(100vh-1.5rem)] sm:max-h-[92vh] border border-emerald-100 bg-white shadow-2xl rounded-3xl overflow-hidden flex flex-col text-[15px] leading-relaxed sm:text-base">
+        <CardHeader className="sticky top-0 z-20 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-gradient-to-r from-[#0b7c4a] via-[#199a59] to-[#3f8f68] px-5 py-5 sm:px-8 sm:py-7 text-white shadow-lg rounded-b-[28px]">
           <div className="space-y-1">
             <CardTitle className="text-2xl font-bold text-white">Proyecto o Situación</CardTitle>
             <CardDescription className="text-base text-emerald-100">

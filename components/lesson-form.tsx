@@ -1746,70 +1746,71 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                   <h3 className="text-xl font-bold text-slate-900">Información General</h3>
                   <p className="text-base text-slate-600">Datos básicos del evento o situación</p>
                 </div>
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                <div className="space-y-3">
-                  <Label htmlFor="autor" className="text-base font-semibold text-slate-700">
-                    Autor
-                  </Label>
-                  <Input
-                    id="autor"
-                    value={autorDisplay}
-                    readOnly
-                    placeholder="Se asignará automáticamente"
-                    className="border-slate-200 bg-slate-50 text-slate-600 cursor-not-allowed"
-                  />
-                </div>
-                <div className="space-y-3">
-                  <Label htmlFor="estado" className="text-base font-semibold text-slate-700">
-                    Estado
-                  </Label>
-                  <Input
-                    id="estado"
-                    value={formData.estado}
-                    readOnly
-                    className="border-slate-200 bg-slate-50 text-slate-600 cursor-not-allowed"
-                  />
-                </div>
-                <div className="space-y-3">
-                  <Label htmlFor="fecha" className="text-base font-semibold text-slate-700">
-                    Fecha *
-                  </Label>
-                  <Input
-                    id="fecha"
-                    type="date"
-                    value={formData.fecha}
-                    onChange={(e) => setFormData({ ...formData, fecha: e.target.value })}
-                    max={todayIso}
-                    className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30"
-                    required
-                  />
-                </div>
-                <div className="space-y-3">
-                  <Label htmlFor="proceso" className="text-base font-semibold text-slate-700">
-                    Proceso *
-                  </Label>
-                  <Select
-                    value={formData.proceso}
-                    onValueChange={(value) => setFormData({ ...formData, proceso: value })}
-                  >
-                    <SelectTrigger className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30">
-                      <SelectValue placeholder="Seleccionar proceso" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {procesos.length > 0 ? (
-                        procesos.map((proceso) => (
-                          <SelectItem key={proceso.id} value={proceso.id}>
-                            {proceso.nombre}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <SelectItem value="sin-procesos" disabled>
-                          No hay procesos disponibles
-                        </SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                    <div className="space-y-3">
+                      <Label htmlFor="autor" className="text-base font-semibold text-slate-700">
+                        Autor
+                      </Label>
+                      <Input
+                        id="autor"
+                        value={autorDisplay}
+                        readOnly
+                        placeholder="Se asignará automáticamente"
+                        className="border-slate-200 bg-slate-50 text-slate-600 cursor-not-allowed"
+                      />
+                    </div>
+                    <div className="space-y-3">
+                      <Label htmlFor="estado" className="text-base font-semibold text-slate-700">
+                        Estado
+                      </Label>
+                      <Input
+                        id="estado"
+                        value={formData.estado}
+                        readOnly
+                        className="border-slate-200 bg-slate-50 text-slate-600 cursor-not-allowed"
+                      />
+                    </div>
+                    <div className="space-y-3">
+                      <Label htmlFor="fecha" className="text-base font-semibold text-slate-700">
+                        Fecha *
+                      </Label>
+                      <Input
+                        id="fecha"
+                        type="date"
+                        value={formData.fecha}
+                        onChange={(e) => setFormData({ ...formData, fecha: e.target.value })}
+                        max={todayIso}
+                        className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-3">
+                      <Label htmlFor="proceso" className="text-base font-semibold text-slate-700">
+                        Proceso *
+                      </Label>
+                      <Select
+                        value={formData.proceso}
+                        onValueChange={(value) => setFormData({ ...formData, proceso: value })}
+                      >
+                        <SelectTrigger className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30">
+                          <SelectValue placeholder="Seleccionar proceso" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {procesos.length > 0 ? (
+                            procesos.map((proceso) => (
+                              <SelectItem key={proceso.id} value={proceso.id}>
+                                {proceso.nombre}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value="sin-procesos" disabled>
+                              No hay procesos disponibles
+                            </SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
                 <div className="space-y-3">
                   <Label htmlFor="compania" className="text-base font-semibold text-slate-700">
                     Compañía *
@@ -2074,46 +2075,83 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
               </div>
 
               {eventos.length > 0 ? (
-                <div className="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
-                  <Table className="min-w-full md:min-w-[720px]">
-                    <TableHeader>
-                      <TableRow className="bg-slate-50">
-                        <TableHead className="font-semibold">Evento</TableHead>
-                        <TableHead className="font-semibold text-center">Impactos</TableHead>
-                        <TableHead className="font-semibold text-center">Acciones</TableHead>
-                        <TableHead className="font-semibold text-center">Resultados</TableHead>
-                        <TableHead className="font-semibold text-center">Lecciones</TableHead>
-                        <TableHead className="font-semibold text-right">Acciones</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {eventos.map((evento) => (
-                        <TableRow key={evento.id}>
-                          <TableCell className="max-w-md">
-                            <p className="line-clamp-2 text-base">{evento.evento}</p>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Badge variant="secondary" className="bg-red-50 text-red-700">
-                              {evento.impactos.length}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Badge variant="secondary" className="bg-green-50 text-green-700">
-                              {evento.accionesImplementadas.length}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Badge variant="secondary" className="bg-yellow-50 text-yellow-700">
-                              {evento.resultados.length}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Badge variant="secondary" className="bg-purple-50 text-purple-700">
-                              {evento.leccionesAprendidas.length}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex justify-end gap-2">
+                <>
+                  <div className="hidden overflow-x-auto rounded-xl border border-slate-200 shadow-sm md:block">
+                    <Table className="min-w-full md:min-w-[720px]">
+                      <TableHeader>
+                        <TableRow className="bg-slate-50">
+                          <TableHead className="font-semibold">Evento</TableHead>
+                          <TableHead className="font-semibold text-center">Impactos</TableHead>
+                          <TableHead className="font-semibold text-center">Acciones</TableHead>
+                          <TableHead className="font-semibold text-center">Resultados</TableHead>
+                          <TableHead className="font-semibold text-center">Lecciones</TableHead>
+                          <TableHead className="font-semibold text-right">Acciones</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {eventos.map((evento) => (
+                          <TableRow key={evento.id}>
+                            <TableCell className="max-w-md">
+                              <p className="line-clamp-2 text-base">{evento.evento}</p>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Badge variant="secondary" className="bg-red-50 text-red-700">
+                                {evento.impactos.length}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Badge variant="secondary" className="bg-green-50 text-green-700">
+                                {evento.accionesImplementadas.length}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Badge variant="secondary" className="bg-yellow-50 text-yellow-700">
+                                {evento.resultados.length}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Badge variant="secondary" className="bg-purple-50 text-purple-700">
+                                {evento.leccionesAprendidas.length}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end gap-2">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => openEditEventDialog(evento)}
+                                  className="text-[#067138] hover:bg-[#e0f3e8]"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => deleteEvent(evento.id)}
+                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  <div className="space-y-3 md:hidden">
+                    {eventos.map((evento) => (
+                      <div
+                        key={evento.id}
+                        className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+                      >
+                        <div className="flex flex-col gap-3">
+                          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                            <p className="text-base font-semibold text-slate-900">{evento.evento}</p>
+                            <div className="flex items-center gap-2 sm:justify-end">
                               <Button
                                 type="button"
                                 variant="ghost"
@@ -2133,12 +2171,38 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="flex items-center justify-between rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700">
+                              Impactos
+                              <Badge variant="secondary" className="bg-white text-red-700">
+                                {evento.impactos.length}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center justify-between rounded-lg bg-green-50 px-3 py-2 text-sm font-medium text-green-700">
+                              Acciones
+                              <Badge variant="secondary" className="bg-white text-green-700">
+                                {evento.accionesImplementadas.length}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center justify-between rounded-lg bg-yellow-50 px-3 py-2 text-sm font-medium text-yellow-700">
+                              Resultados
+                              <Badge variant="secondary" className="bg-white text-yellow-700">
+                                {evento.resultados.length}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center justify-between rounded-lg bg-purple-50 px-3 py-2 text-sm font-medium text-purple-700">
+                              Lecciones
+                              <Badge variant="secondary" className="bg-white text-purple-700">
+                                {evento.leccionesAprendidas.length}
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
               ) : (
                 <div className="text-center py-12 bg-slate-50 rounded-lg border-2 border-dashed border-slate-200">
                   <p className="text-slate-500 mb-4">No hay eventos agregados aún</p>
@@ -2188,9 +2252,9 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                         return (
                           <div
                             key={attachmentKey}
-                            className="flex flex-wrap items-center gap-3 rounded-2xl border border-emerald-50 bg-[#f8fdf9] p-4 shadow-inner"
+                            className="flex w-full flex-wrap items-center gap-3 rounded-2xl border border-emerald-50 bg-[#f8fdf9] p-4 shadow-inner"
                           >
-                            <div className="flex-1 min-w-[200px]">
+                            <div className="flex-1 min-w-[220px] break-words">
                               <p className="font-medium text-slate-900 break-words">
                                 {attachment.nombreArchivo ?? "Archivo sin nombre"}
                               </p>

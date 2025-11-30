@@ -148,6 +148,7 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
   const [attachments, setAttachments] = useState<ProyectoAdjunto[]>([])
   const [isLoadingAttachments, setIsLoadingAttachments] = useState(false)
   const [attachmentsError, setAttachmentsError] = useState<string | null>(null)
+  const [downloadingAttachmentId, setDownloadingAttachmentId] = useState<number | string | null>(null)
 
   useEffect(() => {
     if (!proyecto.id) return
@@ -188,6 +189,7 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
       return
     }
 
+    setDownloadingAttachmentId(downloadId)
     try {
       const response = await fetch(`${API_BASE_URL}/Adjuntos/${downloadId}/archivo`)
       if (!response.ok) {
@@ -206,6 +208,8 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
     } catch (error) {
       console.error("Error al descargar adjunto", error)
       alert("No se pudo descargar el adjunto. Inténtalo nuevamente.")
+    } finally {
+      setDownloadingAttachmentId(null)
     }
   }
 
@@ -495,19 +499,29 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
                           ID de descarga: {attachment.id ?? attachment.idAdjunto ?? "N/D"}
                         </p>
                       </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="gap-2 border-[#8fd0ab] text-[#065f46] hover:bg-[#e0f3e8]"
-                        onClick={() => handleDownload(attachment)}
-                      >
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 border-[#8fd0ab] text-[#065f46] hover:bg-[#e0f3e8]"
+                    onClick={() => handleDownload(attachment)}
+                    disabled={downloadingAttachmentId === downloadKey}
+                  >
+                    {downloadingAttachmentId === downloadKey ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Descargando...
+                      </>
+                    ) : (
+                      <>
                         <Download className="h-4 w-4" />
                         Descargar
-                      </Button>
-                    </div>
-                  )
-                })}
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )
+            })}
               </div>
             )}
           </section>

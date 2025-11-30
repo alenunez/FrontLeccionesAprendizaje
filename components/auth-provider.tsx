@@ -3,7 +3,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react"
 import {
   AuthSession,
-  audienceScope,
   buildLoginUrl,
   buildLogoutUrl,
   clearSession,
@@ -97,4 +96,3 @@ export const useAuth = () => {
   return context
 }
 
-export const audienceScopeLabel = audienceScope

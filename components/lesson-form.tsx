@@ -738,8 +738,8 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
     setSelectedUsers((prev) => prev.filter((id) => id !== userId))
   }
 
-  const MAX_ATTACHMENTS = 5
-  const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024
+  const MAX_ATTACHMENTS = 3
+  const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
@@ -769,13 +769,13 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
       const filesWithinLimit = selectableFiles.slice(0, remainingSlots)
       const validFiles = filesWithinLimit.filter((file) => file.size <= MAX_FILE_SIZE_BYTES)
 
-      if (validFiles.length !== filesWithinLimit.length) {
-        toast({
-          title: "Archivo demasiado grande",
-          description: "Cada adjunto debe pesar máximo 10 MB.",
-          variant: "destructive",
-        })
-      }
+          if (validFiles.length !== filesWithinLimit.length) {
+            toast({
+              title: "Archivo demasiado grande",
+              description: "Cada adjunto debe pesar máximo 5 MB.",
+              variant: "destructive",
+            })
+          }
 
       if (validFiles.length > 0) {
         const newAttachments: Attachment[] = validFiles.map((file) => ({
@@ -1955,15 +1955,15 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                     type="button"
                     variant="outline"
                     onClick={() => document.getElementById("file-upload")?.click()}
-                    className="gap-2 border-green-200 text-green-700 hover:bg-green-50"
-                  >
-                    <Upload className="h-4 w-4" />
-                    Subir archivos
-                  </Button>
-                  <span className="text-sm text-slate-500">
-                    Formatos soportados: PDF, Word, Excel, PowerPoint, imágenes, texto. Hasta 5 archivos de 10 MB cada uno.
-                  </span>
-                </div>
+                  className="gap-2 border-green-200 text-green-700 hover:bg-green-50"
+                >
+                  <Upload className="h-4 w-4" />
+                  Subir archivos
+                </Button>
+                <span className="text-sm text-slate-500">
+                  Formatos soportados: PDF, Word, Excel, PowerPoint, imágenes, texto. Hasta 3 archivos de 5 MB cada uno.
+                </span>
+              </div>
 
                 {attachments.length > 0 && (
                   <div className="space-y-2">

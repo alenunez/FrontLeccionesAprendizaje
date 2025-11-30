@@ -156,6 +156,8 @@
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-sans);
+    font-size: 1.03rem;
+    line-height: 1.6;
   }
   h1,
   h2,

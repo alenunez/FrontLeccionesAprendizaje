@@ -215,20 +215,25 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-8">
-      <Card className="w-full max-w-6xl max-h-[95vh] overflow-hidden border border-emerald-100 shadow-2xl break-words">
-        <CardHeader className="flex flex-row items-center justify-between gap-4 bg-gradient-to-r from-[#067138] via-[#0fa958] to-[#45a06c] text-white">
+      <Card className="w-full max-w-6xl max-h-[95vh] rounded-3xl border border-emerald-100 shadow-2xl break-words flex flex-col overflow-hidden">
+        <CardHeader className="sticky top-0 z-20 flex flex-row items-center justify-between gap-4 bg-gradient-to-r from-[#067138] via-[#0fa958] to-[#45a06c] px-6 py-5 sm:px-8 sm:py-6 text-white shadow-md">
           <div>
             <CardTitle className="text-xl font-semibold text-white">Visualización del Proyecto</CardTitle>
             <CardDescription className="text-emerald-50">
               Consulta los detalles completos del proyecto o situación y sus eventos asociados.
             </CardDescription>
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose} className="text-white hover:bg-white/20">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="text-white hover:bg-white/20"
+          >
             <X className="h-5 w-5" />
           </Button>
         </CardHeader>
 
-        <CardContent className="space-y-10 overflow-y-auto bg-gradient-to-b from-[#f4fff9] via-white to-[#f0fbf4] p-8">
+        <CardContent className="space-y-10 bg-gradient-to-b from-[#f4fff9] via-white to-[#f0fbf4] p-6 sm:p-8 flex-1 overflow-y-auto">
           <section className="space-y-4">
             <div className="flex flex-col gap-3 rounded-3xl border border-emerald-100 bg-white/80 p-6 shadow-sm">
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#067138]/70">Proyecto o situación</p>

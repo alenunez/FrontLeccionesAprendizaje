@@ -89,9 +89,11 @@ export const getWorkflowActions = (
     if (estadoDescripcion === "en revision") {
       actions.add("publish")
       actions.add("returnToDraft")
+      actions.add("returnToReview")
     }
 
     if (estadoDescripcion === "publicado" || estadoDescripcion === "publicada") {
+      actions.add("returnToDraft")
       actions.add("returnToReview")
     }
   }

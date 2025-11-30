@@ -1666,11 +1666,11 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <Card className="w-full max-w-6xl max-h-[92vh] border border-emerald-100 bg-white shadow-2xl rounded-3xl overflow-hidden flex flex-col">
-        <CardHeader className="sticky top-0 z-20 flex flex-row items-center justify-between bg-gradient-to-r from-[#067138] via-[#0fa958] to-[#45a06c] px-6 py-5 sm:px-8 sm:py-6 text-white shadow-md">
-          <div>
-            <CardTitle className="text-xl text-white">Proyecto o Situación</CardTitle>
-            <CardDescription className="text-emerald-100">
+      <Card className="w-full max-w-6xl max-h-[92vh] border border-emerald-100 bg-white shadow-2xl rounded-3xl overflow-hidden flex flex-col text-[15px] leading-relaxed sm:text-base">
+        <CardHeader className="sticky top-0 z-20 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-gradient-to-r from-[#0b7c4a] via-[#199a59] to-[#3f8f68] px-6 py-6 sm:px-8 sm:py-7 text-white shadow-lg rounded-b-[28px]">
+          <div className="space-y-1">
+            <CardTitle className="text-2xl font-bold text-white">Proyecto o Situación</CardTitle>
+            <CardDescription className="text-base text-emerald-100">
               Eventos y lecciones aprendidas de un proyecto o situación
             </CardDescription>
           </div>
@@ -1679,7 +1679,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
             size="icon"
             onClick={onClose}
             disabled={isSubmitting}
-            className="text-white hover:bg-white/20"
+            className="ml-auto h-10 w-10 rounded-full bg-white/10 text-white shadow-sm transition hover:bg-white/20 sm:ml-0"
           >
             <X className="h-4 w-4" />
           </Button>
@@ -1687,49 +1687,49 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
 
         <div className="flex-1 overflow-y-auto">
           <div className="flex flex-col gap-3 border-b border-emerald-100 bg-[#f4fff9] px-5 py-4 sm:px-6">
-          <div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
-            <div className="text-sm font-medium text-slate-700">Acciones de Flujo de Trabajo</div>
-            <div className="text-xs text-slate-500">
-              Las acciones disponibles dependen de tu rol, el estado y tu relación con el proyecto.
+            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+              <div className="text-base font-semibold text-slate-700">Acciones de Flujo de Trabajo</div>
+              <div className="text-sm text-slate-500 max-w-3xl">
+                Las acciones disponibles dependen de tu rol, el estado y tu relación con el proyecto.
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {initialData?.proyecto?.id ? (
+                workflowActions.length > 0 ? (
+                  workflowActions.map((action) => {
+                    const config = workflowActionConfig[action]
+
+                    return (
+                      <Button
+                        key={action}
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleWorkflowAction(action)}
+                        disabled={isChangingStatus || isSubmitting}
+                        className="gap-2 border-[#8fd0ab] text-[#065f46] hover:bg-[#e0f3e8]"
+                      >
+                        {isChangingStatus ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          config.icon
+                        )}
+                        <span>{config.label}</span>
+                      </Button>
+                    )
+                  })
+                ) : (
+                  <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700">
+                    No hay acciones disponibles para tu rol en este estado.
+                  </Badge>
+                )
+              ) : (
+                <Badge variant="outline" className="border-slate-200 bg-white text-slate-600">
+                  Guarda el borrador para habilitar las acciones de flujo.
+                </Badge>
+              )}
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {initialData?.proyecto?.id ? (
-              workflowActions.length > 0 ? (
-                workflowActions.map((action) => {
-                  const config = workflowActionConfig[action]
-
-                  return (
-                    <Button
-                      key={action}
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleWorkflowAction(action)}
-                      disabled={isChangingStatus || isSubmitting}
-                      className="gap-2 border-[#8fd0ab] text-[#065f46] hover:bg-[#e0f3e8]"
-                    >
-                      {isChangingStatus ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        config.icon
-                      )}
-                      <span>{config.label}</span>
-                    </Button>
-                  )
-                })
-              ) : (
-                <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700">
-                  No hay acciones disponibles para tu rol en este estado.
-                </Badge>
-              )
-            ) : (
-              <Badge variant="outline" className="border-slate-200 bg-white text-slate-600">
-                Guarda el borrador para habilitar las acciones de flujo.
-              </Badge>
-            )}
-          </div>
-        </div>
 
         {!isEditable && editBlockedReason && (
           <div className="mx-6 mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
@@ -1744,11 +1744,11 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
               <div className="space-y-6">
                 <div className="border-l-4 border-[#067138] pl-4">
                   <h3 className="text-xl font-bold text-slate-900">Información General</h3>
-                  <p className="text-sm text-slate-600">Datos básicos del evento o situación</p>
+                  <p className="text-base text-slate-600">Datos básicos del evento o situación</p>
                 </div>
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div className="space-y-3">
-                  <Label htmlFor="autor" className="text-sm font-semibold text-slate-700">
+                  <Label htmlFor="autor" className="text-base font-semibold text-slate-700">
                     Autor
                   </Label>
                   <Input
@@ -1760,7 +1760,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                   />
                 </div>
                 <div className="space-y-3">
-                  <Label htmlFor="estado" className="text-sm font-semibold text-slate-700">
+                  <Label htmlFor="estado" className="text-base font-semibold text-slate-700">
                     Estado
                   </Label>
                   <Input
@@ -1771,7 +1771,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                   />
                 </div>
                 <div className="space-y-3">
-                  <Label htmlFor="fecha" className="text-sm font-semibold text-slate-700">
+                  <Label htmlFor="fecha" className="text-base font-semibold text-slate-700">
                     Fecha *
                   </Label>
                   <Input
@@ -1785,7 +1785,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                   />
                 </div>
                 <div className="space-y-3">
-                  <Label htmlFor="proceso" className="text-sm font-semibold text-slate-700">
+                  <Label htmlFor="proceso" className="text-base font-semibold text-slate-700">
                     Proceso *
                   </Label>
                   <Select
@@ -1811,7 +1811,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                   </Select>
                 </div>
                 <div className="space-y-3">
-                  <Label htmlFor="compania" className="text-sm font-semibold text-slate-700">
+                  <Label htmlFor="compania" className="text-base font-semibold text-slate-700">
                     Compañía *
                   </Label>
                   <Select
@@ -1837,7 +1837,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                   </Select>
                 </div>
                 <div className="space-y-3">
-                  <Label htmlFor="sede" className="text-sm font-semibold text-slate-700">
+                  <Label htmlFor="sede" className="text-base font-semibold text-slate-700">
                     Sede *
                   </Label>
                   <Select
@@ -1864,7 +1864,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                   </Select>
                 </div>
                 <div className="space-y-3">
-                  <Label htmlFor="responsable" className="text-sm font-semibold text-slate-700">
+                  <Label htmlFor="responsable" className="text-base font-semibold text-slate-700">
                     Responsable *
                   </Label>
                   <div className="relative">
@@ -1905,7 +1905,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                           >
                             <span className="font-medium text-slate-900">{user.name}</span>
                             {(user.email || user.title) && (
-                              <span className="text-xs text-slate-500">{user.email ?? user.title}</span>
+                              <span className="text-sm text-slate-500">{user.email ?? user.title}</span>
                             )}
                           </button>
                         ))}
@@ -1914,7 +1914,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                   </div>
                 </div>
                 <div className="space-y-3">
-                  <Label htmlFor="proyectoOSituacion" className="text-sm font-semibold text-slate-700">
+                  <Label htmlFor="proyectoOSituacion" className="text-base font-semibold text-slate-700">
                     Proyecto o situación *
                   </Label>
                   <Textarea
@@ -1928,7 +1928,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                   />
                 </div>
                 <div className="space-y-3">
-                  <Label htmlFor="aplicacionPractica" className="text-sm font-semibold text-slate-700">
+                  <Label htmlFor="aplicacionPractica" className="text-base font-semibold text-slate-700">
                     Aplicación Práctica *
                   </Label>
                   <Textarea
@@ -1943,7 +1943,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                 </div>
 
                 <div className="space-y-3 md:col-span-2">
-                  <Label htmlFor="nivelAcceso" className="text-sm font-semibold text-slate-700">
+                  <Label htmlFor="nivelAcceso" className="text-base font-semibold text-slate-700">
                     Nivel de Acceso *
                   </Label>
                   <Select value={nivelAcceso} onValueChange={(value: "Público" | "Privado") => setNivelAcceso(value)}>
@@ -1955,7 +1955,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                       <SelectItem value="Privado">Privado</SelectItem>
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-sm text-slate-500">
                     {nivelAcceso === "Público"
                       ? "Esta lección será visible para todos los usuarios"
                       : "Esta lección solo será visible para los lectores seleccionados"}
@@ -1964,7 +1964,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
 
                   {nivelAcceso === "Privado" && (
                     <div className="space-y-3 md:col-span-2" ref={userDropdownRef}>
-                      <Label className="text-sm font-semibold text-slate-700">Lectores *</Label>
+                      <Label className="text-base font-semibold text-slate-700">Lectores *</Label>
                       <div className="space-y-3">
                         <div className="relative">
                           <Button
@@ -2058,20 +2058,24 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
 
             {/* DETALLE - Eventos Section */}
             <div className="space-y-6">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="border-l-4 border-purple-500 pl-4">
                   <h3 className="text-xl font-bold text-slate-900">Eventos</h3>
-                  <p className="text-sm text-slate-600">Gestione los eventos relacionados con esta lección</p>
+                  <p className="text-base text-slate-600">Gestione los eventos relacionados con esta lección</p>
                 </div>
-                <Button type="button" onClick={openAddEventDialog} className="gap-2 bg-purple-600 hover:bg-purple-700">
+                <Button
+                  type="button"
+                  onClick={openAddEventDialog}
+                  className="w-full gap-2 bg-purple-600 text-base hover:bg-purple-700 sm:w-auto"
+                >
                   <Plus className="h-4 w-4" />
                   Agregar Evento
                 </Button>
               </div>
 
               {eventos.length > 0 ? (
-                <div className="border border-slate-200 rounded-lg overflow-hidden">
-                  <Table>
+                <div className="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
+                  <Table className="min-w-[720px]">
                     <TableHeader>
                       <TableRow className="bg-slate-50">
                         <TableHead className="font-semibold">Evento</TableHead>
@@ -2086,7 +2090,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                       {eventos.map((evento) => (
                         <TableRow key={evento.id}>
                           <TableCell className="max-w-md">
-                            <p className="line-clamp-2 text-sm">{evento.evento}</p>
+                            <p className="line-clamp-2 text-base">{evento.evento}</p>
                           </TableCell>
                           <TableCell className="text-center">
                             <Badge variant="secondary" className="bg-red-50 text-red-700">
@@ -2150,7 +2154,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
             <div className="space-y-6">
               <div className="border-l-4 border-[#067138] pl-4">
                 <h3 className="text-xl font-bold text-slate-900">Anexos</h3>
-                <p className="text-sm text-slate-600">Adjunte documentos, imágenes o archivos relacionados</p>
+                <p className="text-base text-slate-600">Adjunte documentos, imágenes o archivos relacionados</p>
               </div>
 
               {isEditing ? (
@@ -2168,7 +2172,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                   )}
 
                   {isLoadingExistingAttachments && (
-                    <div className="flex items-center gap-2 text-sm text-slate-600">
+                    <div className="flex items-center gap-2 text-base text-slate-600">
                       <Loader2 className="h-4 w-4 animate-spin text-[#067138]" /> Cargando adjuntos...
                     </div>
                   )}
@@ -2190,7 +2194,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                               <p className="font-medium text-slate-900 break-words">
                                 {attachment.nombreArchivo ?? "Archivo sin nombre"}
                               </p>
-                              <p className="text-xs text-slate-500">
+                              <p className="text-sm text-slate-500">
                                 ID de descarga: {resolveAttachmentId(attachment) ?? "N/D"}
                               </p>
                             </div>

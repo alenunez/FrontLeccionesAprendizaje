@@ -44,18 +44,31 @@ const isSamePerson = (first: string, second: string): boolean => Boolean(first) 
 
 export const canEditLesson = (lesson: ProyectoSituacionDto | null | undefined, user: SimulatedUser): boolean => {
   if (!lesson) return true
-  if (normalize(user.role) === "administrador") return true
 
   const estadoDescripcion = normalize(extractEstadoDescripcion(lesson))
   const isBorrador = estadoDescripcion === "borrador"
   const isEnRevision = estadoDescripcion === "en revision"
+  const isPublicado = estadoDescripcion === "publicado" || estadoDescripcion === "publicada"
+
+  const role = normalize(user.role)
+  if (role === "administrador") return true
 
   const userEmail = getUserEmail(user)
   const autorEmail = getAutorEmail(lesson)
   const responsableEmail = getResponsableEmail(lesson)
 
-  if (isBorrador && isSamePerson(userEmail, autorEmail)) return true
-  if (isEnRevision && isSamePerson(userEmail, responsableEmail)) return true
+  if (role === "colaborador") {
+    return isBorrador && isSamePerson(userEmail, autorEmail)
+  }
+
+  if (role === "responsable") {
+    if (isPublicado) return false
+
+    if (isEnRevision && isSamePerson(userEmail, responsableEmail)) return true
+    if (isBorrador && isSamePerson(userEmail, autorEmail)) return true
+
+    return false
+  }
 
   return false
 }
@@ -70,10 +83,14 @@ export const getWorkflowActions = (
   if (!lesson?.proyecto?.id) return []
 
   const estadoDescripcion = normalize(options?.overrideEstado ?? extractEstadoDescripcion(lesson))
+  const isBorrador = estadoDescripcion === "borrador"
+  const isEnRevision = estadoDescripcion === "en revision"
+  const isPublicado = estadoDescripcion === "publicado" || estadoDescripcion === "publicada"
 
-  const isAdmin = normalize(user.role) === "administrador"
-  const isResponsableRole = normalize(user.role) === "responsable"
-  const isColaborador = normalize(user.role) === "colaborador"
+  const role = normalize(user.role)
+  const isAdmin = role === "administrador"
+  const isResponsableRole = role === "responsable"
+  const isColaborador = role === "colaborador"
 
   const userEmail = getUserEmail(user)
   const autorEmail = getAutorEmail(lesson)
@@ -85,44 +102,38 @@ export const getWorkflowActions = (
   const actions = new Set<WorkflowAction>()
 
   if (isAdmin) {
-    if (estadoDescripcion === "borrador") {
+    if (isBorrador) {
       actions.add("sendToReview")
       actions.add("publish")
     }
 
-    if (estadoDescripcion === "en revision") {
+    if (isEnRevision) {
       actions.add("publish")
+      actions.add("returnToDraft")
+    }
+
+    if (isPublicado) {
       actions.add("returnToDraft")
       actions.add("returnToReview")
     }
-
-    if (estadoDescripcion === "publicado" || estadoDescripcion === "publicada") {
-      actions.add("returnToDraft")
-      actions.add("returnToReview")
-    }
   }
 
-  if (estadoDescripcion === "borrador") {
-    if (isAuthor && isResponsableRole) {
+  if (isColaborador && isAuthor && isBorrador) actions.add("sendToReview")
+
+  if (isResponsableRole) {
+    if (isPublicado) return []
+
+    if (isEnRevision && isResponsibleUser) {
       actions.add("publish")
-    } else if (isAuthor && isColaborador) {
-      actions.add("sendToReview")
+      actions.add("returnToDraft")
+    }
+
+    if (isBorrador && isAuthor) {
+      actions.add("publish")
     }
   }
 
-  if (estadoDescripcion === "en revision" && isResponsableRole && isResponsibleUser) {
-    actions.add("publish")
-    actions.add("returnToDraft")
-  }
-
-  if (estadoDescripcion === "publicado" && isAdmin) {
-    actions.add("returnToReview")
-  }
-
-  if (estadoDescripcion === "borrador" && isAuthor && (isResponsableRole || isAdmin)) {
-    actions.delete("sendToReview")
-    actions.add("publish")
-  }
+  if ((isPublicado || isEnRevision) && !isAdmin && !isResponsableRole) return []
 
   return WORKFLOW_ACTION_ORDER.filter((action) => actions.has(action))
 }

@@ -216,10 +216,10 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 px-3 py-6 sm:px-4 sm:py-8">
       <Card className="w-full max-w-6xl max-h-[calc(100vh-2rem)] sm:max-h-[95vh] rounded-3xl border border-emerald-100 shadow-2xl break-words flex flex-col overflow-hidden text-[15px] leading-relaxed sm:text-base">
-        <CardHeader className="sticky top-0 z-20 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-gradient-to-r from-[#0b7c4a] via-[#199a59] to-[#3f8f68] px-5 py-5 sm:px-8 sm:py-7 text-white shadow-lg rounded-b-[28px]">
-          <div className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-white">Visualización del Proyecto</CardTitle>
-            <CardDescription className="text-base text-emerald-50">
+        <CardHeader className="sticky top-0 z-20 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-gradient-to-r from-[#0b7c4a] via-[#199a59] to-[#3f8f68] px-4 py-4 sm:px-6 sm:py-5 text-white shadow-md rounded-none sm:rounded-b-2xl">
+          <div className="space-y-0.5">
+            <CardTitle className="text-xl font-bold text-white">Visualización del Proyecto</CardTitle>
+            <CardDescription className="text-sm text-emerald-50 sm:text-base">
               Consulta los detalles completos del proyecto o situación y sus eventos asociados.
             </CardDescription>
           </div>
@@ -227,7 +227,7 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
             variant="ghost"
             size="icon"
             onClick={onClose}
-            className="ml-auto h-11 w-11 rounded-full bg-white/10 text-white shadow-sm transition hover:bg-white/20 sm:ml-0"
+            className="ml-auto h-9 w-9 rounded-full bg-white/10 text-white shadow-sm transition hover:bg-white/20 sm:ml-0"
           >
             <X className="h-5 w-5" />
           </Button>

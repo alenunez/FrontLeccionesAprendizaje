@@ -467,10 +467,6 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
     sede: "",
     proceso: "",
   })
-  const workflowActions = useMemo(
-    () => getWorkflowActions(initialData ?? null, loggedUser, { overrideEstado: formData.estado }),
-    [formData.estado, initialData, loggedUser],
-  )
   const workflowActionConfig: Record<WorkflowAction, { label: string; icon: React.ReactNode; targetEstado: string }> = {
     sendToReview: {
       label: "Enviar a revisión",
@@ -493,6 +489,17 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
       targetEstado: "En Revisión",
     },
   }
+  const workflowActions = useMemo(
+    () => getWorkflowActions(initialData ?? null, loggedUser, { overrideEstado: formData.estado }),
+    [formData.estado, initialData, loggedUser],
+  )
+  const visibleWorkflowActions = useMemo(
+    () =>
+      workflowActions.filter(
+        (action) => normalizeStatus(workflowActionConfig[action].targetEstado) !== normalizeStatus(formData.estado),
+      ),
+    [formData.estado, workflowActions],
+  )
 
   useEffect(() => {
     const controller = new AbortController()
@@ -1695,8 +1702,8 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
             </div>
             <div className="flex flex-wrap items-center gap-2">
               {initialData?.proyecto?.id ? (
-                workflowActions.length > 0 ? (
-                  workflowActions.map((action) => {
+                visibleWorkflowActions.length > 0 ? (
+                  visibleWorkflowActions.map((action) => {
                     const config = workflowActionConfig[action]
 
                     return (

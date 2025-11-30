@@ -1,5 +1,7 @@
 const SOLLA_CLIENT_ID = process.env.NEXT_PUBLIC_AZURE_CLIENT_ID ?? "c1867d25-8d36-4eb7-9318-ca4aee5ba48d"
 const SOLLA_TENANT_ID = process.env.NEXT_PUBLIC_AZURE_TENANT_ID ?? "46a23419-32b8-42b0-b756-68be11181169"
+const SOLLA_API_SCOPE =
+  process.env.NEXT_PUBLIC_AZURE_API_SCOPE ?? "api://f6b45b8e-6229-42ef-bd56-7d06afb0cad5/.default"
 export interface AuthSession {
   accessToken?: string
   tokenType: string
@@ -14,7 +16,7 @@ export interface AuthSession {
 const STORAGE_KEY = "solla.auth.session"
 const STATE_KEY = "solla.auth.state"
 
-const baseAuthScopes = ["openid", "profile", "email"]
+const baseAuthScopes = ["openid", "profile", "email", "offline_access", SOLLA_API_SCOPE]
 
 const decodeJwtPayload = (token?: string) => {
   if (!token) return undefined
@@ -36,7 +38,7 @@ const isExpired = (expiresAt?: number) => !expiresAt || Date.now() > expiresAt
 export const buildLoginUrl = (redirectUri: string, state: string, nonce: string) => {
   const url = new URL(`https://login.microsoftonline.com/${SOLLA_TENANT_ID}/oauth2/v2.0/authorize`)
   url.searchParams.set("client_id", SOLLA_CLIENT_ID)
-  url.searchParams.set("response_type", "id_token")
+  url.searchParams.set("response_type", "id_token token")
   url.searchParams.set("redirect_uri", redirectUri)
   url.searchParams.set("scope", baseAuthScopes.join(" "))
   url.searchParams.set("state", state)

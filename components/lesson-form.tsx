@@ -33,8 +33,15 @@ import type { ProyectoSituacionDto, ProyectoSituacionEventoDto } from "@/types/l
 import type { SimulatedUser } from "@/lib/user-context"
 import { canEditLesson, getWorkflowActions, type WorkflowAction } from "@/lib/permissions"
 import { flattenEventoDto } from "@/lib/event-normalizer"
+import { useAuth } from "@/components/auth-provider"
+import type { AuthSession } from "@/lib/auth"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:7043/api"
+
+type Fetcher = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
+
+const createAuthHeaders = (session?: AuthSession | null): HeadersInit =>
+  session?.accessToken ? { Authorization: `${session.tokenType ?? "Bearer"} ${session.accessToken}` } : {}
 
 interface LessonFormProps {
   onClose: () => void
@@ -163,9 +170,10 @@ const fetchEntities = async (
   endpoint: string,
   setter: React.Dispatch<React.SetStateAction<SelectOption[]>>,
   signal: AbortSignal,
+  fetcher: Fetcher,
 ) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/${endpoint}`, { signal })
+    const response = await fetcher(`${API_BASE_URL}/${endpoint}`, { signal })
     if (!response.ok) {
       throw new Error(`Error al cargar ${endpoint}: ${response.status}`)
     }
@@ -182,9 +190,10 @@ const fetchEntities = async (
 const fetchSedes = async (
   setter: React.Dispatch<React.SetStateAction<SedeOption[]>>,
   signal: AbortSignal,
+  fetcher: Fetcher,
 ) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/Sede`, { signal })
+    const response = await fetcher(`${API_BASE_URL}/Sede`, { signal })
     if (!response.ok) {
       throw new Error(`Error al cargar sedes: ${response.status}`)
     }
@@ -443,6 +452,18 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
   >(null)
   const [deletingExistingAttachmentId, setDeletingExistingAttachmentId] = useState<number | string | null>(null)
   const [isUploadingExistingAttachment, setIsUploadingExistingAttachment] = useState(false)
+  const { session } = useAuth()
+  const authHeaders = useMemo<HeadersInit>(() => createAuthHeaders(session), [session])
+  const authorizedFetch = useCallback<Fetcher>(
+    (input, init) => {
+      const headers: HeadersInit = { ...authHeaders }
+      if (init?.headers) {
+        Object.assign(headers, init.headers as Record<string, string>)
+      }
+      return fetch(input, { ...init, headers })
+    },
+    [authHeaders],
+  )
 
   const [procesos, setProcesos] = useState<SelectOption[]>([])
   const [companias, setCompanias] = useState<SelectOption[]>([])
@@ -504,13 +525,13 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
   useEffect(() => {
     const controller = new AbortController()
 
-    fetchEntities("Proceso", setProcesos, controller.signal)
-    fetchEntities("Compania", setCompanias, controller.signal)
-    fetchSedes(setAllSedes, controller.signal)
+    fetchEntities("Proceso", setProcesos, controller.signal, authorizedFetch)
+    fetchEntities("Compania", setCompanias, controller.signal, authorizedFetch)
+    fetchSedes(setAllSedes, controller.signal, authorizedFetch)
 
     const fetchEstados = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/Estado`, { signal: controller.signal })
+        const response = await authorizedFetch(`${API_BASE_URL}/Estado`, { signal: controller.signal })
         if (!response.ok) {
           throw new Error(`Error al cargar estados: ${response.status}`)
         }
@@ -526,7 +547,7 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
     fetchEstados()
 
     return () => controller.abort()
-  }, [])
+  }, [authorizedFetch])
 
   useEffect(() => {
     if (allSedes.length === 0) return
@@ -557,7 +578,7 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
       setIsLoadingResponsables(true)
       try {
         const params = new URLSearchParams({ query: responsableQuery })
-        const response = await fetch(`${API_BASE_URL}/DirectorioActivo/suggestions?${params.toString()}`, {
+        const response = await authorizedFetch(`${API_BASE_URL}/DirectorioActivo/suggestions?${params.toString()}`, {
           signal: controller.signal,
         })
         if (!response.ok) {
@@ -584,7 +605,7 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
       clearTimeout(handler)
       controller.abort()
     }
-  }, [responsableQuery])
+  }, [authorizedFetch, responsableQuery])
 
   useEffect(() => {
     if (!lectorQuery.trim()) {
@@ -597,7 +618,7 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
       setIsLoadingLectores(true)
       try {
         const params = new URLSearchParams({ query: lectorQuery })
-        const response = await fetch(`${API_BASE_URL}/DirectorioActivo/suggestions?${params.toString()}`, {
+        const response = await authorizedFetch(`${API_BASE_URL}/DirectorioActivo/suggestions?${params.toString()}`, {
           signal: controller.signal,
         })
         if (!response.ok) {
@@ -624,7 +645,7 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
       clearTimeout(handler)
       controller.abort()
     }
-  }, [lectorQuery])
+  }, [authorizedFetch, lectorQuery])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -787,7 +808,7 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
       setIsLoadingExistingAttachments(true)
       setExistingAttachmentsError(null)
       try {
-        const response = await fetch(`${API_BASE_URL}/Adjuntos/proyecto/${projectId}`, { signal })
+        const response = await authorizedFetch(`${API_BASE_URL}/Adjuntos/proyecto/${projectId}`, { signal })
         if (!response.ok) {
           throw new Error("No fue posible cargar los adjuntos.")
         }
@@ -802,7 +823,7 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
         setIsLoadingExistingAttachments(false)
       }
     },
-    [projectId],
+    [authorizedFetch, projectId],
   )
 
   useEffect(() => {
@@ -827,7 +848,7 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
 
     setDownloadingExistingAttachmentId(downloadId)
     try {
-      const response = await fetch(`${API_BASE_URL}/Adjuntos/${downloadId}/archivo`)
+      const response = await authorizedFetch(`${API_BASE_URL}/Adjuntos/${downloadId}/archivo`)
       if (!response.ok) {
         throw new Error("No se pudo descargar el archivo.")
       }
@@ -866,7 +887,7 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
 
     setDeletingExistingAttachmentId(deleteId)
     try {
-      const response = await fetch(`${API_BASE_URL}/Adjuntos/${deleteId}`, { method: "DELETE" })
+      const response = await authorizedFetch(`${API_BASE_URL}/Adjuntos/${deleteId}`, { method: "DELETE" })
       if (!response.ok) {
         throw new Error("No fue posible eliminar el adjunto.")
       }
@@ -923,7 +944,7 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
 
     setIsUploadingExistingAttachment(true)
     try {
-      const response = await fetch(`${API_BASE_URL}/Adjuntos/multiples`, {
+      const response = await authorizedFetch(`${API_BASE_URL}/Adjuntos/multiples`, {
         method: "POST",
         body: submission,
       })
@@ -1488,12 +1509,15 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
 
     setIsChangingStatus(true)
     try {
-      const headers: Record<string, string> = { "Content-Type": "application/json" }
+      const headers: Record<string, string> = {
+        ...(authHeaders as Record<string, string>),
+        "Content-Type": "application/json",
+      }
       if (loggedUser.email) {
         headers.correousuario = loggedUser.email
       }
 
-      const response = await fetch(`${API_BASE_URL}/ProyectoSituacion/estado`, {
+      const response = await authorizedFetch(`${API_BASE_URL}/ProyectoSituacion/estado`, {
         method: "PUT",
         headers,
         body: JSON.stringify({ IdProyectoSituacion: proyectoId, IdEstado: estadoId }),
@@ -1627,7 +1651,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
           ? `${API_BASE_URL}/ProyectoSituacion/complete/${initialData.proyecto.id}`
           : `${API_BASE_URL}/ProyectoSituacion/complete`
 
-      const headers: Record<string, string> = {}
+      const headers: Record<string, string> = { ...(authHeaders as Record<string, string>) }
 
       if (loggedUser?.email) {
         headers.correousuario = loggedUser.email
@@ -1639,7 +1663,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
         submission.append("Adjuntos", attachment.file)
       })
 
-      const response = await fetch(endpointUrl, {
+      const response = await authorizedFetch(endpointUrl, {
         method: isEditing ? "PUT" : "POST",
         headers,
         body: submission,

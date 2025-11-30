@@ -58,7 +58,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signIn = () => {
     if (typeof window === "undefined") return
-    const redirectUri = `${window.location.origin}/login`
+    const redirectUri = `${window.location.origin}/redirect`
     const state = crypto.randomUUID()
     const nonce = crypto.randomUUID()
     saveState(state)
@@ -70,7 +70,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (typeof window === "undefined") return
     setSession(null)
     clearSession()
-    const postLogoutRedirectUri = `${window.location.origin}/login`
+    const postLogoutRedirectUri = `${window.location.origin}`
     window.location.href = buildLogoutUrl(postLogoutRedirectUri)
   }
 

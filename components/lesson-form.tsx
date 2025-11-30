@@ -1666,7 +1666,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-3 backdrop-blur-sm sm:p-4 md:p-6">
-      <Card className="w-full h-full max-h-screen max-w-full sm:h-auto sm:max-h-[92vh] sm:max-w-6xl border border-emerald-100 bg-white shadow-2xl rounded-2xl sm:rounded-3xl overflow-hidden flex flex-col text-[15px] leading-relaxed sm:text-base">
+      <Card className="w-full h-full max-h-screen max-w-full p-0 sm:h-auto sm:max-h-[92vh] sm:max-w-6xl border border-emerald-100 bg-white shadow-2xl rounded-2xl sm:rounded-3xl overflow-hidden flex flex-col text-[15px] leading-relaxed sm:text-base">
         <CardHeader className="sticky top-0 z-20 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-gradient-to-r from-[#0b7c4a] via-[#199a59] to-[#3f8f68] px-4 py-4 sm:px-6 sm:py-5 text-white shadow-md rounded-none sm:rounded-b-2xl">
           <div className="space-y-0.5">
             <CardTitle className="text-xl font-bold text-white">Proyecto o Situación</CardTitle>

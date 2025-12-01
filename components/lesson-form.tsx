@@ -743,15 +743,20 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
 
     hasAppliedInitialSelections.current = false
 
+    const companiaId =
+      (proyecto.sede?.data as { compania?: { data?: { id?: string }; id?: string } })?.compania?.data?.id ??
+      (proyecto.sede?.data as { compania?: { id?: string } })?.compania?.id ??
+      (proyecto.sede as { compania?: { id?: string } })?.compania?.id ??
+      (proyecto.sede as { data?: { compania?: { id?: string } } })?.data?.compania?.id ??
+      ""
+
     setFormData({
       autorNombre: proyecto.nombreAutor ?? loggedUser.name,
       autorCorreo: proyecto.correoAutor ?? loggedUser.email,
       estado: extractEstadoFromProyecto(proyecto),
       fecha: proyecto.fecha ? proyecto.fecha.split("T")[0] : "",
       proceso: String((proyecto.proceso as { id?: string })?.id ?? proyecto.proceso?.data?.id ?? ""),
-      compania: String(
-        (proyecto.sede?.data as { compania?: { data?: { id?: string } } })?.compania?.data?.id ?? "",
-      ),
+      compania: String(companiaId),
       sede: String(proyecto.sede?.data?.id ?? (proyecto.sede as { id?: string })?.id ?? ""),
       responsable: proyecto.nombreResponsable ?? "",
       responsableCorreo: proyecto.correoResponsable ?? "",

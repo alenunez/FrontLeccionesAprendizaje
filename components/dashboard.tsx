@@ -24,7 +24,7 @@ import { canEditLesson } from "@/lib/permissions"
 import { useAuth } from "@/components/auth-provider"
 import { Spinner } from "./spinner"
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:7043/api"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL 
 const BRAND_COLOR = "#067138"
 const BRAND_ACCENT = "#0fa958"
 const SOLLA_LOGO_URL = "https://www.solla.com/wp-content/uploads/2022/01/logo-solla-1.png"

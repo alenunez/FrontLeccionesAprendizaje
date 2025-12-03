@@ -36,7 +36,7 @@ import { flattenEventoDto } from "@/lib/event-normalizer"
 import { useAuth } from "@/components/auth-provider"
 import type { AuthSession } from "@/lib/auth"
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:7043/api"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL 
 
 type Fetcher = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
 

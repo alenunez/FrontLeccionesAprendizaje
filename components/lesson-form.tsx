@@ -552,6 +552,31 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
     sede: "",
     proceso: "",
   })
+  const ensureSedeVisible = useCallback(
+    (proyecto: ProyectoSituacionDto["proyecto"] | undefined) => {
+      if (!proyecto?.sede) return
+
+      const nestedSede = (proyecto.sede as { data?: RemoteEntity })?.data ?? (proyecto.sede as RemoteEntity)
+      const nestedCompania =
+        (nestedSede as { compania?: RemoteEntity })?.compania ??
+        (proyecto.sede as { compania?: RemoteEntity })?.compania
+
+      const sedeId = getEntityId(nestedSede)
+      if (!sedeId) return
+
+      const fallbackSede: SedeOption = {
+        id: sedeId,
+        nombre: getEntityName(nestedSede),
+        companiaId: getEntityId(nestedCompania) || undefined,
+      }
+
+      setAllSedes((prev) => {
+        const alreadyExists = prev.some((sede) => sede.id === fallbackSede.id)
+        return alreadyExists ? prev : [...prev, fallbackSede]
+      })
+    },
+    [],
+  )
   const hasAppliedInitialSelections = useRef(false)
   const workflowActionConfig: Record<WorkflowAction, { label: string; icon: React.ReactNode; targetEstado: string }> = {
     sendToReview: {
@@ -798,6 +823,8 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
       proceso: getEntityName((proyecto.proceso as { data?: RemoteEntity })?.data ?? (proyecto.proceso as RemoteEntity)),
     })
 
+    ensureSedeVisible(proyecto)
+
     hasAppliedInitialSelections.current = false
 
     const companiaId = getEntityId(nestedCompania)
@@ -823,7 +850,7 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
     setAvailableUsers((prev) => mergeUsers(prev, lectores))
     setSelectedUsers(lectores.map((lector) => lector.id))
     setEventos((initialData.eventos ?? []).map(mapEventoDtoToState))
-  }, [initialData, loggedUser])
+  }, [ensureSedeVisible, initialData, loggedUser])
 
   useEffect(() => {
     if (hasAppliedInitialSelections.current) return

@@ -141,7 +141,17 @@ const normalizePayload = (payload: unknown): RemoteEntity[] => {
 const formatFileSize = (bytes: number) => `${(bytes / 1024 / 1024).toFixed(2)} MB`
 
 const getEntityId = (entity?: RemoteEntity | null): string =>
-  String(entity?.id ?? entity?.Id ?? (entity as { codigo?: string })?.codigo ?? (entity as { Codigo?: string })?.Codigo ?? "")
+  String(
+    entity?.id ??
+      entity?.Id ??
+      (entity as { codigo?: string })?.codigo ??
+      (entity as { Codigo?: string })?.Codigo ??
+      (entity as { data?: RemoteEntity })?.data?.id ??
+      (entity as { data?: RemoteEntity })?.data?.Id ??
+      (entity as { data?: { codigo?: string } })?.data?.codigo ??
+      (entity as { data?: { Codigo?: string } })?.data?.Codigo ??
+      "",
+  )
 
 const getEntityName = (entity?: RemoteEntity | null): string =>
   String(

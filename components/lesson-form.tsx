@@ -779,16 +779,20 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
     const nestedSede = (proyecto.sede as { data?: RemoteEntity })?.data ?? null
     const nestedCompania =
       (nestedSede as { compania?: RemoteEntity })?.compania ?? (proyecto.sede as { compania?: RemoteEntity })?.compania
+    const directCompania = (proyecto as { compania?: RemoteEntity })?.compania
+    const directCompaniaId = (proyecto as { companiaId?: string | number })?.companiaId
+
+    const companiaEntity = nestedCompania ?? directCompania
 
     setInitialSelectionNames({
-      compania: getEntityName(nestedCompania),
+      compania: getEntityName(companiaEntity),
       sede: getEntityName(nestedSede ?? (proyecto.sede as RemoteEntity)),
       proceso: getEntityName((proyecto.proceso as { data?: RemoteEntity })?.data ?? (proyecto.proceso as RemoteEntity)),
     })
 
     hasAppliedInitialSelections.current = false
 
-    const companiaId = getEntityId(nestedCompania)
+    const companiaId = getEntityId(companiaEntity) || String(directCompaniaId ?? "")
     const procesoEntity = (proyecto.proceso as RemoteEntity) ?? (proyecto.proceso as { data?: RemoteEntity })?.data
 
     const sedeIdFromPrimitive = (proyecto as { sedeId?: string | number }).sedeId

@@ -601,22 +601,21 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
       ? allSedes.filter((sede) => sede.companiaId === formData.compania || sede.id === formData.sede)
       : allSedes
 
-    if (!selectedSede && formData.sede && initialSelectionNames.sede) {
+    if (formData.sede && !filtered.some((sede) => sede.id === formData.sede)) {
+      const fallbackNombre = selectedSede?.nombre || initialSelectionNames.sede || `Sede ${formData.sede}`
+      const fallbackCompaniaId = selectedSede?.companiaId || formData.compania || undefined
+
       filtered = [
         ...filtered,
         {
           id: formData.sede,
-          nombre: initialSelectionNames.sede,
-          companiaId: formData.compania || undefined,
+          nombre: fallbackNombre,
+          companiaId: fallbackCompaniaId,
         },
       ]
     }
 
     setSedes(filtered)
-
-    if (formData.sede && !filtered.some((sede) => sede.id === formData.sede)) {
-      setFormData((prev) => ({ ...prev, sede: "" }))
-    }
   }, [formData.compania, formData.sede, allSedes, initialSelectionNames.sede])
 
   useEffect(() => {

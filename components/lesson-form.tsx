@@ -140,10 +140,46 @@ const normalizePayload = (payload: unknown): RemoteEntity[] => {
 
 const formatFileSize = (bytes: number) => `${(bytes / 1024 / 1024).toFixed(2)} MB`
 
+const getEntityId = (entity?: RemoteEntity | null): string => {
+  const nested = (entity as { data?: RemoteEntity })?.data
+  const id =
+    entity?.id ??
+    entity?.Id ??
+    nested?.id ??
+    nested?.Id ??
+    (entity as { codigo?: string })?.codigo ??
+    (entity as { Codigo?: string })?.Codigo ??
+    (nested as { codigo?: string })?.codigo ??
+    (nested as { Codigo?: string })?.Codigo ??
+    ""
+
+  return String(id)
+}
+
+const getEntityName = (entity?: RemoteEntity | null): string => {
+  const nested = (entity as { data?: RemoteEntity })?.data
+
+  return String(
+    entity?.nombre ??
+      entity?.Nombre ??
+      entity?.name ??
+      nested?.nombre ??
+      nested?.Nombre ??
+      nested?.name ??
+      (entity as { value?: string })?.value ??
+      (entity as { Value?: string })?.Value ??
+      (nested as { value?: string })?.value ??
+      (nested as { Value?: string })?.Value ??
+      "",
+  )
+}
+
 const toSelectOptions = (entities: RemoteEntity[]): SelectOption[] =>
   entities.map((entity, index) => {
-    const identifier = entity.id ?? entity.Id ?? entity.codigo ?? index
-    const label = entity.nombre ?? entity.Nombre ?? entity.name ?? entity.Name ?? "Sin nombre"
+    const source = (entity as { data?: RemoteEntity })?.data ?? entity
+    const identifier = getEntityId(entity) || getEntityId(source) || String(index)
+    const label =
+      getEntityName(entity) || getEntityName(source) || String((source as { name?: string })?.name ?? "Sin nombre")
 
     return {
       id: String(identifier),
@@ -153,13 +189,12 @@ const toSelectOptions = (entities: RemoteEntity[]): SelectOption[] =>
 
 const toSedeOptions = (entities: RemoteEntity[]): SedeOption[] =>
   entities.map((entity, index) => {
-    const identifier = entity.id ?? entity.Id ?? entity.codigo ?? index
-    const label = entity.nombre ?? entity.Nombre ?? entity.name ?? entity.Name ?? "Sin nombre"
-    const compania = (entity as { compania?: RemoteEntity }).compania
-    const companiaId =
-      (compania?.id ?? compania?.Id ?? (compania as { data?: RemoteEntity })?.data?.id ??
-        (compania as { data?: RemoteEntity })?.data?.Id) ??
-      undefined
+    const source = (entity as { data?: RemoteEntity })?.data ?? entity
+    const identifier = getEntityId(entity) || getEntityId(source) || String(index)
+    const label = getEntityName(entity) || getEntityName(source) || "Sin nombre"
+    const compania =
+      (source as { compania?: RemoteEntity })?.compania ?? (entity as { compania?: RemoteEntity })?.compania
+    const companiaId = getEntityId(compania)
 
     return {
       id: String(identifier),
@@ -580,7 +615,18 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
   }, [authorizedFetch])
 
   useEffect(() => {
-    if (allSedes.length === 0) return
+    if (allSedes.length === 0) {
+      if (formData.sede) {
+        setSedes([
+          {
+            id: formData.sede,
+            nombre: initialSelectionNames.sede || `Sede ${formData.sede}`,
+            companiaId: formData.compania || undefined,
+          },
+        ])
+      }
+      return
+    }
 
     const selectedSede = allSedes.find((sede) => sede.id === formData.sede)
 
@@ -588,22 +634,21 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
       ? allSedes.filter((sede) => sede.companiaId === formData.compania || sede.id === formData.sede)
       : allSedes
 
-    if (!selectedSede && formData.sede && initialSelectionNames.sede) {
+    if (formData.sede && !filtered.some((sede) => sede.id === formData.sede)) {
+      const fallbackNombre = selectedSede?.nombre || initialSelectionNames.sede || `Sede ${formData.sede}`
+      const fallbackCompaniaId = selectedSede?.companiaId || formData.compania || undefined
+
       filtered = [
         ...filtered,
         {
           id: formData.sede,
-          nombre: initialSelectionNames.sede,
-          companiaId: formData.compania || undefined,
+          nombre: fallbackNombre,
+          companiaId: fallbackCompaniaId,
         },
       ]
     }
 
     setSedes(filtered)
-
-    if (formData.sede && !filtered.some((sede) => sede.id === formData.sede)) {
-      setFormData((prev) => ({ ...prev, sede: "" }))
-    }
   }, [formData.compania, formData.sede, allSedes, initialSelectionNames.sede])
 
   useEffect(() => {
@@ -743,30 +788,30 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
       title: lector.titulo ?? undefined,
     }))
 
+    const nestedSede = (proyecto.sede as { data?: RemoteEntity })?.data ?? null
+    const nestedCompania =
+      (nestedSede as { compania?: RemoteEntity })?.compania ?? (proyecto.sede as { compania?: RemoteEntity })?.compania
+
     setInitialSelectionNames({
-      compania:
-        (proyecto.sede?.data as { compania?: { data?: { nombre?: string } } })?.compania?.data?.nombre ?? "",
-      sede: proyecto.sede?.data?.nombre ?? "",
-      proceso: proyecto.proceso?.data?.nombre ?? "",
+      compania: getEntityName(nestedCompania),
+      sede: getEntityName(nestedSede ?? (proyecto.sede as RemoteEntity)),
+      proceso: getEntityName((proyecto.proceso as { data?: RemoteEntity })?.data ?? (proyecto.proceso as RemoteEntity)),
     })
 
     hasAppliedInitialSelections.current = false
 
-    const companiaId =
-      (proyecto.sede?.data as { compania?: { data?: { id?: string }; id?: string } })?.compania?.data?.id ??
-      (proyecto.sede?.data as { compania?: { id?: string } })?.compania?.id ??
-      (proyecto.sede as { compania?: { id?: string } })?.compania?.id ??
-      (proyecto.sede as { data?: { compania?: { id?: string } } })?.data?.compania?.id ??
-      ""
+    const companiaId = getEntityId(nestedCompania)
+    const procesoEntity = (proyecto.proceso as RemoteEntity) ?? (proyecto.proceso as { data?: RemoteEntity })?.data
+    const sedeId = getEntityId(proyecto.sede as RemoteEntity) || getEntityId(nestedSede)
 
     setFormData({
       autorNombre: proyecto.nombreAutor ?? loggedUser.name,
       autorCorreo: proyecto.correoAutor ?? loggedUser.email,
       estado: extractEstadoFromProyecto(proyecto),
       fecha: proyecto.fecha ? proyecto.fecha.split("T")[0] : "",
-      proceso: String((proyecto.proceso as { id?: string })?.id ?? proyecto.proceso?.data?.id ?? ""),
-      compania: String(companiaId),
-      sede: String(proyecto.sede?.data?.id ?? (proyecto.sede as { id?: string })?.id ?? ""),
+      proceso: getEntityId(procesoEntity),
+      compania: companiaId,
+      sede: sedeId,
       responsable: proyecto.nombreResponsable ?? "",
       responsableCorreo: proyecto.correoResponsable ?? "",
       proyectoOSituacion: proyecto.descripcion ?? "",

@@ -582,22 +582,29 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
   useEffect(() => {
     if (allSedes.length === 0) return
 
-    if (!formData.compania) {
-      setSedes(allSedes)
-      if (formData.sede && !allSedes.some((sede) => sede.id === formData.sede)) {
-        setFormData((prev) => ({ ...prev, sede: "" }))
-      }
-      return
+    const selectedSede = allSedes.find((sede) => sede.id === formData.sede)
+
+    let filtered = formData.compania
+      ? allSedes.filter((sede) => sede.companiaId === formData.compania || sede.id === formData.sede)
+      : allSedes
+
+    if (!selectedSede && formData.sede && initialSelectionNames.sede) {
+      filtered = [
+        ...filtered,
+        {
+          id: formData.sede,
+          nombre: initialSelectionNames.sede,
+          companiaId: formData.compania || undefined,
+        },
+      ]
     }
 
-    const filtered = allSedes.filter(
-      (sede) => sede.companiaId === formData.compania || sede.id === formData.sede,
-    )
     setSedes(filtered)
+
     if (formData.sede && !filtered.some((sede) => sede.id === formData.sede)) {
       setFormData((prev) => ({ ...prev, sede: "" }))
     }
-  }, [formData.compania, formData.sede, allSedes])
+  }, [formData.compania, formData.sede, allSedes, initialSelectionNames.sede])
 
   useEffect(() => {
     if (!responsableQuery.trim()) {

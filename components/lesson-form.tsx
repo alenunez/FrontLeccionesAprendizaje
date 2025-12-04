@@ -593,7 +593,18 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
   }, [authorizedFetch])
 
   useEffect(() => {
-    if (allSedes.length === 0) return
+    if (allSedes.length === 0) {
+      if (formData.sede) {
+        setSedes([
+          {
+            id: formData.sede,
+            nombre: initialSelectionNames.sede || `Sede ${formData.sede}`,
+            companiaId: formData.compania || undefined,
+          },
+        ])
+      }
+      return
+    }
 
     const selectedSede = allSedes.find((sede) => sede.id === formData.sede)
 

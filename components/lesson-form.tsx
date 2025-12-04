@@ -781,10 +781,10 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
     const companiaId = getEntityId(nestedCompania)
     const procesoEntity = (proyecto.proceso as RemoteEntity) ?? (proyecto.proceso as { data?: RemoteEntity })?.data
 
+    const sedeIdFromPrimitive = (proyecto as { sedeId?: string | number }).sedeId
+
     const sedeId =
-      getEntityId(proyecto.sede as RemoteEntity) ||
-      getEntityId(nestedSede) ||
-      getEntityId((proyecto as { sedeId?: string | number }).sedeId as unknown as RemoteEntity)
+      getEntityId(proyecto.sede as RemoteEntity) || getEntityId(nestedSede) || String(sedeIdFromPrimitive ?? "")
 
     setFormData({
       autorNombre: proyecto.nombreAutor ?? loggedUser.name,

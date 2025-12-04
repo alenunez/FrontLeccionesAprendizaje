@@ -141,17 +141,7 @@ const normalizePayload = (payload: unknown): RemoteEntity[] => {
 const formatFileSize = (bytes: number) => `${(bytes / 1024 / 1024).toFixed(2)} MB`
 
 const getEntityId = (entity?: RemoteEntity | null): string =>
-  String(
-    entity?.id ??
-      entity?.Id ??
-      (entity as { codigo?: string })?.codigo ??
-      (entity as { Codigo?: string })?.Codigo ??
-      (entity as { data?: RemoteEntity })?.data?.id ??
-      (entity as { data?: RemoteEntity })?.data?.Id ??
-      (entity as { data?: { codigo?: string } })?.data?.codigo ??
-      (entity as { data?: { Codigo?: string } })?.data?.Codigo ??
-      "",
-  )
+  String(entity?.id ?? entity?.Id ?? (entity as { codigo?: string })?.codigo ?? (entity as { Codigo?: string })?.Codigo ?? "")
 
 const getEntityName = (entity?: RemoteEntity | null): string =>
   String(
@@ -490,6 +480,7 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
   const [nivelAcceso, setNivelAcceso] = useState<"Público" | "Privado">(() =>
     normalizeAccessLevel(initialData?.proyecto?.isPrivate),
   )
+const [sedeInicialAplicada, setSedeInicialAplicada] = useState(false);
 
   const [selectedUsers, setSelectedUsers] = useState<string[]>([])
   const [showUserDropdown, setShowUserDropdown] = useState(false)
@@ -639,6 +630,27 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
     setSedes(filtered)
   }, [formData.compania, formData.sede, allSedes, initialSelectionNames.sede])
 
+// 🔥 Este efecto asegura que la sede aparezca cuando editas un proyecto,
+// pero solo la PRIMERA VEZ (para no bloquear cambios del usuario)
+useEffect(() => {
+  if (!isEditing) return;
+  if (!initialData?.proyecto) return;
+  if (sedes.length === 0) return;
+  if (sedeInicialAplicada) return; // ⛔ Ya aplicamos la sede una vez
+
+  const sedeId = String(getEntityId(initialData.proyecto.sede));
+  if (!sedeId) return;
+
+  const existe = sedes.some((s) => s.id === sedeId);
+  if (!existe) return;
+
+  // Aplicamos la sede seleccionada del proyecto únicamente la primera vez
+  setFormData((prev) => ({ ...prev, sede: sedeId }));
+  setSedeInicialAplicada(true); // 🔥 Evita que se ejecute nuevamente
+}, [isEditing, initialData, sedes, sedeInicialAplicada]);
+
+
+
   useEffect(() => {
     if (!responsableQuery.trim()) {
       setResponsableSuggestions([])
@@ -779,20 +791,16 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
     const nestedSede = (proyecto.sede as { data?: RemoteEntity })?.data ?? null
     const nestedCompania =
       (nestedSede as { compania?: RemoteEntity })?.compania ?? (proyecto.sede as { compania?: RemoteEntity })?.compania
-    const directCompania = (proyecto as { compania?: RemoteEntity })?.compania
-    const directCompaniaId = (proyecto as { companiaId?: string | number })?.companiaId
-
-    const companiaEntity = nestedCompania ?? directCompania
 
     setInitialSelectionNames({
-      compania: getEntityName(companiaEntity),
+      compania: getEntityName(nestedCompania),
       sede: getEntityName(nestedSede ?? (proyecto.sede as RemoteEntity)),
       proceso: getEntityName((proyecto.proceso as { data?: RemoteEntity })?.data ?? (proyecto.proceso as RemoteEntity)),
     })
 
     hasAppliedInitialSelections.current = false
 
-    const companiaId = getEntityId(companiaEntity) || String(directCompaniaId ?? "")
+    const companiaId = getEntityId(nestedCompania)
     const procesoEntity = (proyecto.proceso as RemoteEntity) ?? (proyecto.proceso as { data?: RemoteEntity })?.data
 
     const sedeIdFromPrimitive = (proyecto as { sedeId?: string | number }).sedeId
@@ -805,9 +813,9 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
       autorCorreo: proyecto.correoAutor ?? loggedUser.email,
       estado: extractEstadoFromProyecto(proyecto),
       fecha: proyecto.fecha ? proyecto.fecha.split("T")[0] : "",
-      proceso: procesoEntity ? String(getEntityId(procesoEntity) ?? "") : "",
-      compania: companiaId ? String(companiaId) : "",
-      sede: sedeId ? String(sedeId) : "",
+      proceso: getEntityId(procesoEntity),
+      compania: companiaId,
+      sede: sedeId,
       responsable: proyecto.nombreResponsable ?? "",
       responsableCorreo: proyecto.correoResponsable ?? "",
       proyectoOSituacion: proyecto.descripcion ?? "",
@@ -1985,7 +1993,13 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                   </Label>
                   <Select
                     value={formData.compania}
-                    onValueChange={(value) => setFormData({ ...formData, compania: value })}
+                    onValueChange={(value) =>
+                      setFormData({
+                        ...formData,
+                        compania: value,
+                        sede: "", // 🔥 Cuando cambia compañía, resetea sede
+                      })
+                    }
                   >
                     <SelectTrigger className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30">
                       <SelectValue placeholder="Seleccionar compañía" />

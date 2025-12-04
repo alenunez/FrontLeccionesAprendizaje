@@ -590,7 +590,9 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
       return
     }
 
-    const filtered = allSedes.filter((sede) => sede.companiaId === formData.compania)
+    const filtered = allSedes.filter(
+      (sede) => sede.companiaId === formData.compania || sede.id === formData.sede,
+    )
     setSedes(filtered)
     if (formData.sede && !filtered.some((sede) => sede.id === formData.sede)) {
       setFormData((prev) => ({ ...prev, sede: "" }))

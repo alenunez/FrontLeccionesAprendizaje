@@ -2553,6 +2553,8 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
   <Dialog open={showEventDialog && isEditable} onOpenChange={(open) => !isSubmitting && isEditable && setShowEventDialog(open)}>
     <DialogContent
       className={`w-screen max-w-none p-0 m-0 rounded-none h-[90vh] overflow-y-auto min-w-full ${isSubmitting ? "pointer-events-none opacity-70" : ""}`}
+      onInteractOutside={(event) => event.preventDefault()}
+      onEscapeKeyDown={(event) => event.preventDefault()}
     >
           <div className="space-y-6 px-6 pt-6 pb-4">
             <div className="space-y-3">

@@ -1122,7 +1122,7 @@ export function Dashboard() {
                   <div className="space-y-8">
                     <Card className="shadow-sm border border-emerald-50 bg-white/80 backdrop-blur-sm">
                       <CardHeader>
-                        <CardTitle className="text-lg">Cantidad de proyectos por compañía</CardTitle>
+                        <CardTitle className="text-lg">Cantidad de proyecto o situación por compañía</CardTitle>
                         <CardDescription>Total de proyectos o situaciones registrados por empresa</CardDescription>
                       </CardHeader>
                       <CardContent>
@@ -1152,7 +1152,7 @@ export function Dashboard() {
 
                     <Card className="shadow-sm border border-emerald-50 bg-white/80 backdrop-blur-sm">
                       <CardHeader>
-                        <CardTitle className="text-lg">Cantidad de proyectos por estado y compañía</CardTitle>
+                        <CardTitle className="text-lg">Cantidad de proyecto o situación por estado y compañía</CardTitle>
                         <CardDescription>Distribución de estados (borrador, en revisión, publicado) para cada empresa</CardDescription>
                       </CardHeader>
                       <CardContent>
@@ -1192,7 +1192,7 @@ export function Dashboard() {
                     <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
                       <Card className="shadow-sm border border-emerald-50 bg-white/80 backdrop-blur-sm">
                         <CardHeader>
-                          <CardTitle className="text-lg">Promedio de eventos por proyecto y compañía</CardTitle>
+                          <CardTitle className="text-lg">Promedio de eventos por proyecto o situación y compañía</CardTitle>
                           <CardDescription>Eventos registrados en promedio por cada proyecto o situación</CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -1222,8 +1222,8 @@ export function Dashboard() {
 
                       <Card className="shadow-sm border border-emerald-50 bg-white/80 backdrop-blur-sm">
                         <CardHeader>
-                          <CardTitle className="text-lg">Promedio de lecciones por proyecto y compañía</CardTitle>
-                          <CardDescription>Lecciones aprendidas promedio registradas por proyecto</CardDescription>
+                          <CardTitle className="text-lg">Promedio de lecciones por proyecto o situación y compañía</CardTitle>
+                          <CardDescription>Lecciones aprendidas promedio registradas por proyecto o situación</CardDescription>
                         </CardHeader>
                         <CardContent>
                           <div className="h-72">
@@ -1253,7 +1253,7 @@ export function Dashboard() {
 
                     <Card className="shadow-sm border border-emerald-50 bg-white/80 backdrop-blur-sm">
                       <CardHeader>
-                        <CardTitle className="text-lg">Proyectos por año y compañía</CardTitle>
+                        <CardTitle className="text-lg">Proyecto o situación por año y compañía</CardTitle>
                         <CardDescription>Evolución anual de proyectos o situaciones por empresa</CardDescription>
                       </CardHeader>
                       <CardContent>

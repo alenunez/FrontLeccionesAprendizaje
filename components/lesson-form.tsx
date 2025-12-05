@@ -2138,6 +2138,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                     onChange={(e) => setFormData({ ...formData, proyectoOSituacion: e.target.value })}
                     placeholder="Descripción detallada del proyecto o situación"
                     rows={3}
+                    maxLength={200}
                     className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30"
                     required
                   />
@@ -2152,6 +2153,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                     onChange={(e) => setFormData({ ...formData, aplicacionPractica: e.target.value })}
                     placeholder="¿Cómo y donde puede usarse lo aprendido?"
                     rows={3}
+                    maxLength={200}
                     className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30"
                     required
                   />

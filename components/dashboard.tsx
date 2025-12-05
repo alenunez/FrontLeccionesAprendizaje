@@ -207,8 +207,9 @@ export function Dashboard() {
     publicado: 0,
   })
   const [estadoIds, setEstadoIds] = useState<Record<string, string | number | undefined>>({})
+  const PAGE_SIZE_OPTIONS = [5, 10, 15] as const
   const [pageNumber, setPageNumber] = useState(1)
-  const [pageSize, setPageSize] = useState(10)
+  const [pageSize, setPageSize] = useState<number>(PAGE_SIZE_OPTIONS[1])
   const [totalCount, setTotalCount] = useState(0)
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc")
   const [estadoFilterId, setEstadoFilterId] = useState<string | number | null>(null)
@@ -389,7 +390,7 @@ export function Dashboard() {
   }
 
   const handlePageSizeChange = (value: number) => {
-    if (Number.isNaN(value) || value <= 0) return
+    if (!PAGE_SIZE_OPTIONS.includes(value as (typeof PAGE_SIZE_OPTIONS)[number])) return
     setPageSize(value)
     setPageNumber(1)
   }
@@ -924,7 +925,7 @@ export function Dashboard() {
                               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
                                 Proyecto o Situación
                               </span>
-                              <p className="text-base font-semibold text-slate-900 mt-1 text-balance break-words">
+                              <p className="text-base font-semibold text-slate-900 mt-1 text-balance break-words break-all">
                                 {lesson.projectOrSituation}
                               </p>
                             </div>
@@ -933,27 +934,27 @@ export function Dashboard() {
                             <div className="grid grid-cols-1 gap-x-6 gap-y-3 pt-2 sm:grid-cols-2 lg:grid-cols-3">
                               <div>
                                 <span className="text-xs font-medium text-slate-500">Estado</span>
-                                <p className="text-sm text-slate-900 mt-0.5">{lesson.status}</p>
+                                <p className="text-sm text-slate-900 mt-0.5 break-words break-all">{lesson.status}</p>
                               </div>
                               <div>
                                 <span className="text-xs font-medium text-slate-500">Responsable</span>
-                                <p className="text-sm text-slate-900 mt-0.5">{lesson.responsable}</p>
+                                <p className="text-sm text-slate-900 mt-0.5 break-words break-all">{lesson.responsable}</p>
                               </div>
                               <div>
                                 <span className="text-xs font-medium text-slate-500">Fecha</span>
-                                <p className="text-sm text-slate-900 mt-0.5">{lesson.fecha}</p>
+                                <p className="text-sm text-slate-900 mt-0.5 break-words break-all">{lesson.fecha}</p>
                               </div>
                               <div>
                                 <span className="text-xs font-medium text-slate-500">Proceso</span>
-                                <p className="text-sm text-slate-900 mt-0.5">{lesson.proceso}</p>
+                                <p className="text-sm text-slate-900 mt-0.5 break-words break-all">{lesson.proceso}</p>
                               </div>
                               <div>
                                 <span className="text-xs font-medium text-slate-500">Compañía</span>
-                                <p className="text-sm text-slate-900 mt-0.5">{lesson.compania}</p>
+                                <p className="text-sm text-slate-900 mt-0.5 break-words break-all">{lesson.compania}</p>
                               </div>
                               <div>
                                 <span className="text-xs font-medium text-slate-500">Sede</span>
-                                <p className="text-sm text-slate-900 mt-0.5">{lesson.sede}</p>
+                                <p className="text-sm text-slate-900 mt-0.5 break-words break-all">{lesson.sede}</p>
                               </div>
                             </div>
 
@@ -1033,7 +1034,7 @@ export function Dashboard() {
                             value={pageSize}
                             onChange={(event) => handlePageSizeChange(Number(event.target.value))}
                           >
-                            {[5, 10, 20, 30].map((sizeOption) => (
+                            {PAGE_SIZE_OPTIONS.map((sizeOption) => (
                               <option key={`page-size-${sizeOption}`} value={sizeOption}>
                                 {sizeOption}
                               </option>

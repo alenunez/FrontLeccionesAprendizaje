@@ -578,7 +578,7 @@ function EventColumn({ title, subtitle, items }: EventColumnProps) {
                       <Badge
                         key={`${item.id}-${relation}-${relationIndex}`}
                         variant="outline"
-                        className="!flex w-full max-w-full items-start justify-start rounded-full border-emerald-200 text-left text-[11px] text-[#067138] break-words break-all !whitespace-pre-wrap !overflow-visible !shrink leading-snug"
+                        className="!flex w-full max-w-full items-start justify-start rounded-full border-emerald-200 text-left text-[11px] text-[#067138] break-words break-all !whitespace-pre-wrap !overflow-hidden !shrink leading-snug"
                       >
                         {relation}
                       </Badge>

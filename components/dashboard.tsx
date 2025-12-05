@@ -924,7 +924,7 @@ export function Dashboard() {
                               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
                                 Proyecto o Situación
                               </span>
-                              <p className="text-base font-semibold text-slate-900 mt-1 text-balance">
+                              <p className="text-base font-semibold text-slate-900 mt-1 text-balance break-words">
                                 {lesson.projectOrSituation}
                               </p>
                             </div>

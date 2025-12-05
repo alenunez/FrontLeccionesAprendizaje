@@ -2138,10 +2138,11 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                     onChange={(e) => setFormData({ ...formData, proyectoOSituacion: e.target.value })}
                     placeholder="Descripción detallada del proyecto o situación"
                     rows={3}
-                    maxLength={200}
+                    maxLength={TEXTAREA_MAX_LENGTH}
                     className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30"
                     required
                   />
+                  {renderCharLimitNotice(formData.proyectoOSituacion)}
                 </div>
                 <div className="space-y-3">
                   <Label htmlFor="aplicacionPractica" className="text-base font-semibold text-slate-700">
@@ -2153,10 +2154,11 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                     onChange={(e) => setFormData({ ...formData, aplicacionPractica: e.target.value })}
                     placeholder="¿Cómo y donde puede usarse lo aprendido?"
                     rows={3}
-                    maxLength={200}
+                    maxLength={TEXTAREA_MAX_LENGTH}
                     className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30"
                     required
                   />
+                  {renderCharLimitNotice(formData.aplicacionPractica)}
                 </div>
 
                 <div className="space-y-3 md:col-span-2">

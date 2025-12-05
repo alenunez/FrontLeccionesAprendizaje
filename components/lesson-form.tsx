@@ -1375,7 +1375,7 @@ useEffect(() => {
     relationLabel?: string,
     onRemoveRow?: (id: string) => void,
   ) => (
-    <div className="space-y-4">
+    <div className="space-y-4 min-w-0">
       <div className={`border-l-4 border-${color}-500 pl-4`}>
         <h3 className="text-lg font-bold text-slate-900">{title}</h3>
       </div>
@@ -1386,7 +1386,7 @@ useEffect(() => {
               <div className="flex items-center justify-center min-w-[24px] h-9 text-sm font-semibold text-slate-600 bg-slate-100 rounded px-2">
                 {index + 1}
               </div>
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <Textarea
                   value={row.description}
                   onChange={(e) => updateRowWithRelations(row.id, "description", e.target.value, setter)}
@@ -1411,7 +1411,7 @@ useEffect(() => {
             </div>
 
             {relationOptions && relationKey && relationLabel && (
-              <div className="ml-2 space-y-2 border-l-2 border-slate-200 pl-4">
+              <div className="ml-2 space-y-2 border-l-2 border-slate-200 pl-4 min-w-0">
                 <Label className="text-xs font-semibold text-slate-600 mb-1 block">{relationLabel}</Label>
                 <div className="flex flex-wrap gap-2">
                   {relationOptions
@@ -1434,7 +1434,9 @@ useEffect(() => {
                           <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-[11px] font-semibold text-slate-700 transition group-hover:bg-emerald-100 group-hover:text-emerald-800">
                             {originalIndex + 1}
                           </span>
-                          <span className="whitespace-normal text-left leading-snug">{option.description}</span>
+                          <span className="whitespace-normal text-left leading-snug break-words">
+                            {option.description}
+                          </span>
                           {isSelected && <Check className="h-4 w-4 shrink-0 text-emerald-600" />}
                         </button>
                       )
@@ -1468,7 +1470,7 @@ useEffect(() => {
     color: string,
     onRemoveRow?: (id: string) => void,
   ) => (
-    <div className="space-y-4">
+    <div className="space-y-4 min-w-0">
       <div className={`border-l-4 border-${color}-500 pl-4`}>
         <h3 className="text-lg font-bold text-slate-900">{title}</h3>
       </div>
@@ -1478,7 +1480,7 @@ useEffect(() => {
             <div className="flex items-center justify-center min-w-[24px] h-9 text-sm font-semibold text-slate-600 bg-slate-100 rounded px-2">
               {index + 1}
             </div>
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <Textarea
                 value={row.description}
                 onChange={(e) => updateRow(row.id, e.target.value, setter)}

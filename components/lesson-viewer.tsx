@@ -556,7 +556,7 @@ interface EventColumnProps {
 
 function EventColumn({ title, subtitle, items }: EventColumnProps) {
   return (
-    <div className="flex flex-col gap-3 rounded-3xl border border-emerald-50 bg-[#f8fdf9] p-4 shadow-inner">
+    <div className="flex min-w-0 flex-col gap-3 rounded-3xl border border-emerald-50 bg-[#f8fdf9] p-4 shadow-inner">
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#067138]/70">{subtitle}</p>
         <h4 className="text-base font-semibold text-slate-900">{title}</h4>
@@ -565,7 +565,7 @@ function EventColumn({ title, subtitle, items }: EventColumnProps) {
       {items.length > 0 && (
         <ul className="space-y-3">
           {items.map((item, index) => (
-            <li key={item.id} className="rounded-2xl border border-emerald-100 bg-white/80 p-3 shadow-sm">
+            <li key={item.id} className="min-w-0 rounded-2xl border border-emerald-100 bg-white/80 p-3 shadow-sm">
               <div className="text-xs font-semibold text-slate-500">#{index + 1}</div>
               <p className="text-sm font-medium text-slate-900 break-words">{item.descripcion}</p>
               {item.relations && item.relations.length > 0 && (
@@ -573,12 +573,12 @@ function EventColumn({ title, subtitle, items }: EventColumnProps) {
                   <p className="text-xs font-semibold text-slate-500">
                     {item.relationLabel ?? "Relaciones"}
                   </p>
-                  <div className="flex flex-wrap gap-1">
+                  <div className="flex max-w-full flex-wrap gap-1">
                     {item.relations.map((relation, relationIndex) => (
                       <Badge
                         key={`${item.id}-${relation}-${relationIndex}`}
                         variant="outline"
-                        className="rounded-full border-emerald-200 text-[11px] text-[#067138] break-words whitespace-normal"
+                        className="max-w-full rounded-full border-emerald-200 text-left text-[11px] text-[#067138] break-words !whitespace-normal !w-full sm:!w-auto"
                       >
                         {relation}
                       </Badge>

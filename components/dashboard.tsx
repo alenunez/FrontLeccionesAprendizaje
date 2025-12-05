@@ -1123,7 +1123,7 @@ export function Dashboard() {
                   <div className="space-y-8">
                     <Card className="shadow-sm border border-emerald-50 bg-white/80 backdrop-blur-sm">
                       <CardHeader>
-                        <CardTitle className="text-lg">Cantidad de proyecto o situación por compañía</CardTitle>
+                        <CardTitle className="text-lg">Cantidad de proyectos o situaciones por compañía</CardTitle>
                         <CardDescription>Total de proyectos o situaciones registrados por empresa</CardDescription>
                       </CardHeader>
                       <CardContent>
@@ -1153,7 +1153,7 @@ export function Dashboard() {
 
                     <Card className="shadow-sm border border-emerald-50 bg-white/80 backdrop-blur-sm">
                       <CardHeader>
-                        <CardTitle className="text-lg">Cantidad de proyecto o situación por estado y compañía</CardTitle>
+                        <CardTitle className="text-lg">Cantidad de proyectos o situaciones por estado y compañía</CardTitle>
                         <CardDescription>Distribución de estados (borrador, en revisión, publicado) para cada empresa</CardDescription>
                       </CardHeader>
                       <CardContent>
@@ -1254,7 +1254,7 @@ export function Dashboard() {
 
                     <Card className="shadow-sm border border-emerald-50 bg-white/80 backdrop-blur-sm">
                       <CardHeader>
-                        <CardTitle className="text-lg">Proyecto o situación por año y compañía</CardTitle>
+                        <CardTitle className="text-lg">Proyectos o situaciones por año y compañía</CardTitle>
                         <CardDescription>Evolución anual de proyectos o situaciones por empresa</CardDescription>
                       </CardHeader>
                       <CardContent>

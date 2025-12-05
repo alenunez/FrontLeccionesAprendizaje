@@ -461,18 +461,87 @@ export function Dashboard() {
     return () => controller.abort()
   }, [authHeaders, showAnalyticsTab, analyticsReloadKey])
 
-  const handleGeneratePPTX = (lesson: any) => {
-    // Simulate PPTX generation
-    console.log(`Generando presentación PPTX para: ${lesson.projectOrSituation}`)
+  // const handleGeneratePPTX = (lesson: any) => {
+  //   // Simulate PPTX generation
+  //   console.log(`Generando presentación PPTX para: ${lesson.projectOrSituation}`)
 
-    // Create a simple notification or download simulation
-    const link = document.createElement("a")
-    link.href = "#"
-    link.download = `${lesson.id}_${lesson.projectOrSituation.replace(/\s+/g, "_")}.pptx`
+  //   // Create a simple notification or download simulation
+  //   const link = document.createElement("a")
+  //   link.href = "#"
+  //   link.download = `${lesson.id}_${lesson.projectOrSituation.replace(/\s+/g, "_")}.pptx`
 
-    // Show a success message
-    alert(`Generando presentación PPTX para: "${lesson.projectOrSituation}"\nArchivo: ${lesson.id}_presentacion.pptx`)
+  //   // Show a success message
+  //   alert(`Generando presentación PPTX para: "${lesson.projectOrSituation}"\nArchivo: ${lesson.id}_presentacion.pptx`)
+  // }
+
+  const handleGeneratePPTX = async (lesson: LessonSummary) => {
+  if (!API_BASE_URL) {
+    alert("La URL base del API no está configurada (NEXT_PUBLIC_API_BASE_URL).")
+    return
   }
+
+  // lesson.id viene del proyecto.id (mapLessons)
+  const proyectoId = Number(lesson.id)
+  if (Number.isNaN(proyectoId)) {
+    alert("El identificador del proyecto no es válido para generar la presentación.")
+    return
+  }
+
+  try {
+    const url = `${API_BASE_URL}/proyectos/${proyectoId}/presentacion`
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        ...authHeaders, // incluye Authorization si hay token
+        // si tu endpoint requiere el correo como en el listado, lo agregas:
+        correoUsuario: loggedUser.email,
+        Accept:
+          "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      },
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "")
+      console.error("Error al generar PPTX:", response.status, errorText)
+      alert("No fue posible generar la presentación PPTX. Intenta nuevamente.")
+      return
+    }
+
+    const blob = await response.blob()
+
+    // Intentar obtener el nombre de archivo desde Content-Disposition
+    const contentDisposition =
+          response.headers.get("Content-Disposition") ||
+          response.headers.get("content-disposition")
+    let fileName = `LeccionesAprendidas_${proyectoId}.pptx`
+
+    if (contentDisposition) {
+      const match = contentDisposition.match(/filename\*?=(?:UTF-8'')?["']?([^\"';]+)["']?/i)
+      if (match && match[1]) {
+        try {
+          fileName = decodeURIComponent(match[1])
+        } catch {
+          fileName = match[1]
+        }
+      }
+    }
+
+    // Crear enlace temporal y disparar descarga
+    const blobUrl = window.URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = blobUrl
+    link.download = fileName
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(blobUrl)
+  } catch (error) {
+    console.error("Error inesperado al generar PPTX:", error)
+    alert("Ocurrió un error inesperado al generar la presentación PPTX.")
+  }
+}
+
 
   const handleCloseViewer = () => {
     setSelectedLesson(null)

@@ -245,6 +245,7 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
             <div className="flex flex-col gap-3 rounded-3xl border border-emerald-100 bg-white/80 p-6 shadow-sm">
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#067138]/70">Proyecto o situación</p>
               <h2 className="text-2xl font-semibold text-slate-900 break-words">{safeText(proyecto.descripcion)}</h2>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#067138]/70">Aplicación práctica</p>
               <p className="text-sm text-slate-600 break-words">{safeText(proyecto.aplicacionPractica)}</p>
             </div>
 

@@ -1279,6 +1279,26 @@ useEffect(() => {
       return
     }
 
+    const impactosSinAccion = impactos.some((impacto) =>
+      acciones.every((accion) => !accion.relatedImpactos.includes(impacto.id)),
+    )
+    const accionesSinResultado = acciones.some((accion) =>
+      resultados.every((resultado) => !resultado.relatedAcciones.includes(accion.id)),
+    )
+    const resultadosSinLeccion = resultados.some((resultado) =>
+      lecciones.every((leccion) => !leccion.relatedResultados.includes(resultado.id)),
+    )
+
+    if (impactosSinAccion || accionesSinResultado || resultadosSinLeccion) {
+      toast({
+        title: "Relaciones incompletas",
+        description:
+          "Cada impacto debe tener una acción, cada acción un resultado y cada resultado una lección asociada antes de guardar.",
+        variant: "destructive",
+      })
+      return
+    }
+
     const eventData: Event = {
       id: editingEventId || Date.now().toString(),
       evento: currentEvent.evento,

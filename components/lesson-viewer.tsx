@@ -245,6 +245,7 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
             <div className="flex flex-col gap-3 rounded-3xl border border-emerald-100 bg-white/80 p-6 shadow-sm">
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#067138]/70">Proyecto o situación</p>
               <h2 className="text-2xl font-semibold text-slate-900 break-words">{safeText(proyecto.descripcion)}</h2>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#067138]/70">Aplicación práctica</p>
               <p className="text-sm text-slate-600 break-words">{safeText(proyecto.aplicacionPractica)}</p>
             </div>
 
@@ -578,7 +579,7 @@ function EventColumn({ title, subtitle, items }: EventColumnProps) {
                       <Badge
                         key={`${item.id}-${relation}-${relationIndex}`}
                         variant="outline"
-                        className="!flex w-full max-w-full items-start justify-start rounded-full border-emerald-200 text-left text-[11px] text-[#067138] break-words break-all !whitespace-pre-wrap !overflow-hidden !shrink leading-snug"
+                        className="!flex w-full max-w-full flex-col items-center justify-center gap-2 rounded-full border-2 border-emerald-200 bg-white px-4 py-6 text-center text-[11px] text-[#067138] break-words whitespace-pre-wrap leading-snug !overflow-visible !shrink shadow-inner min-h-32"
                       >
                         {relation}
                       </Badge>

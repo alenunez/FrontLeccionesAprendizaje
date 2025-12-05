@@ -36,7 +36,8 @@ import { flattenEventoDto } from "@/lib/event-normalizer"
 import { useAuth } from "@/components/auth-provider"
 import type { AuthSession } from "@/lib/auth"
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
+const TEXTAREA_MAX_LENGTH = 200
 
 type Fetcher = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
 
@@ -118,6 +119,13 @@ interface FormDataState {
 }
 
 const isDefined = <T,>(value: T | undefined | null): value is T => value !== undefined && value !== null
+
+const renderCharLimitNotice = (value: string) =>
+  value.length >= TEXTAREA_MAX_LENGTH ? (
+    <p className="mt-1 text-xs font-medium text-amber-600">
+      Has alcanzado el límite de {TEXTAREA_MAX_LENGTH} caracteres.
+    </p>
+  ) : null
 
 const normalizePayload = (payload: unknown): RemoteEntity[] => {
   if (Array.isArray(payload)) {
@@ -1384,8 +1392,10 @@ useEffect(() => {
                   onChange={(e) => updateRowWithRelations(row.id, "description", e.target.value, setter)}
                   placeholder={`${placeholder} ${index + 1}`}
                   rows={2}
+                  maxLength={TEXTAREA_MAX_LENGTH}
                   className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30"
                 />
+                {renderCharLimitNotice(row.description)}
               </div>
               {data.length > 1 && (
                 <Button
@@ -1474,8 +1484,10 @@ useEffect(() => {
                 onChange={(e) => updateRow(row.id, e.target.value, setter)}
                 placeholder={`${placeholder} ${index + 1}`}
                 rows={2}
+                maxLength={TEXTAREA_MAX_LENGTH}
                 className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30"
               />
+              {renderCharLimitNotice(row.description)}
             </div>
             {data.length > 1 && (
               <Button
@@ -2587,9 +2599,11 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                 onChange={(e) => setCurrentEvent({ ...currentEvent, evento: e.target.value })}
                 placeholder="Describa el evento relacionado con esta lección"
                 rows={3}
+                maxLength={TEXTAREA_MAX_LENGTH}
                 className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30"
                 required
               />
+              {renderCharLimitNotice(currentEvent.evento)}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

@@ -116,15 +116,6 @@ const getRelatedDescriptions = (ids: (string | number)[] | undefined, dataset: N
   }, [])
 }
 
-const calculateRelationBubbleSize = (text: string): number => {
-  const baseSize = 120
-  const growthPerLine = 18
-  const maxSize = 240
-  const estimatedLines = Math.ceil(Math.max(text.length, 1) / 36)
-
-  return Math.min(maxSize, baseSize + (estimatedLines - 1) * growthPerLine)
-}
-
 const normalizeAccessLevel = (value: unknown): "Público" | "Privado" | null => {
   if (typeof value === "boolean") {
     return value ? "Privado" : "Público"
@@ -583,25 +574,15 @@ function EventColumn({ title, subtitle, items }: EventColumnProps) {
                     {item.relationLabel ?? "Relaciones"}
                   </p>
                   <div className="max-w-full space-y-1">
-                    {item.relations.map((relation, relationIndex) => {
-                      const bubbleSize = calculateRelationBubbleSize(relation)
-
-                      return (
-                        <Badge
-                          key={`${item.id}-${relation}-${relationIndex}`}
-                          variant="outline"
-                          style={{
-                            width: bubbleSize,
-                            height: bubbleSize,
-                            minWidth: bubbleSize,
-                            minHeight: bubbleSize,
-                          }}
-                          className="!flex items-center justify-center rounded-full border-emerald-200 text-center text-[11px] text-[#067138] break-words break-all whitespace-pre-wrap leading-snug px-3 py-2"
-                        >
-                          {relation}
-                        </Badge>
-                      )
-                    })}
+                    {item.relations.map((relation, relationIndex) => (
+                      <Badge
+                        key={`${item.id}-${relation}-${relationIndex}`}
+                        variant="outline"
+                        className="!flex w-full max-w-full items-start justify-start rounded-full border-emerald-200 text-left text-[11px] text-[#067138] break-words break-all !whitespace-pre-wrap !overflow-hidden !shrink leading-snug"
+                      >
+                        {relation}
+                      </Badge>
+                    ))}
                   </div>
                 </div>
               )}

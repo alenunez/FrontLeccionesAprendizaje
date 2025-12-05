@@ -1424,7 +1424,7 @@ useEffect(() => {
                         <button
                           key={option.id}
                           type="button"
-                          className={`group flex items-center gap-2 rounded-full border px-3 py-2 text-left text-xs transition ${
+                          className={`group flex min-w-0 max-w-full items-start gap-2 rounded-full border px-3 py-2 text-left text-xs leading-snug transition sm:max-w-xl ${
                             isSelected
                               ? "border-emerald-500 bg-emerald-50 text-emerald-800 shadow-[0_0_0_1px] shadow-emerald-100"
                               : "border-slate-200 bg-white text-slate-600 hover:border-emerald-200 hover:bg-emerald-50"
@@ -1434,7 +1434,7 @@ useEffect(() => {
                           <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-[11px] font-semibold text-slate-700 transition group-hover:bg-emerald-100 group-hover:text-emerald-800">
                             {originalIndex + 1}
                           </span>
-                          <span className="whitespace-normal text-left leading-snug">{option.description}</span>
+                          <span className="min-w-0 whitespace-normal break-words text-left leading-snug">{option.description}</span>
                           {isSelected && <Check className="h-4 w-4 shrink-0 text-emerald-600" />}
                         </button>
                       )

@@ -378,7 +378,7 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Evento #{index + 1}</p>
-                      <p className="text-lg font-semibold text-slate-900 break-words whitespace-pre-wrap">
+                      <p className="text-lg font-semibold text-slate-900 break-words break-all whitespace-pre-wrap">
                         {safeText(eventoDto.evento?.descripcion ?? eventoDto.evento?.titulo)}
                       </p>
                     </div>
@@ -567,7 +567,7 @@ function EventColumn({ title, subtitle, items }: EventColumnProps) {
           {items.map((item, index) => (
             <li key={item.id} className="min-w-0 rounded-2xl border border-emerald-100 bg-white/80 p-3 shadow-sm">
               <div className="text-xs font-semibold text-slate-500">#{index + 1}</div>
-              <p className="text-sm font-medium text-slate-900 break-words whitespace-pre-wrap">{item.descripcion}</p>
+              <p className="text-sm font-medium text-slate-900 break-words break-all whitespace-pre-wrap">{item.descripcion}</p>
               {item.relations && item.relations.length > 0 && (
                 <div className="mt-2 space-y-1">
                   <p className="text-xs font-semibold text-slate-500">
@@ -578,7 +578,7 @@ function EventColumn({ title, subtitle, items }: EventColumnProps) {
                       <Badge
                         key={`${item.id}-${relation}-${relationIndex}`}
                         variant="outline"
-                        className="!flex w-full max-w-full items-start justify-start rounded-full border-emerald-200 text-left text-[11px] text-[#067138] break-words whitespace-pre-wrap leading-snug"
+                        className="!flex w-full max-w-full items-start justify-start rounded-full border-emerald-200 text-left text-[11px] text-[#067138] break-words break-all !whitespace-pre-wrap !overflow-visible !shrink leading-snug"
                       >
                         {relation}
                       </Badge>

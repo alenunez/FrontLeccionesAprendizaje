@@ -931,8 +931,8 @@ useEffect(() => {
     setSelectedUsers((prev) => prev.filter((id) => id !== userId))
   }
 
-  const MAX_ATTACHMENTS = 3
-  const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024
+  const MAX_ATTACHMENTS = 5
+  const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024
   const projectId = initialData?.proyecto?.id
 
   const fetchExistingAttachments = useCallback(
@@ -1057,7 +1057,7 @@ useEffect(() => {
     if (existingAttachments.length >= MAX_ATTACHMENTS) {
       toast({
         title: "Límite alcanzado",
-        description: "Solo puedes tener hasta 3 adjuntos. Elimina uno para agregar otro.",
+        description: "Solo puedes tener hasta 5 adjuntos. Elimina uno para agregar otro.",
         variant: "destructive",
       })
       return
@@ -1066,7 +1066,7 @@ useEffect(() => {
     if (file.size > MAX_FILE_SIZE_BYTES) {
       toast({
         title: "Archivo demasiado grande",
-        description: "Cada adjunto debe pesar máximo 5 MB.",
+        description: "Cada adjunto debe pesar máximo 20 MB.",
         variant: "destructive",
       })
       return
@@ -1143,7 +1143,7 @@ useEffect(() => {
           if (validFiles.length !== filesWithinLimit.length) {
             toast({
               title: "Archivo demasiado grande",
-              description: "Cada adjunto debe pesar máximo 5 MB.",
+              description: "Cada adjunto debe pesar máximo 20 MB.",
               variant: "destructive",
             })
           }
@@ -2470,7 +2470,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                   <div className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-dashed border-emerald-200 bg-emerald-50/40 p-4">
                     <div className="flex flex-col gap-1 text-sm text-slate-700">
                       <span className="font-medium text-slate-800">Agregar un archivo</span>
-                      <span className="text-xs text-slate-600">Hasta 3 adjuntos de máximo 5 MB cada uno.</span>
+                      <span className="text-xs text-slate-600">Hasta 5 adjuntos de máximo 20 MB cada uno.</span>
                     </div>
                     <Button
                       type="button"
@@ -2495,7 +2495,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
 
                   {existingAttachments.length >= MAX_ATTACHMENTS && (
                     <p className="text-sm text-red-600">
-                      Has alcanzado el máximo de 3 adjuntos. Elimina uno para poder cargar un nuevo archivo.
+                      Has alcanzado el máximo de 5 adjuntos. Elimina uno para poder cargar un nuevo archivo.
                     </p>
                   )}
                 </div>
@@ -2520,7 +2520,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                       Subir archivos
                     </Button>
                     <span className="text-sm text-slate-500 text-justify sm:text-left">
-                      Formatos soportados: PDF, Word, Excel, PowerPoint, imágenes, texto. Hasta 3 archivos de 5 MB cada uno.
+                      Formatos soportados: PDF, Word, Excel, PowerPoint, imágenes, texto. Hasta 5 archivos de 20 MB cada uno.
                     </span>
                   </div>
 

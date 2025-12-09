@@ -34,6 +34,8 @@ interface LessonSummary {
   projectOrSituation: string
   status: string
   responsable: string
+  autorEmail?: string | null
+  responsableEmail?: string | null
   fecha: string
   proceso: string
   compania: string
@@ -164,6 +166,8 @@ const mapLessons = (payload: ProyectoSituacionDto[]): LessonSummary[] =>
       projectOrSituation: proyecto.descripcion ?? "Sin descripción",
       status: estadoDescripcion,
       responsable: responsableNombre,
+      autorEmail: proyecto.correoAutor,
+      responsableEmail: proyecto.correoResponsable,
       fecha: formatDate(proyecto.fecha),
       proceso: proyecto.proceso?.data?.nombre ?? "Sin proceso",
       compania: proyecto.sede?.data?.compania?.data?.nombre ?? "Sin compañía",
@@ -186,6 +190,8 @@ const normalizeEstadoPayload = (payload: unknown): Array<{ id?: string | number;
   if (Array.isArray(payload)) return payload as Array<{ id?: string | number; descripcion?: string; titulo?: string }>
   return []
 }
+
+const normalizeEmail = (value?: string | null): string => value?.trim().toLowerCase() ?? ""
 
 export function Dashboard() {
   const { session, signOut } = useAuth()
@@ -223,6 +229,8 @@ export function Dashboard() {
   const [analyticsReloadKey, setAnalyticsReloadKey] = useState(0)
   const isViewerOnly = loggedUser.isUsuarioCreate === false
   const showAnalyticsTab = !isViewerOnly
+  const normalizedUserEmail = normalizeEmail(session?.user?.email ?? loggedUser.email)
+  const userRole = session?.user?.role ?? loggedUser.role ?? ""
 
   const authHeaders = useMemo<HeadersInit>(
     () => (session?.accessToken ? { Authorization: `${session.tokenType ?? "Bearer"} ${session.accessToken}` } : {}),
@@ -378,6 +386,17 @@ export function Dashboard() {
   const handleSortToggle = () => {
     setSortDirection((prev) => (prev === "desc" ? "asc" : "desc"))
     setPageNumber(1)
+  }
+
+  const canDownloadPresentation = (lesson: LessonSummary) => {
+    const autorEmail = normalizeEmail(lesson.autorEmail)
+    const responsableEmail = normalizeEmail(lesson.responsableEmail)
+    const isOwner =
+      normalizedUserEmail !== "" &&
+      (normalizedUserEmail === autorEmail || normalizedUserEmail === responsableEmail)
+    const isAdmin = userRole.trim().toLowerCase() === "administrador"
+
+    return isAdmin || isOwner
   }
 
   const handleViewLesson = (lesson: LessonSummary) => {
@@ -913,6 +932,7 @@ export function Dashboard() {
                       filteredLessons.map((lesson) => {
                         const fullLesson = rawLessons.find((item) => `${item.proyecto?.id ?? ""}` === lesson.id)
                         const isEditable = canEditLesson(fullLesson, loggedUser)
+                        const allowPresentationDownload = canDownloadPresentation(lesson)
 
                         return (
                           <div
@@ -996,16 +1016,22 @@ export function Dashboard() {
                             >
                               <Edit3 className="h-4 w-4" />
                             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className={`text-[#b45309] hover:bg-orange-50 ${isViewerOnly ? "cursor-not-allowed opacity-60" : ""}`}
-              onClick={() => !isViewerOnly && handleGeneratePPTX(lesson)}
-              title={isViewerOnly ? "Acceso de solo lectura" : "Generar presentación PPTX"}
-              disabled={isViewerOnly}
-            >
-              <Presentation className="h-4 w-4" />
-            </Button>
+                            {allowPresentationDownload ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className={`text-[#b45309] hover:bg-orange-50 ${isViewerOnly ? "cursor-not-allowed opacity-60" : ""}`}
+                                onClick={() => !isViewerOnly && handleGeneratePPTX(lesson)}
+                                title={
+                                  isViewerOnly
+                                    ? "Acceso de solo lectura"
+                                    : "Descargar presentación en PPTX"
+                                }
+                                disabled={isViewerOnly}
+                              >
+                                <Presentation className="h-4 w-4" />
+                              </Button>
+                            ) : null}
                             <Button
                               variant="ghost"
                               size="sm"

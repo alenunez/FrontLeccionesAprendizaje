@@ -52,8 +52,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const enhanceSessionWithApi = useCallback(
     async (currentSession: AuthSession) => {
-      const hasUserMetadata = currentSession.user?.isUsuarioCreate !== undefined
-      if (!currentSession.accessToken || hasUserMetadata) return currentSession
+      if (!currentSession.accessToken) return currentSession
 
       try {
         const response = await fetch(`${API_BASE_URL}/Usuario/validar-token`, {
@@ -83,15 +82,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           nombre?: string
         }
 
+        const nextUser = {
+          ...currentSession.user,
+          name: payload.nombre ?? currentSession.user?.name,
+          email: payload.email ?? currentSession.user?.email,
+          role: payload.nombreRol ?? payload.rolName ?? currentSession.user?.role,
+          isUsuarioCreate: payload.isUsuarioCreate ?? currentSession.user?.isUsuarioCreate,
+        }
+
+        const hasUserChanged =
+          nextUser.name !== currentSession.user?.name ||
+          nextUser.email !== currentSession.user?.email ||
+          nextUser.role !== currentSession.user?.role ||
+          nextUser.isUsuarioCreate !== currentSession.user?.isUsuarioCreate
+
+        if (!hasUserChanged) {
+          return currentSession
+        }
+
         const updatedSession: AuthSession = {
           ...currentSession,
-          user: {
-            ...currentSession.user,
-            name: payload.nombre ?? currentSession.user?.name,
-            email: payload.email ?? currentSession.user?.email,
-            role: payload.nombreRol ?? payload.rolName ?? currentSession.user?.role,
-            isUsuarioCreate: payload.isUsuarioCreate ?? currentSession.user?.isUsuarioCreate,
-          },
+          user: nextUser,
         }
 
         storeSession(updatedSession)
@@ -136,7 +147,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const syncUser = async () => {
       if (!session) return
       const updatedSession = await enhanceSessionWithApi(session)
-      if (isMounted) {
+      if (isMounted && updatedSession !== session) {
         setSession(updatedSession)
       }
     }

@@ -1,15 +1,24 @@
 "use client"
 
 import Image from "next/image"
-import { useEffect } from "react"
+import { Suspense, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/card"
 import { useAuth } from "@/components/auth-provider"
+import { Spinner } from "@/components/spinner"
 import { consumeRedirectPath, saveRedirectPath } from "@/lib/auth"
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoginLoader />}>
+      <LoginPageContent />
+    </Suspense>
+  )
+}
+
+const LoginPageContent = () => {
   const { signIn, session, loading, error } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -120,3 +129,12 @@ export default function LoginPage() {
     </div>
   )
 }
+
+const LoginLoader = () => (
+  <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#f6f3ec] via-white to-[#ecf5ef] px-4 py-12 text-emerald-900">
+    <div className="flex flex-col items-center gap-4 rounded-2xl bg-white/80 p-8 shadow-lg shadow-emerald-100 ring-1 ring-emerald-100">
+      <Spinner />
+      <p className="text-sm text-emerald-800">Preparando la página de inicio de sesión…</p>
+    </div>
+  </div>
+)

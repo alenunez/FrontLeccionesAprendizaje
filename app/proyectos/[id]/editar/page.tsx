@@ -43,6 +43,7 @@ function ProjectEditorContent() {
   const [lesson, setLesson] = useState<ProyectoSituacionDto | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [hasFetched, setHasFetched] = useState(false)
 
   const authHeaders = useMemo<HeadersInit>(
     () => (session?.accessToken ? { Authorization: `${session.tokenType ?? "Bearer"} ${session.accessToken}` } : {}),
@@ -67,6 +68,7 @@ function ProjectEditorContent() {
     const fetchLesson = async () => {
       setLoading(true)
       setError(null)
+      setHasFetched(false)
 
       try {
         const response = await fetch(`${API_BASE_URL}/ProyectoSituacion/full/edit/${lessonId}`, {
@@ -87,6 +89,7 @@ function ProjectEditorContent() {
         setLesson(null)
       } finally {
         setLoading(false)
+        setHasFetched(true)
       }
     }
 
@@ -103,7 +106,7 @@ function ProjectEditorContent() {
     router.replace("/")
   }
 
-  if (loading) {
+  if (loading || !hasFetched) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary/10 via-secondary/30 to-background text-foreground">
         <div className="flex flex-col items-center gap-3 rounded-3xl border border-border/60 bg-card/80 p-8 shadow-lg backdrop-blur-sm">

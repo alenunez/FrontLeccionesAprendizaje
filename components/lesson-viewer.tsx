@@ -82,11 +82,11 @@ const normalizeEntities = (entities: NormalizableEntity[]): NormalizedEntity[] =
     }
   })
 
-const getRelatedDescriptions = (ids: (string | number)[] | undefined, dataset: NormalizedEntity[]): string[] => {
+const getRelatedIndexes = (ids: (string | number)[] | undefined, dataset: NormalizedEntity[]): string[] => {
   if (!ids || ids.length === 0) return []
 
-  const lookupMap = new Map<string, string>()
-  const seen = new Set<string>()
+  const lookupMap = new Map<string, number>()
+  const seen = new Set<number>()
 
   dataset.forEach((item, index) => {
     const candidateIds = [
@@ -98,7 +98,7 @@ const getRelatedDescriptions = (ids: (string | number)[] | undefined, dataset: N
 
     candidateIds.forEach((candidateId) => {
       if (!lookupMap.has(candidateId)) {
-        lookupMap.set(candidateId, item.descripcion)
+        lookupMap.set(candidateId, index + 1)
       }
     })
   })
@@ -107,11 +107,11 @@ const getRelatedDescriptions = (ids: (string | number)[] | undefined, dataset: N
     const normalizedId = String(rawId ?? "").trim()
     if (!normalizedId) return matches
 
-    const description = lookupMap.get(normalizedId)
-    if (!description || seen.has(description)) return matches
+    const relatedIndex = lookupMap.get(normalizedId)
+    if (!relatedIndex || seen.has(relatedIndex)) return matches
 
-    seen.add(description)
-    matches.push(description)
+    seen.add(relatedIndex)
+    matches.push(`#${relatedIndex}`)
     return matches
   }, [])
 }
@@ -408,7 +408,7 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
                         descripcion: safeText(
                           impacto.impacto?.descripcion ?? (impacto.impacto as { titulo?: string })?.titulo,
                         ),
-                        relations: getRelatedDescriptions(impacto.accionIds, acciones),
+                        relations: getRelatedIndexes(impacto.accionIds, acciones).map((value) => `Acción ${value}`),
                         relationLabel: "Acciones relacionadas",
                       })) ?? []}
                     />
@@ -421,8 +421,8 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
                           accion.accion?.descripcion ?? (accion.accion as { titulo?: string })?.titulo,
                         ),
                         relations: [
-                          ...getRelatedDescriptions(accion.impactoIds, impactos).map((value) => `Impacto: ${value}`),
-                          ...getRelatedDescriptions(accion.resultadoIds, resultados).map((value) => `Resultado: ${value}`),
+                          ...getRelatedIndexes(accion.impactoIds, impactos).map((value) => `Impacto ${value}`),
+                          ...getRelatedIndexes(accion.resultadoIds, resultados).map((value) => `Resultado ${value}`),
                         ],
                         relationLabel: "Relaciones",
                       })) ?? []}
@@ -440,8 +440,8 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
                           resultado.resultado?.descripcion ?? (resultado.resultado as { titulo?: string })?.titulo,
                         ),
                         relations: [
-                          ...getRelatedDescriptions(resultado.accionIds, acciones).map((value) => `Acción: ${value}`),
-                          ...getRelatedDescriptions(resultado.leccionIds, lecciones).map((value) => `Lección: ${value}`),
+                          ...getRelatedIndexes(resultado.accionIds, acciones).map((value) => `Acción ${value}`),
+                          ...getRelatedIndexes(resultado.leccionIds, lecciones).map((value) => `Lección ${value}`),
                         ],
                         relationLabel: "Relaciones",
                       })) ?? []}
@@ -458,7 +458,7 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
                         descripcion: safeText(
                           leccion.leccion?.descripcion ?? (leccion.leccion as { titulo?: string })?.titulo,
                         ),
-                        relations: getRelatedDescriptions(leccion.resultadoIds, resultados).map((value) => `Resultado: ${value}`),
+                        relations: getRelatedIndexes(leccion.resultadoIds, resultados).map((value) => `Resultado ${value}`),
                         relationLabel: "Resultados relacionados",
                       })) ?? []}
                     />

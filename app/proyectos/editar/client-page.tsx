@@ -1,43 +1,63 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 
 import { ProtectedRoute } from "@/components/protected-route"
-import { LessonViewer } from "@/components/lesson-viewer"
+import { LessonForm } from "@/components/lesson-form"
 import { Spinner } from "@/components/spinner"
 import { Button } from "@/components/ui/button"
-import type { ProyectoSituacionDto } from "@/types/lessons"
 import { useAuth } from "@/components/auth-provider"
+import { useSimulatedUser, UserProvider, type SimulatedUser } from "@/lib/user-context"
+import type { ProyectoSituacionDto } from "@/types/lessons"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
 
-export function ProjectViewerPageClient() {
+export function ProjectEditorPageClient() {
+  const { session } = useAuth()
+
+  const userFromSession: SimulatedUser | undefined = session
+    ? {
+        name: session.user?.name ?? "Usuario Solla",
+        email: session.user?.email ?? "sesion@solla.com",
+        role: session.user?.role ?? "Gestor de conocimiento",
+        isUsuarioCreate: session.user?.isUsuarioCreate,
+        avatarUrl: "",
+      }
+    : undefined
+
   return (
     <ProtectedRoute>
-      <ProjectViewerContent />
+      <UserProvider user={userFromSession}>
+        <ProjectEditorContent />
+      </UserProvider>
     </ProtectedRoute>
   )
 }
 
-function ProjectViewerContent() {
-  const params = useParams<{ id: string }>()
+function ProjectEditorContent() {
+  const searchParams = useSearchParams()
   const router = useRouter()
   const { session } = useAuth()
+  const loggedUser = useSimulatedUser()
   const [lesson, setLesson] = useState<ProyectoSituacionDto | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [hasFetched, setHasFetched] = useState(false)
+  const lessonId = searchParams.get("id")
 
   const authHeaders = useMemo<HeadersInit>(
     () => (session?.accessToken ? { Authorization: `${session.tokenType ?? "Bearer"} ${session.accessToken}` } : {}),
     [session?.accessToken, session?.tokenType],
   )
 
+  const correoHeaders = useMemo<HeadersInit>(
+    () => (loggedUser.email ? { correoUsuario: loggedUser.email } : {}),
+    [loggedUser.email],
+  )
+
   useEffect(() => {
     const controller = new AbortController()
-    const lessonId = params?.id
-
     if (!lessonId) {
       setError("No se recibió un identificador de proyecto o situación válido.")
       setLoading(false)
@@ -48,10 +68,11 @@ function ProjectViewerContent() {
       setLoading(true)
       setError(null)
       setHasFetched(false)
+
       try {
-        const response = await fetch(`${API_BASE_URL}/ProyectoSituacion/full/${lessonId}`, {
+        const response = await fetch(`${API_BASE_URL}/ProyectoSituacion/full/edit/${lessonId}`, {
           signal: controller.signal,
-          headers: authHeaders,
+          headers: { ...authHeaders, ...correoHeaders },
         })
 
         if (!response.ok) {
@@ -75,9 +96,13 @@ function ProjectViewerContent() {
     fetchLesson()
 
     return () => controller.abort()
-  }, [params?.id, authHeaders])
+  }, [lessonId, authHeaders, correoHeaders])
 
   const handleClose = () => {
+    router.replace("/")
+  }
+
+  const handleSaved = () => {
     router.replace("/")
   }
 
@@ -132,14 +157,14 @@ function ProjectViewerContent() {
       <div className="mx-auto max-w-6xl px-4 py-10">
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">Visualización</p>
-            <h1 className="text-2xl font-semibold">Proyecto o situación #{params.id}</h1>
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">Edición</p>
+            <h1 className="text-2xl font-semibold">Proyecto o situación #{lessonId ?? ""}</h1>
           </div>
           <Button variant="outline" onClick={handleClose} className="rounded-full">
             Cerrar
           </Button>
         </div>
-        <LessonViewer lesson={lesson} onClose={handleClose} />
+        <LessonForm onClose={handleClose} onSaved={handleSaved} initialData={lesson} loggedUser={loggedUser} />
       </div>
     </div>
   )

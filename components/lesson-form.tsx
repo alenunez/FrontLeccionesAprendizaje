@@ -37,7 +37,10 @@ import { useAuth } from "@/components/auth-provider"
 import type { AuthSession } from "@/lib/auth"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
-const TEXTAREA_MAX_LENGTH = 200
+const DEFAULT_TEXTAREA_MAX_LENGTH = 200
+const APPLICACION_PRACTICA_MAX_LENGTH = 400
+const EVENT_DESCRIPTION_MAX_LENGTH = 400
+const EVENT_TABLE_TEXTAREA_MAX_LENGTH = 1000
 
 type Fetcher = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
 
@@ -120,10 +123,10 @@ interface FormDataState {
 
 const isDefined = <T,>(value: T | undefined | null): value is T => value !== undefined && value !== null
 
-const renderCharLimitNotice = (value: string) =>
-  value.length >= TEXTAREA_MAX_LENGTH ? (
+const renderCharLimitNotice = (value: string, maxLength = DEFAULT_TEXTAREA_MAX_LENGTH) =>
+  value.length >= maxLength ? (
     <p className="mt-1 text-xs font-medium text-amber-600">
-      Has alcanzado el límite de {TEXTAREA_MAX_LENGTH} caracteres.
+      Has alcanzado el límite de {maxLength} caracteres.
     </p>
   ) : null
 
@@ -1392,10 +1395,10 @@ useEffect(() => {
                   onChange={(e) => updateRowWithRelations(row.id, "description", e.target.value, setter)}
                   placeholder={`${placeholder} ${index + 1}`}
                   rows={2}
-                  maxLength={TEXTAREA_MAX_LENGTH}
+                  maxLength={EVENT_TABLE_TEXTAREA_MAX_LENGTH}
                   className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30"
                 />
-                {renderCharLimitNotice(row.description)}
+                {renderCharLimitNotice(row.description, EVENT_TABLE_TEXTAREA_MAX_LENGTH)}
               </div>
               {data.length > 1 && (
                 <Button
@@ -1484,10 +1487,10 @@ useEffect(() => {
                 onChange={(e) => updateRow(row.id, e.target.value, setter)}
                 placeholder={`${placeholder} ${index + 1}`}
                 rows={2}
-                maxLength={TEXTAREA_MAX_LENGTH}
+                maxLength={EVENT_TABLE_TEXTAREA_MAX_LENGTH}
                 className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30"
               />
-              {renderCharLimitNotice(row.description)}
+              {renderCharLimitNotice(row.description, EVENT_TABLE_TEXTAREA_MAX_LENGTH)}
             </div>
             {data.length > 1 && (
               <Button
@@ -2138,11 +2141,11 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                     onChange={(e) => setFormData({ ...formData, proyectoOSituacion: e.target.value })}
                     placeholder="Descripción detallada del proyecto o situación"
                     rows={3}
-                    maxLength={TEXTAREA_MAX_LENGTH}
+                    maxLength={DEFAULT_TEXTAREA_MAX_LENGTH}
                     className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30"
                     required
                   />
-                  {renderCharLimitNotice(formData.proyectoOSituacion)}
+                  {renderCharLimitNotice(formData.proyectoOSituacion, DEFAULT_TEXTAREA_MAX_LENGTH)}
                 </div>
                 <div className="space-y-3">
                   <Label htmlFor="aplicacionPractica" className="text-base font-semibold text-slate-700">
@@ -2154,11 +2157,11 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                     onChange={(e) => setFormData({ ...formData, aplicacionPractica: e.target.value })}
                     placeholder="¿Cómo y donde puede usarse lo aprendido?"
                     rows={3}
-                    maxLength={TEXTAREA_MAX_LENGTH}
+                    maxLength={APPLICACION_PRACTICA_MAX_LENGTH}
                     className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30"
                     required
                   />
-                  {renderCharLimitNotice(formData.aplicacionPractica)}
+                  {renderCharLimitNotice(formData.aplicacionPractica, APPLICACION_PRACTICA_MAX_LENGTH)}
                 </div>
 
                 <div className="space-y-3 md:col-span-2">
@@ -2603,11 +2606,11 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                 onChange={(e) => setCurrentEvent({ ...currentEvent, evento: e.target.value })}
                 placeholder="Describa el evento relacionado con esta lección"
                 rows={3}
-                maxLength={TEXTAREA_MAX_LENGTH}
+                maxLength={EVENT_DESCRIPTION_MAX_LENGTH}
                 className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30"
                 required
               />
-              {renderCharLimitNotice(currentEvent.evento)}
+              {renderCharLimitNotice(currentEvent.evento, EVENT_DESCRIPTION_MAX_LENGTH)}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

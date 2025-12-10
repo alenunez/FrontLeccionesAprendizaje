@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 
 import { ProtectedRoute } from "@/components/protected-route"
 import { LessonViewer } from "@/components/lesson-viewer"
@@ -12,7 +12,7 @@ import { useAuth } from "@/components/auth-provider"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
 
-export default function ProjectViewerPage() {
+export function ProjectViewerPageClient() {
   return (
     <ProtectedRoute>
       <ProjectViewerContent />
@@ -21,7 +21,8 @@ export default function ProjectViewerPage() {
 }
 
 function ProjectViewerContent() {
-  const params = useParams<{ id: string }>()
+  const searchParams = useSearchParams()
+  const pathname = usePathname()
   const router = useRouter()
   const { session } = useAuth()
   const [lesson, setLesson] = useState<ProyectoSituacionDto | null>(null)
@@ -36,7 +37,7 @@ function ProjectViewerContent() {
 
   useEffect(() => {
     const controller = new AbortController()
-    const lessonId = params?.id
+    const lessonId = searchParams.get("id") ?? pathname?.split("/").filter(Boolean).pop()
 
     if (!lessonId) {
       setError("No se recibió un identificador de proyecto o situación válido.")
@@ -75,7 +76,7 @@ function ProjectViewerContent() {
     fetchLesson()
 
     return () => controller.abort()
-  }, [params?.id, authHeaders])
+    }, [searchParams, pathname, authHeaders])
 
   const handleClose = () => {
     router.replace("/")

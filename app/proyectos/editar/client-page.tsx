@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 
 import { ProtectedRoute } from "@/components/protected-route"
 import { LessonForm } from "@/components/lesson-form"
@@ -13,7 +13,7 @@ import type { ProyectoSituacionDto } from "@/types/lessons"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
 
-export default function ProjectEditorPage() {
+export function ProjectEditorPageClient() {
   const { session } = useAuth()
 
   const userFromSession: SimulatedUser | undefined = session
@@ -36,7 +36,8 @@ export default function ProjectEditorPage() {
 }
 
 function ProjectEditorContent() {
-  const params = useParams<{ id: string }>()
+  const searchParams = useSearchParams()
+  const pathname = usePathname()
   const router = useRouter()
   const { session } = useAuth()
   const loggedUser = useSimulatedUser()
@@ -57,7 +58,7 @@ function ProjectEditorContent() {
 
   useEffect(() => {
     const controller = new AbortController()
-    const lessonId = params?.id
+    const lessonId = searchParams.get("id") ?? pathname?.split("/").filter(Boolean).pop()
 
     if (!lessonId) {
       setError("No se recibió un identificador de proyecto o situación válido.")
@@ -97,7 +98,7 @@ function ProjectEditorContent() {
     fetchLesson()
 
     return () => controller.abort()
-  }, [params?.id, authHeaders, correoHeaders])
+  }, [searchParams, pathname, authHeaders, correoHeaders])
 
   const handleClose = () => {
     router.replace("/")

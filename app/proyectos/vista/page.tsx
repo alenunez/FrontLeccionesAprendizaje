@@ -2,7 +2,6 @@ import { Suspense } from "react"
 
 import { ProjectViewerPageClient } from "./client-page"
 
-export const dynamic = "force-dynamic"
 
 export default function ProjectViewerPage() {
   return (

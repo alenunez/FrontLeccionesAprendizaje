@@ -1,7 +1,7 @@
 "use client"
 
 import Image from "next/image"
-import { useEffect } from "react"
+import { Suspense, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/c
 import { useAuth } from "@/components/auth-provider"
 import { consumeRedirectPath, saveRedirectPath } from "@/lib/auth"
 
-export default function LoginPage() {
+function LoginPageContent() {
   const { signIn, session, loading, error } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -118,5 +118,13 @@ export default function LoginPage() {
         </Card>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-emerald-900">Cargando…</div>}>
+      <LoginPageContent />
+    </Suspense>
   )
 }

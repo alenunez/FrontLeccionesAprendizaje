@@ -6,6 +6,7 @@ import {
   buildLoginUrl,
   buildLogoutUrl,
   clearSession,
+  consumeRedirectPath,
   extractTokensFromHash,
   getStoredSession,
   isExpired,
@@ -131,7 +132,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setSession(redirectSession)
       setLoading(false)
       window.history.replaceState({}, document.title, window.location.pathname)
-      router.replace("/")
+      const redirectPath = consumeRedirectPath()
+      router.replace(redirectPath ?? "/")
       return
     }
 

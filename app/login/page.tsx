@@ -2,19 +2,29 @@
 
 import Image from "next/image"
 import { useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/card"
 import { useAuth } from "@/components/auth-provider"
+import { consumeRedirectPath, saveRedirectPath } from "@/lib/auth"
 
 export default function LoginPage() {
   const { signIn, session, loading, error } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    const redirect = searchParams.get("redirect")
+    if (redirect) {
+      saveRedirectPath(redirect)
+    }
+  }, [searchParams])
 
   useEffect(() => {
     if (session && !loading) {
-      router.replace("/")
+      const redirectPath = consumeRedirectPath()
+      router.replace(redirectPath ?? "/")
     }
   }, [session, loading, router])
 

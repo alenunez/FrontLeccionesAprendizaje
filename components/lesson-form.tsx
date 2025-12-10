@@ -1859,6 +1859,14 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
         description: "El proyecto o situación se guardó correctamente.",
         className: "bg-emerald-50 border-emerald-200 text-emerald-900",
       })
+      if (!isEditing && attachments.length > 0) {
+        toast({
+          title: "Estamos procesando tus adjuntos",
+          description:
+            "Dependiendo del tamaño de los archivos, podrían tardar algunos minutos en reflejarse en el proyecto o situación.",
+          className: "bg-amber-50 border-amber-200 text-amber-900",
+        })
+      }
       onSaved()
     } catch (error) {
       console.error(error)

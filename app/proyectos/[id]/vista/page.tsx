@@ -66,6 +66,7 @@ function ProjectViewerContent() {
         setError("No fue posible cargar la información del proyecto. Intenta nuevamente o regresa al inicio.")
         setLesson(null)
       } finally {
+        if (controller.signal.aborted) return
         setLoading(false)
         setHasFetched(true)
       }

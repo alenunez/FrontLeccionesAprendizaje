@@ -1427,7 +1427,7 @@ useEffect(() => {
                         <button
                           key={option.id}
                           type="button"
-                          className={`group flex min-w-0 max-w-full items-start gap-2 rounded-full border px-3 py-2 text-left text-xs leading-snug transition sm:max-w-xl ${
+                          className={`group flex min-w-0 w-full sm:w-auto sm:max-w-xl items-start gap-2 rounded-lg border px-3 py-2 text-left text-xs leading-snug transition ${
                             isSelected
                               ? "border-emerald-500 bg-emerald-50 text-emerald-800 shadow-[0_0_0_1px] shadow-emerald-100"
                               : "border-slate-200 bg-white text-slate-600 hover:border-emerald-200 hover:bg-emerald-50"

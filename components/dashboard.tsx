@@ -1,6 +1,7 @@
 "use client"
 
 import Image from "next/image"
+import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -9,7 +10,6 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BookOpen, Plus, Search, Filter, Eye, BarChart3, Presentation, LogOut, Edit3 } from "lucide-react"
 import { LessonForm } from "./lesson-form"
-import { LessonViewer } from "./lesson-viewer"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -195,6 +195,7 @@ const normalizeEmail = (value?: string | null): string => value?.trim().toLowerC
 
 export function Dashboard() {
   const { session, signOut } = useAuth()
+  const router = useRouter()
   const loggedUser = useSimulatedUser()
   const [activeTab, setActiveTab] = useState("lessons")
   const [showForm, setShowForm] = useState(false)
@@ -205,7 +206,6 @@ export function Dashboard() {
   const [rawLessons, setRawLessons] = useState<ProyectoSituacionDto[]>([])
   const [isLoadingLessons, setIsLoadingLessons] = useState(false)
   const [fetchError, setFetchError] = useState<string | null>(null)
-  const [selectedLesson, setSelectedLesson] = useState<ProyectoSituacionDto | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
   const [estadoCounts, setEstadoCounts] = useState<ProyectoSituacionEstadoCounts>({
     borrador: 0,
@@ -401,11 +401,14 @@ export function Dashboard() {
 
   const handleViewLesson = (lesson: LessonSummary) => {
     const foundLesson = rawLessons.find((item) => `${item.proyecto?.id ?? ""}` === lesson.id)
-    if (foundLesson) {
-      setSelectedLesson(foundLesson)
-    } else {
+    const lessonId = foundLesson?.proyecto?.id ?? lesson.id
+
+    if (!lessonId) {
       alert("No fue posible encontrar la información completa de esta lección.")
+      return
     }
+
+    router.push(`/proyectos/vista?id=${lessonId}`)
   }
 
   const handlePageSizeChange = (value: number) => {
@@ -563,10 +566,6 @@ export function Dashboard() {
 }
 
 
-  const handleCloseViewer = () => {
-    setSelectedLesson(null)
-  }
-
   const handleFormSaved = () => {
     setShowForm(false)
     setLessonToEdit(null)
@@ -574,6 +573,13 @@ export function Dashboard() {
   }
 
   const handleOpenForm = (lesson?: ProyectoSituacionDto) => {
+    const lessonId = lesson?.proyecto?.id ?? lesson?.id
+
+    if (lessonId) {
+      router.push(`/proyectos/editar?id=${lessonId}`)
+      return
+    }
+
     setLessonToEdit(lesson ?? null)
     setShowForm(true)
   }
@@ -1335,7 +1341,6 @@ export function Dashboard() {
           loggedUser={loggedUser}
         />
       )}
-      {selectedLesson && <LessonViewer lesson={selectedLesson} onClose={handleCloseViewer} />}
     </div>
   )
 }

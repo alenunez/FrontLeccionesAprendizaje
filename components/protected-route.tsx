@@ -1,19 +1,28 @@
 "use client"
 
 import { useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useAuth } from "./auth-provider"
 import { Spinner } from "@/components/spinner"
+import { saveRedirectPath } from "@/lib/auth"
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, loading } = useAuth()
   const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
 
   useEffect(() => {
     if (!loading && !session) {
-      router.replace("/login")
+      const currentSearch = searchParams?.toString()
+      const currentPath = currentSearch ? `${pathname}?${currentSearch}` : pathname
+      if (currentPath) {
+        saveRedirectPath(currentPath)
+      }
+      const redirectParam = currentPath ? `?redirect=${encodeURIComponent(currentPath)}` : ""
+      router.replace(`/login${redirectParam}`)
     }
-  }, [loading, session, router])
+  }, [loading, session, router, pathname, searchParams])
 
   if (loading || !session) {
     return (

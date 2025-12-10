@@ -16,6 +16,7 @@ export interface AuthSession {
 
 const STORAGE_KEY = "solla.auth.session"
 const STATE_KEY = "solla.auth.state"
+const REDIRECT_PATH_KEY = "solla.auth.redirectPath"
 
 const baseAuthScopes = ["openid", "profile", "email", "offline_access", SOLLA_API_SCOPE]
 
@@ -81,6 +82,18 @@ export const storeSession = (session: AuthSession) => {
 export const clearSession = () => {
   if (typeof window === "undefined") return
   localStorage.removeItem(STORAGE_KEY)
+}
+
+export const saveRedirectPath = (path: string) => {
+  if (typeof window === "undefined") return
+  sessionStorage.setItem(REDIRECT_PATH_KEY, path)
+}
+
+export const consumeRedirectPath = () => {
+  if (typeof window === "undefined") return null
+  const redirectPath = sessionStorage.getItem(REDIRECT_PATH_KEY)
+  sessionStorage.removeItem(REDIRECT_PATH_KEY)
+  return redirectPath
 }
 
 export const saveState = (state: string) => {

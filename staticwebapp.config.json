@@ -1,0 +1,19 @@
+{
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": [
+      "/_next/*",
+      "/api/*",
+      "/fonts/*",
+      "/images/*",
+      "/icons/*",
+      "/assets/*"
+    ]
+  },
+  "routes": [
+    { "route": "/redirect", "rewrite": "/redirect.html" },
+    { "route": "/redirect/*", "rewrite": "/redirect.html" },
+    { "route": "/proyectos/editar", "rewrite": "/proyectos/editar.html" },
+    { "route": "/proyectos/vista", "rewrite": "/proyectos/vista.html" }
+  ]
+}

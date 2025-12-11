@@ -43,7 +43,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signIn = useCallback(() => {
     if (typeof window === "undefined") return
-    const redirectUri = `${window.location.origin}/redirect`
+    // Use the exported HTML file directly to avoid directory resolution issues on
+    // static hosts (e.g., Azure Static Web Apps). This prevents EISDIR errors
+    // when the identity provider redirects back without a trailing slash.
+    const redirectUri = `${window.location.origin}/redirect.html`
     const state = crypto.randomUUID()
     const nonce = crypto.randomUUID()
     saveState(state)

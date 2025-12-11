@@ -6,7 +6,6 @@
     "build": "next build",
     "dev": "next dev",
     "lint": "next lint",
-    "postbuild": "cp staticwebapp.config.json out/staticwebapp.config.json",
     "start": "next start"
   },
   "dependencies": {

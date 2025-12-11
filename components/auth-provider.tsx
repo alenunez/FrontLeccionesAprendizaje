@@ -43,7 +43,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signIn = useCallback(() => {
     if (typeof window === "undefined") return
-    const redirectUri = `${window.location.origin}/redirect/`
+    const redirectUri = `${window.location.origin}/redirect`
     const state = crypto.randomUUID()
     const nonce = crypto.randomUUID()
     saveState(state)

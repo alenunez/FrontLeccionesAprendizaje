@@ -35,6 +35,11 @@ function ProjectViewerContent() {
     [session?.accessToken, session?.tokenType],
   )
 
+  const correoHeaders = useMemo<HeadersInit>(
+    () => (session?.user?.email ? { correoUsuario: session.user.email } : {}),
+    [session?.user?.email],
+  )
+
   useEffect(() => {
     const controller = new AbortController()
     if (!lessonId) {
@@ -50,18 +55,25 @@ function ProjectViewerContent() {
       try {
         const response = await fetch(`${API_BASE_URL}/ProyectoSituacion/full/${lessonId}`, {
           signal: controller.signal,
-          headers: authHeaders,
+          headers: { ...authHeaders, ...correoHeaders },
         })
 
         if (!response.ok) {
-          throw new Error(`Error al cargar el proyecto: ${response.status}`)
+          const error = new Error(`Error al cargar el proyecto: ${response.status}`) as Error & { status?: number }
+          error.status = response.status
+          throw error
         }
 
         const payload = (await response.json()) as ProyectoSituacionDto
         setLesson(payload)
       } catch (err) {
         if ((err as Error).name === "AbortError") return
+        const status = (err as { status?: number }).status
         console.error("No fue posible cargar el proyecto o situación", err)
+        if (status === 403) {
+          setError("No tienes permisos para acceder a este proyecto o situación.")
+          return
+        }
         setError("No fue posible cargar la información del proyecto. Intenta nuevamente o regresa al inicio.")
         setLesson(null)
       } finally {
@@ -74,7 +86,7 @@ function ProjectViewerContent() {
     fetchLesson()
 
     return () => controller.abort()
-  }, [lessonId, authHeaders])
+  }, [lessonId, authHeaders, correoHeaders])
 
   const handleClose = () => {
     router.replace("/")

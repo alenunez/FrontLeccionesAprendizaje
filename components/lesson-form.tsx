@@ -62,6 +62,24 @@ interface Attachment {
   file: File
 }
 
+const getFileBaseName = (name: string) => {
+  const lastDotIndex = name.lastIndexOf(".")
+  if (lastDotIndex === -1) return name
+  return name.slice(0, lastDotIndex)
+}
+
+const getFileExtension = (name: string) => {
+  const lastDotIndex = name.lastIndexOf(".")
+  if (lastDotIndex === -1) return ""
+  return name.slice(lastDotIndex)
+}
+
+const sanitizeBaseFileName = (name: string) =>
+  name
+    .replace(/\.[^/.]+$/, "")
+    .replace(/[\\/:*?"<>|]/g, "")
+    .trim()
+
 interface ProyectoAdjunto {
   id?: number
   idAdjunto?: number
@@ -506,6 +524,9 @@ const [sedeInicialAplicada, setSedeInicialAplicada] = useState(false);
   >(null)
   const [deletingExistingAttachmentId, setDeletingExistingAttachmentId] = useState<number | string | null>(null)
   const [isUploadingExistingAttachment, setIsUploadingExistingAttachment] = useState(false)
+  const [editingAttachmentNameId, setEditingAttachmentNameId] = useState<number | string | null>(null)
+  const [attachmentNameDraft, setAttachmentNameDraft] = useState("")
+  const [savingAttachmentNameId, setSavingAttachmentNameId] = useState<number | string | null>(null)
   const { session } = useAuth()
   const authHeaders = useMemo<HeadersInit>(() => createAuthHeaders(session), [session])
   const authorizedFetch = useCallback<Fetcher>(
@@ -1115,6 +1136,79 @@ useEffect(() => {
     void handleExistingAttachmentUpload(file)
   }
 
+  const startEditingAttachmentName = (attachment: ProyectoAdjunto) => {
+    const resolvedId = resolveAttachmentId(attachment)
+    if (!resolvedId) {
+      toast({
+        title: "No se puede editar",
+        description: "El adjunto seleccionado no tiene un identificador válido.",
+        variant: "destructive",
+      })
+      return
+    }
+    const currentName = attachment.nombreArchivo ?? ""
+    setEditingAttachmentNameId(resolvedId)
+    setAttachmentNameDraft(sanitizeBaseFileName(currentName) || getFileBaseName(currentName))
+  }
+
+  const cancelAttachmentNameEditing = () => {
+    setEditingAttachmentNameId(null)
+    setAttachmentNameDraft("")
+  }
+
+  const saveAttachmentName = async (attachment: ProyectoAdjunto) => {
+    const attachmentId = resolveAttachmentId(attachment)
+    if (!attachmentId) {
+      toast({
+        title: "No se pudo actualizar",
+        description: "El adjunto seleccionado no tiene un identificador válido.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    const rawBaseName = attachmentNameDraft.trim()
+    const sanitizedBaseName = sanitizeBaseFileName(rawBaseName)
+    const currentName = attachment.nombreArchivo ?? ""
+    const extension = getFileExtension(currentName)
+    const finalBaseName = sanitizedBaseName || getFileBaseName(currentName)
+    const nextName = `${finalBaseName}${extension}`
+
+    setSavingAttachmentNameId(attachmentId)
+    try {
+      const response = await authorizedFetch(`${API_BASE_URL}/Adjuntos/${attachmentId}/nombre`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          ...(authHeaders as Record<string, string>),
+          correousuario: loggedUser.email ?? "",
+        },
+        body: JSON.stringify({ nombre: nextName }),
+      })
+
+      if (!response.ok) {
+        throw new Error("No fue posible actualizar el nombre del adjunto.")
+      }
+
+      toast({
+        title: "Nombre actualizado",
+        description: "El adjunto fue renombrado correctamente.",
+        className: "bg-emerald-50 border-emerald-200 text-emerald-900",
+      })
+      await fetchExistingAttachments()
+      cancelAttachmentNameEditing()
+    } catch (error) {
+      console.error("Error al actualizar nombre de adjunto", error)
+      toast({
+        title: "No se pudo actualizar",
+        description: "Ocurrió un error al cambiar el nombre del archivo.",
+        variant: "destructive",
+      })
+    } finally {
+      setSavingAttachmentNameId(null)
+    }
+  }
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (files) {
@@ -1163,6 +1257,23 @@ useEffect(() => {
       }
     }
     e.target.value = ""
+  }
+
+  const updateAttachmentName = (id: string, nextBaseName: string) => {
+    const sanitizedBaseName = sanitizeBaseFileName(nextBaseName)
+
+    setAttachments((prev) =>
+      prev.map((attachment) => {
+        if (attachment.id !== id) return attachment
+
+        const extension = getFileExtension(attachment.file.name)
+        const finalBaseName = sanitizedBaseName || getFileBaseName(attachment.name)
+        const nextName = `${finalBaseName}${extension}`
+        const updatedFile = new File([attachment.file], nextName, { type: attachment.file.type })
+
+        return { ...attachment, name: nextName, file: updatedFile }
+      }),
+    )
   }
 
   const removeAttachment = (id: string) => {
@@ -2415,62 +2526,131 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                     <div className="space-y-3">
                       {existingAttachments.map((attachment, index) => {
                         const attachmentKey = resolveAttachmentId(attachment) ?? index
+                        const attachmentName = attachment.nombreArchivo ?? "Archivo sin nombre"
+                        const attachmentExtension = getFileExtension(attachmentName)
+                        const isEditingName = editingAttachmentNameId === attachmentKey
+                        const isSavingName = savingAttachmentNameId === attachmentKey
+
                         return (
                           <div
                             key={attachmentKey}
-                            className="flex flex-wrap items-center gap-3 rounded-2xl border border-emerald-50 bg-[#f8fdf9] p-4 shadow-inner"
+                            className="flex flex-wrap items-start gap-3 rounded-2xl border border-emerald-50 bg-[#f8fdf9] p-4 shadow-inner"
                           >
-                            <div className="flex-1 min-w-[200px]">
-                              <p className="font-medium text-slate-900 break-words">
-                                {attachment.nombreArchivo ?? "Archivo sin nombre"}
-                              </p>
+                            <div className="flex-1 min-w-[240px] space-y-1">
+                              <div className="flex flex-col gap-2">
+                                {isEditingName ? (
+                                  <div className="space-y-1">
+                                    <label className="text-sm font-medium text-slate-800">Nombre del adjunto</label>
+                                    <div className="flex items-center gap-2">
+                                      <Input
+                                        value={attachmentNameDraft}
+                                        onChange={(event) => setAttachmentNameDraft(event.target.value)}
+                                        disabled={isSavingName}
+                                        className="bg-white"
+                                      />
+                                      <span className="text-sm text-slate-500 whitespace-nowrap">{attachmentExtension}</span>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <p className="font-medium text-slate-900 break-words">{attachmentName}</p>
+                                )}
+                              </div>
                               <p className="text-sm text-slate-500">
                                 ID de descarga: {resolveAttachmentId(attachment) ?? "N/D"}
                               </p>
                             </div>
                             <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                className="w-full gap-2 border-[#8fd0ab] text-[#065f46] hover:bg-[#e0f3e8] sm:w-auto"
-                                onClick={() => handleExistingAttachmentDownload(attachment)}
-                                disabled={downloadingExistingAttachmentId === attachmentKey}
-                              >
-                                {downloadingExistingAttachmentId === attachmentKey ? (
-                                  <>
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                    Descargando...
-                                  </>
-                                ) : (
-                                  <>
-                                    <Download className="h-4 w-4" />
-                                    Descargar
-                                  </>
-                                )}
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                className="w-full gap-2 border-red-200 text-red-700 hover:bg-red-50 sm:w-auto"
-                                onClick={() => handleDeleteExistingAttachment(attachment)}
-                                disabled={
-                                  deletingExistingAttachmentId === attachmentKey || isSubmitting || !isEditable
-                                }
-                              >
-                                {deletingExistingAttachmentId === attachmentKey ? (
-                                  <>
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                    Eliminando...
-                                  </>
-                                ) : (
-                                  <>
-                                    <Trash2 className="h-4 w-4" />
-                                    Eliminar
-                                  </>
-                                )}
-                              </Button>
+                              {isEditingName ? (
+                                <>
+                                  <Button
+                                    type="button"
+                                    variant="default"
+                                    size="sm"
+                                    className="w-full gap-2 bg-[#067138] text-white hover:bg-[#05592d] sm:w-auto"
+                                    onClick={() => saveAttachmentName(attachment)}
+                                    disabled={isSavingName || !isEditable}
+                                  >
+                                    {isSavingName ? (
+                                      <>
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        Guardando...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Check className="h-4 w-4" />
+                                        Guardar nombre
+                                      </>
+                                    )}
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full gap-2 border-slate-200 text-slate-700 hover:bg-slate-100 sm:w-auto"
+                                    onClick={cancelAttachmentNameEditing}
+                                    disabled={isSavingName}
+                                  >
+                                    <X className="h-4 w-4" />
+                                    Cancelar
+                                  </Button>
+                                </>
+                              ) : (
+                                <>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full gap-2 border-[#8fd0ab] text-[#065f46] hover:bg-[#e0f3e8] sm:w-auto"
+                                    onClick={() => handleExistingAttachmentDownload(attachment)}
+                                    disabled={downloadingExistingAttachmentId === attachmentKey}
+                                  >
+                                    {downloadingExistingAttachmentId === attachmentKey ? (
+                                      <>
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        Descargando...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Download className="h-4 w-4" />
+                                        Descargar
+                                      </>
+                                    )}
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full gap-2 border-slate-200 text-slate-700 hover:bg-slate-100 sm:w-auto"
+                                    onClick={() => startEditingAttachmentName(attachment)}
+                                    disabled={!isEditable || isSubmitting}
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                    Renombrar
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full gap-2 border-red-200 text-red-700 hover:bg-red-50 sm:w-auto"
+                                    onClick={() => handleDeleteExistingAttachment(attachment)}
+                                    disabled={
+                                      deletingExistingAttachmentId === attachmentKey || isSubmitting || !isEditable
+                                    }
+                                  >
+                                    {deletingExistingAttachmentId === attachmentKey ? (
+                                      <>
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        Eliminando...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Trash2 className="h-4 w-4" />
+                                        Eliminar
+                                      </>
+                                    )}
+                                  </Button>
+                                </>
+                              )}
                             </div>
                           </div>
                         )
@@ -2537,27 +2717,40 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
 
                   {attachments.length > 0 && (
                     <div className="space-y-2">
-                      {attachments.map((attachment) => (
-                        <div
-                          key={attachment.id}
-                          className="flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3"
-                        >
-                          <FileText className="h-5 w-5 text-slate-500" />
-                          <div className="flex-1 min-w-[180px]">
-                            <div className="font-medium text-slate-900">{attachment.name}</div>
-                            <div className="text-sm text-slate-500">{attachment.size}</div>
-                          </div>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeAttachment(attachment.id)}
-                            className="w-full text-red-600 hover:bg-red-50 hover:text-red-700 sm:w-auto"
+                      {attachments.map((attachment) => {
+                        const baseName = getFileBaseName(attachment.name)
+                        const extension = getFileExtension(attachment.name)
+
+                        return (
+                          <div
+                            key={attachment.id}
+                            className="flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3"
                           >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
+                            <FileText className="h-5 w-5 text-slate-500" />
+                            <div className="flex-1 min-w-[220px] space-y-1">
+                              <label className="text-sm font-medium text-slate-800">Nombre del adjunto</label>
+                              <div className="flex items-center gap-2">
+                                <Input
+                                  value={baseName}
+                                  onChange={(event) => updateAttachmentName(attachment.id, event.target.value)}
+                                  className="bg-white"
+                                />
+                                <span className="text-sm text-slate-500 whitespace-nowrap">{extension}</span>
+                              </div>
+                              <div className="text-sm text-slate-500">{attachment.size}</div>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeAttachment(attachment.id)}
+                              className="w-full text-red-600 hover:bg-red-50 hover:text-red-700 sm:w-auto"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        )
+                      })}
                     </div>
                   )}
                 </div>

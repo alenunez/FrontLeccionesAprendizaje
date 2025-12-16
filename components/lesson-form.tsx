@@ -527,6 +527,7 @@ const [sedeInicialAplicada, setSedeInicialAplicada] = useState(false);
   const [editingAttachmentNameId, setEditingAttachmentNameId] = useState<number | string | null>(null)
   const [attachmentNameDraft, setAttachmentNameDraft] = useState("")
   const [savingAttachmentNameId, setSavingAttachmentNameId] = useState<number | string | null>(null)
+  const canRenameExistingAttachments = false
   const { session } = useAuth()
   const authHeaders = useMemo<HeadersInit>(() => createAuthHeaders(session), [session])
   const authorizedFetch = useCallback<Fetcher>(
@@ -2528,8 +2529,8 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                         const attachmentKey = resolveAttachmentId(attachment) ?? index
                         const attachmentName = attachment.nombreArchivo ?? "Archivo sin nombre"
                         const attachmentExtension = getFileExtension(attachmentName)
-                        const isEditingName = editingAttachmentNameId === attachmentKey
-                        const isSavingName = savingAttachmentNameId === attachmentKey
+                        const isEditingName = canRenameExistingAttachments && editingAttachmentNameId === attachmentKey
+                        const isSavingName = canRenameExistingAttachments && savingAttachmentNameId === attachmentKey
 
                         return (
                           <div
@@ -2538,7 +2539,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                           >
                             <div className="flex-1 min-w-[240px] space-y-1">
                               <div className="flex flex-col gap-2">
-                                {isEditingName ? (
+                                {canRenameExistingAttachments && isEditingName ? (
                                   <div className="space-y-1">
                                     <label className="text-sm font-medium text-slate-800">Nombre del adjunto</label>
                                     <div className="flex items-center gap-2">
@@ -2560,7 +2561,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                               </p>
                             </div>
                             <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
-                              {isEditingName ? (
+                              {canRenameExistingAttachments && isEditingName ? (
                                 <>
                                   <Button
                                     type="button"
@@ -2616,17 +2617,19 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                                       </>
                                     )}
                                   </Button>
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    className="w-full gap-2 border-slate-200 text-slate-700 hover:bg-slate-100 sm:w-auto"
-                                    onClick={() => startEditingAttachmentName(attachment)}
-                                    disabled={!isEditable || isSubmitting}
-                                  >
-                                    <Edit className="h-4 w-4" />
-                                    Renombrar
-                                  </Button>
+                                  {canRenameExistingAttachments && (
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      className="w-full gap-2 border-slate-200 text-slate-700 hover:bg-slate-100 sm:w-auto"
+                                      onClick={() => startEditingAttachmentName(attachment)}
+                                      disabled={!isEditable || isSubmitting}
+                                    >
+                                      <Edit className="h-4 w-4" />
+                                      Renombrar
+                                    </Button>
+                                  )}
                                   <Button
                                     type="button"
                                     variant="outline"

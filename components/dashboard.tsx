@@ -227,6 +227,8 @@ export function Dashboard() {
   const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(false)
   const [analyticsError, setAnalyticsError] = useState<string | null>(null)
   const [analyticsReloadKey, setAnalyticsReloadKey] = useState(0)
+  const [isGeneratingPresentation, setIsGeneratingPresentation] = useState(false)
+  const [presentationLessonId, setPresentationLessonId] = useState<string | null>(null)
   const isViewerOnly = loggedUser.isUsuarioCreate === false
   const showAnalyticsTab = !isViewerOnly
   const normalizedUserEmail = normalizeEmail(session?.user?.email ?? loggedUser.email)
@@ -495,72 +497,80 @@ export function Dashboard() {
   // }
 
   const handleGeneratePPTX = async (lesson: LessonSummary) => {
-  if (!API_BASE_URL) {
-    alert("La URL base del API no está configurada (NEXT_PUBLIC_API_BASE_URL).")
-    return
-  }
+    if (isGeneratingPresentation) return
 
-  // lesson.id viene del proyecto.id (mapLessons)
-  const proyectoId = Number(lesson.id)
-  if (Number.isNaN(proyectoId)) {
-    alert("El identificador del proyecto no es válido para generar la presentación.")
-    return
-  }
-
-  try {
-    const url = `${API_BASE_URL}/proyectos/${proyectoId}/presentacion`
-
-    const response = await fetch(url, {
-      method: "GET",
-      headers: {
-        ...authHeaders, // incluye Authorization si hay token
-        // si tu endpoint requiere el correo como en el listado, lo agregas:
-        correoUsuario: loggedUser.email,
-        Accept:
-          "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-      },
-    })
-
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => "")
-      console.error("Error al generar PPTX:", response.status, errorText)
-      alert("No fue posible generar la presentación PPTX. Intenta nuevamente.")
+    if (!API_BASE_URL) {
+      alert("La URL base del API no está configurada (NEXT_PUBLIC_API_BASE_URL).")
       return
     }
 
-    const blob = await response.blob()
-
-    // Intentar obtener el nombre de archivo desde Content-Disposition
-    const contentDisposition =
-          response.headers.get("Content-Disposition") ||
-          response.headers.get("content-disposition")
-    let fileName = `LeccionesAprendidas_${proyectoId}.pptx`
-
-    if (contentDisposition) {
-      const match = contentDisposition.match(/filename\*?=(?:UTF-8'')?["']?([^\"';]+)["']?/i)
-      if (match && match[1]) {
-        try {
-          fileName = decodeURIComponent(match[1])
-        } catch {
-          fileName = match[1]
-        }
-      }
+    // lesson.id viene del proyecto.id (mapLessons)
+    const proyectoId = Number(lesson.id)
+    if (Number.isNaN(proyectoId)) {
+      alert("El identificador del proyecto no es válido para generar la presentación.")
+      return
     }
 
-    // Crear enlace temporal y disparar descarga
-    const blobUrl = window.URL.createObjectURL(blob)
-    const link = document.createElement("a")
-    link.href = blobUrl
-    link.download = fileName
-    document.body.appendChild(link)
-    link.click()
-    link.remove()
-    window.URL.revokeObjectURL(blobUrl)
-  } catch (error) {
-    console.error("Error inesperado al generar PPTX:", error)
-    alert("Ocurrió un error inesperado al generar la presentación PPTX.")
+    setIsGeneratingPresentation(true)
+    setPresentationLessonId(lesson.id)
+
+    try {
+      const url = `${API_BASE_URL}/proyectos/${proyectoId}/presentacion`
+
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          ...authHeaders, // incluye Authorization si hay token
+          // si tu endpoint requiere el correo como en el listado, lo agregas:
+          correoUsuario: loggedUser.email,
+          Accept:
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        },
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => "")
+        console.error("Error al generar PPTX:", response.status, errorText)
+        alert("No fue posible generar la presentación PPTX. Intenta nuevamente.")
+        return
+      }
+
+      const blob = await response.blob()
+
+      // Intentar obtener el nombre de archivo desde Content-Disposition
+      const contentDisposition =
+        response.headers.get("Content-Disposition") ||
+        response.headers.get("content-disposition")
+      let fileName = `LeccionesAprendidas_${proyectoId}.pptx`
+
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename\*?=(?:UTF-8'')?["']?([^\"';]+)["']?/i)
+        if (match && match[1]) {
+          try {
+            fileName = decodeURIComponent(match[1])
+          } catch {
+            fileName = match[1]
+          }
+        }
+      }
+
+      // Crear enlace temporal y disparar descarga
+      const blobUrl = window.URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = blobUrl
+      link.download = fileName
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(blobUrl)
+    } catch (error) {
+      console.error("Error inesperado al generar PPTX:", error)
+      alert("Ocurrió un error inesperado al generar la presentación PPTX.")
+    } finally {
+      setIsGeneratingPresentation(false)
+      setPresentationLessonId(null)
+    }
   }
-}
 
 
   const handleCloseViewer = () => {
@@ -683,6 +693,19 @@ export function Dashboard() {
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-[#f4fff9] via-white to-[#d8f5e6] text-slate-900">
+      {isGeneratingPresentation ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/70 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-3 rounded-2xl border border-emerald-100 bg-white/90 px-6 py-5 shadow-xl">
+            <Spinner />
+            <p className="text-center text-sm font-semibold text-slate-700">
+              Generando presentación en PowerPoint...
+            </p>
+            <p className="text-center text-xs text-slate-500">
+              Espera un momento. Esta acción puede tardar unos segundos.
+            </p>
+          </div>
+        </div>
+      ) : null}
       <header className="border-b border-emerald-100 bg-white/90 shadow-sm backdrop-blur-md">
         <div className="mx-auto flex w-full max-w-screen-2xl flex-col gap-6 px-4 py-8 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-10 xl:px-16 2xl:px-24">
           <div className="flex w-full flex-1 flex-col gap-4">
@@ -1020,16 +1043,22 @@ export function Dashboard() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className={`text-[#b45309] hover:bg-orange-50 ${isViewerOnly ? "cursor-not-allowed opacity-60" : ""}`}
+                                className={`text-[#b45309] hover:bg-orange-50 ${
+                                  isViewerOnly || isGeneratingPresentation ? "cursor-not-allowed opacity-60" : ""
+                                }`}
                                 onClick={() => !isViewerOnly && handleGeneratePPTX(lesson)}
                                 title={
                                   isViewerOnly
                                     ? "Acceso de solo lectura"
                                     : "Descargar presentación en PPTX"
                                 }
-                                disabled={isViewerOnly}
+                                disabled={isViewerOnly || isGeneratingPresentation}
                               >
-                                <Presentation className="h-4 w-4" />
+                                {presentationLessonId === lesson.id && isGeneratingPresentation ? (
+                                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                                ) : (
+                                  <Presentation className="h-4 w-4" />
+                                )}
                               </Button>
                             ) : null}
                             <Button

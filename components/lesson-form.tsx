@@ -1251,7 +1251,8 @@ useEffect(() => {
         variant: "destructive",
       })
     } finally {
-    setSavingAttachmentNameId(null)
+      setSavingAttachmentNameId(null)
+    }
   }
 
   const updatePendingExistingAttachmentName = (id: string, nextBaseName: string) => {
@@ -1283,7 +1284,6 @@ useEffect(() => {
       setPendingExistingAttachments((prev) => prev.filter((item) => item.id !== attachment.id))
     }
     setSavingPendingAttachmentId(null)
-  }
   }
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {

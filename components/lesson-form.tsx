@@ -62,6 +62,8 @@ interface Attachment {
   file: File
 }
 
+const ATTACHMENT_NAME_MAX_LENGTH = 50
+
 const getFileBaseName = (name: string) => {
   const lastDotIndex = name.lastIndexOf(".")
   if (lastDotIndex === -1) return name
@@ -527,7 +529,7 @@ const [sedeInicialAplicada, setSedeInicialAplicada] = useState(false);
   const [editingAttachmentNameId, setEditingAttachmentNameId] = useState<number | string | null>(null)
   const [attachmentNameDraft, setAttachmentNameDraft] = useState("")
   const [savingAttachmentNameId, setSavingAttachmentNameId] = useState<number | string | null>(null)
-  const canRenameExistingAttachments = false
+  const canRenameExistingAttachments = true
   const { session } = useAuth()
   const authHeaders = useMemo<HeadersInit>(() => createAuthHeaders(session), [session])
   const authorizedFetch = useCallback<Fetcher>(
@@ -1149,7 +1151,9 @@ useEffect(() => {
     }
     const currentName = attachment.nombreArchivo ?? ""
     setEditingAttachmentNameId(resolvedId)
-    setAttachmentNameDraft(sanitizeBaseFileName(currentName) || getFileBaseName(currentName))
+    setAttachmentNameDraft(
+      (sanitizeBaseFileName(currentName) || getFileBaseName(currentName)).slice(0, ATTACHMENT_NAME_MAX_LENGTH),
+    )
   }
 
   const cancelAttachmentNameEditing = () => {
@@ -1169,10 +1173,11 @@ useEffect(() => {
     }
 
     const rawBaseName = attachmentNameDraft.trim()
-    const sanitizedBaseName = sanitizeBaseFileName(rawBaseName)
+    const sanitizedBaseName = sanitizeBaseFileName(rawBaseName).slice(0, ATTACHMENT_NAME_MAX_LENGTH)
     const currentName = attachment.nombreArchivo ?? ""
     const extension = getFileExtension(currentName)
-    const finalBaseName = sanitizedBaseName || getFileBaseName(currentName)
+    const fallbackBaseName = getFileBaseName(currentName).slice(0, ATTACHMENT_NAME_MAX_LENGTH)
+    const finalBaseName = sanitizedBaseName || fallbackBaseName
     const nextName = `${finalBaseName}${extension}`
 
     setSavingAttachmentNameId(attachmentId)
@@ -1247,13 +1252,27 @@ useEffect(() => {
           }
 
       if (validFiles.length > 0) {
-        const newAttachments: Attachment[] = validFiles.map((file) => ({
-          id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-          name: file.name,
-          size: formatFileSize(file.size),
-          type: file.type || "application/octet-stream",
-          file,
-        }))
+        const newAttachments: Attachment[] = validFiles.map((file) => {
+          const sanitizedBaseName = sanitizeBaseFileName(getFileBaseName(file.name)).slice(
+            0,
+            ATTACHMENT_NAME_MAX_LENGTH,
+          )
+          const fallbackBaseName = getFileBaseName(file.name).slice(0, ATTACHMENT_NAME_MAX_LENGTH)
+          const finalBaseName = sanitizedBaseName || fallbackBaseName
+          const extension = getFileExtension(file.name)
+          const nextName = `${finalBaseName}${extension}`
+          const normalizedFile = new File([file], nextName, {
+            type: file.type || "application/octet-stream",
+          })
+
+          return {
+            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+            name: nextName,
+            size: formatFileSize(file.size),
+            type: file.type || "application/octet-stream",
+            file: normalizedFile,
+          }
+        })
         setAttachments((prev) => [...prev, ...newAttachments])
       }
     }
@@ -1261,14 +1280,15 @@ useEffect(() => {
   }
 
   const updateAttachmentName = (id: string, nextBaseName: string) => {
-    const sanitizedBaseName = sanitizeBaseFileName(nextBaseName)
+    const sanitizedBaseName = sanitizeBaseFileName(nextBaseName).slice(0, ATTACHMENT_NAME_MAX_LENGTH)
 
     setAttachments((prev) =>
       prev.map((attachment) => {
         if (attachment.id !== id) return attachment
 
         const extension = getFileExtension(attachment.file.name)
-        const finalBaseName = sanitizedBaseName || getFileBaseName(attachment.name)
+        const fallbackBaseName = getFileBaseName(attachment.name).slice(0, ATTACHMENT_NAME_MAX_LENGTH)
+        const finalBaseName = sanitizedBaseName || fallbackBaseName
         const nextName = `${finalBaseName}${extension}`
         const updatedFile = new File([attachment.file], nextName, { type: attachment.file.type })
 
@@ -2543,12 +2563,15 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                                   <div className="space-y-1">
                                     <label className="text-sm font-medium text-slate-800">Nombre del adjunto</label>
                                     <div className="flex items-center gap-2">
-                                      <Input
-                                        value={attachmentNameDraft}
-                                        onChange={(event) => setAttachmentNameDraft(event.target.value)}
-                                        disabled={isSavingName}
-                                        className="bg-white"
-                                      />
+                                    <Input
+                                      value={attachmentNameDraft}
+                                      maxLength={ATTACHMENT_NAME_MAX_LENGTH}
+                                      onChange={(event) =>
+                                        setAttachmentNameDraft(event.target.value.slice(0, ATTACHMENT_NAME_MAX_LENGTH))
+                                      }
+                                      disabled={isSavingName}
+                                      className="bg-white"
+                                    />
                                       <span className="text-sm text-slate-500 whitespace-nowrap">{attachmentExtension}</span>
                                     </div>
                                   </div>
@@ -2735,6 +2758,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                               <div className="flex items-center gap-2">
                                 <Input
                                   value={baseName}
+                                  maxLength={ATTACHMENT_NAME_MAX_LENGTH}
                                   onChange={(event) => updateAttachmentName(attachment.id, event.target.value)}
                                   className="bg-white"
                                 />

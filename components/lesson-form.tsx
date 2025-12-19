@@ -95,6 +95,8 @@ interface Attachment {
 const ATTACHMENT_NAME_MAX_LENGTH = parsePositiveInteger(process.env.NEXT_PUBLIC_ATTACHMENT_NAME_MAX_LENGTH, 50)
 const MAX_ATTACHMENTS = parsePositiveInteger(process.env.NEXT_PUBLIC_MAX_ATTACHMENTS, 5)
 const MAX_FILE_SIZE_BYTES = parseMegabytesToBytes(process.env.NEXT_PUBLIC_MAX_ATTACHMENT_MB, 20 * 1024 * 1024)
+const MAX_FILE_SIZE_MB = Number((MAX_FILE_SIZE_BYTES / 1024 / 1024).toFixed(2))
+const MAX_FILE_SIZE_TEXT = `${MAX_FILE_SIZE_MB} MB`
 
 const getFileBaseName = (name: string) => {
   const lastDotIndex = name.lastIndexOf(".")
@@ -1116,7 +1118,7 @@ useEffect(() => {
     if (existingAttachments.length >= MAX_ATTACHMENTS) {
       toast({
         title: "Límite alcanzado",
-        description: "Solo puedes tener hasta 5 adjuntos. Elimina uno para agregar otro.",
+        description: `Solo puedes tener hasta ${MAX_ATTACHMENTS} adjuntos. Elimina uno para agregar otro.`,
         variant: "destructive",
       })
       return false
@@ -1125,7 +1127,7 @@ useEffect(() => {
     if (file.size > MAX_FILE_SIZE_BYTES) {
       toast({
         title: "Archivo demasiado grande",
-        description: "Cada adjunto debe pesar máximo 20 MB.",
+        description: `Cada adjunto debe pesar máximo ${MAX_FILE_SIZE_TEXT}.`,
         variant: "destructive",
       })
       return false
@@ -1183,7 +1185,7 @@ useEffect(() => {
     if (file.size > MAX_FILE_SIZE_BYTES) {
       toast({
         title: "Archivo demasiado grande",
-        description: "Cada adjunto debe pesar máximo 20 MB.",
+        description: `Cada adjunto debe pesar máximo ${MAX_FILE_SIZE_TEXT}.`,
         variant: "destructive",
       })
       return
@@ -1347,7 +1349,7 @@ useEffect(() => {
           if (validFiles.length !== filesWithinLimit.length) {
             toast({
               title: "Archivo demasiado grande",
-              description: "Cada adjunto debe pesar máximo 20 MB.",
+              description: `Cada adjunto debe pesar máximo ${MAX_FILE_SIZE_TEXT}.`,
               variant: "destructive",
             })
           }
@@ -2787,7 +2789,9 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                   <div className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-dashed border-emerald-200 bg-emerald-50/40 p-4">
                     <div className="flex flex-col gap-1 text-sm text-slate-700">
                       <span className="font-medium text-slate-800">Agregar un archivo</span>
-                      <span className="text-xs text-slate-600">Hasta 5 adjuntos de máximo 20 MB cada uno.</span>
+                      <span className="text-xs text-slate-600">
+                        Hasta {MAX_ATTACHMENTS} adjuntos de máximo {MAX_FILE_SIZE_TEXT} cada uno.
+                      </span>
                     </div>
                     <Button
                       type="button"
@@ -2814,11 +2818,11 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                     </Button>
                   </div>
 
-                  {existingAttachments.length + pendingExistingAttachments.length >= MAX_ATTACHMENTS && (
-                    <p className="text-sm text-red-600">
-                      Has alcanzado el máximo de 5 adjuntos. Elimina uno para poder cargar un nuevo archivo.
-                    </p>
-                  )}
+                {existingAttachments.length + pendingExistingAttachments.length >= MAX_ATTACHMENTS && (
+                  <p className="text-sm text-red-600">
+                    Has alcanzado el máximo de {MAX_ATTACHMENTS} adjuntos. Elimina uno para poder cargar un nuevo archivo.
+                  </p>
+                )}
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -2841,7 +2845,8 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                       Subir archivos
                     </Button>
                     <span className="text-sm text-slate-500 text-justify sm:text-left">
-                      Formatos soportados: PDF, Word, Excel, PowerPoint, imágenes, texto. Hasta 5 archivos de 20 MB cada uno.
+                      Formatos soportados: PDF, Word, Excel, PowerPoint, imágenes, texto. Hasta {MAX_ATTACHMENTS} archivos de
+                      {MAX_FILE_SIZE_TEXT} cada uno.
                     </span>
                   </div>
 

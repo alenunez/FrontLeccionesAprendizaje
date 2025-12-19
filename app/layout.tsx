@@ -3,6 +3,7 @@ import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 import { Toaster } from '@/components/ui/toaster'
 import { AuthProvider } from '@/components/auth-provider'
+import { ConfigProvider } from '@/components/config-provider'
 
 export const metadata: Metadata = {
   title: 'Sistema de Gestión de Lecciones Aprendidas',
@@ -21,7 +22,9 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className="font-sans antialiased">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <ConfigProvider>{children}</ConfigProvider>
+        </AuthProvider>
         <Analytics />
         <Toaster />
       </body>

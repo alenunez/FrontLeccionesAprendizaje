@@ -34,43 +34,10 @@ import type { SimulatedUser } from "@/lib/user-context"
 import { canEditLesson, getWorkflowActions, type WorkflowAction } from "@/lib/permissions"
 import { flattenEventoDto } from "@/lib/event-normalizer"
 import { useAuth } from "@/components/auth-provider"
+import { useConfig } from "@/components/config-provider"
 import type { AuthSession } from "@/lib/auth"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
-
-const parsePositiveInteger = (value: string | undefined, fallback: number) => {
-  const parsedValue = Number(value)
-
-  if (Number.isFinite(parsedValue) && parsedValue > 0) {
-    return Math.floor(parsedValue)
-  }
-
-  return fallback
-}
-
-const parseMegabytesToBytes = (value: string | undefined, fallback: number) => {
-  const parsedValue = Number(value)
-
-  if (Number.isFinite(parsedValue) && parsedValue > 0) {
-    return Math.floor(parsedValue * 1024 * 1024)
-  }
-
-  return fallback
-}
-
-const DEFAULT_TEXTAREA_MAX_LENGTH = parsePositiveInteger(process.env.NEXT_PUBLIC_TEXTAREA_MAX_LENGTH, 200)
-const APPLICACION_PRACTICA_MAX_LENGTH = parsePositiveInteger(
-  process.env.NEXT_PUBLIC_APLICACION_PRACTICA_MAX_LENGTH,
-  400,
-)
-const EVENT_DESCRIPTION_MAX_LENGTH = parsePositiveInteger(
-  process.env.NEXT_PUBLIC_EVENT_DESCRIPTION_MAX_LENGTH,
-  400,
-)
-const EVENT_TABLE_TEXTAREA_MAX_LENGTH = parsePositiveInteger(
-  process.env.NEXT_PUBLIC_EVENT_TABLE_TEXTAREA_MAX_LENGTH,
-  1000,
-)
 
 type Fetcher = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
 
@@ -91,12 +58,6 @@ interface Attachment {
   type: string
   file: File
 }
-
-const ATTACHMENT_NAME_MAX_LENGTH = parsePositiveInteger(process.env.NEXT_PUBLIC_ATTACHMENT_NAME_MAX_LENGTH, 50)
-const MAX_ATTACHMENTS = parsePositiveInteger(process.env.NEXT_PUBLIC_MAX_ATTACHMENTS, 5)
-const MAX_FILE_SIZE_BYTES = parseMegabytesToBytes(process.env.NEXT_PUBLIC_MAX_ATTACHMENT_MB, 20 * 1024 * 1024)
-const MAX_FILE_SIZE_MB = Number((MAX_FILE_SIZE_BYTES / 1024 / 1024).toFixed(2))
-const MAX_FILE_SIZE_TEXT = `${MAX_FILE_SIZE_MB} MB`
 
 const getFileBaseName = (name: string) => {
   const lastDotIndex = name.lastIndexOf(".")
@@ -177,7 +138,7 @@ interface FormDataState {
 
 const isDefined = <T,>(value: T | undefined | null): value is T => value !== undefined && value !== null
 
-const renderCharLimitNotice = (value: string, maxLength = DEFAULT_TEXTAREA_MAX_LENGTH) =>
+const renderCharLimitNotice = (value: string, maxLength: number) =>
   value.length >= maxLength ? (
     <p className="mt-1 text-xs font-medium text-amber-600">
       Has alcanzado el límite de {maxLength} caracteres.
@@ -566,7 +527,16 @@ const [sedeInicialAplicada, setSedeInicialAplicada] = useState(false);
   const [attachmentNameDraft, setAttachmentNameDraft] = useState("")
   const [savingAttachmentNameId, setSavingAttachmentNameId] = useState<number | string | null>(null)
   const canRenameExistingAttachments = false
+  const { config } = useConfig()
   const { session } = useAuth()
+  const DEFAULT_TEXTAREA_MAX_LENGTH = config.textareaMaxLength
+  const APPLICACION_PRACTICA_MAX_LENGTH = config.aplicacionPracticaMaxLength
+  const EVENT_DESCRIPTION_MAX_LENGTH = config.eventDescriptionMaxLength
+  const EVENT_TABLE_TEXTAREA_MAX_LENGTH = config.eventTableTextareaMaxLength
+  const ATTACHMENT_NAME_MAX_LENGTH = config.attachmentNameMaxLength
+  const MAX_ATTACHMENTS = config.maxAttachments
+  const MAX_FILE_SIZE_BYTES = config.maxAttachmentMb * 1024 * 1024
+  const MAX_FILE_SIZE_TEXT = `${config.maxAttachmentMb} MB`
   const authHeaders = useMemo<HeadersInit>(() => createAuthHeaders(session), [session])
   const authorizedFetch = useCallback<Fetcher>(
     (input, init) => {

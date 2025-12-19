@@ -36,11 +36,34 @@ import { flattenEventoDto } from "@/lib/event-normalizer"
 import { useAuth } from "@/components/auth-provider"
 import type { AuthSession } from "@/lib/auth"
 
+const getPublicEnv = (name: string) => process.env[`NEXT_PUBLIC_${name}`]
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
-const DEFAULT_TEXTAREA_MAX_LENGTH = 200
-const APPLICACION_PRACTICA_MAX_LENGTH = 400
-const EVENT_DESCRIPTION_MAX_LENGTH = 400
-const EVENT_TABLE_TEXTAREA_MAX_LENGTH = 1000
+
+const parsePositiveInteger = (value: string | undefined, fallback: number) => {
+  const parsedValue = Number(value)
+
+  if (Number.isFinite(parsedValue) && parsedValue > 0) {
+    return Math.floor(parsedValue)
+  }
+
+  return fallback
+}
+
+const parseMegabytesToBytes = (value: string | undefined, fallback: number) => {
+  const parsedValue = Number(value)
+
+  if (Number.isFinite(parsedValue) && parsedValue > 0) {
+    return Math.floor(parsedValue * 1024 * 1024)
+  }
+
+  return fallback
+}
+
+const DEFAULT_TEXTAREA_MAX_LENGTH = parsePositiveInteger(getPublicEnv("TEXTAREA_MAX_LENGTH"), 200)
+const APPLICACION_PRACTICA_MAX_LENGTH = parsePositiveInteger(getPublicEnv("APLICACION_PRACTICA_MAX_LENGTH"), 400)
+const EVENT_DESCRIPTION_MAX_LENGTH = parsePositiveInteger(getPublicEnv("EVENT_DESCRIPTION_MAX_LENGTH"), 400)
+const EVENT_TABLE_TEXTAREA_MAX_LENGTH = parsePositiveInteger(getPublicEnv("EVENT_TABLE_TEXTAREA_MAX_LENGTH"), 1000)
 
 type Fetcher = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
 
@@ -62,7 +85,9 @@ interface Attachment {
   file: File
 }
 
-const ATTACHMENT_NAME_MAX_LENGTH = 50
+const ATTACHMENT_NAME_MAX_LENGTH = parsePositiveInteger(getPublicEnv("ATTACHMENT_NAME_MAX_LENGTH"), 50)
+const MAX_ATTACHMENTS = parsePositiveInteger(getPublicEnv("MAX_ATTACHMENTS"), 5)
+const MAX_FILE_SIZE_BYTES = parseMegabytesToBytes(getPublicEnv("MAX_ATTACHMENT_MB"), 20 * 1024 * 1024)
 
 const getFileBaseName = (name: string) => {
   const lastDotIndex = name.lastIndexOf(".")
@@ -960,8 +985,6 @@ useEffect(() => {
     setSelectedUsers((prev) => prev.filter((id) => id !== userId))
   }
 
-  const MAX_ATTACHMENTS = 5
-  const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024
   const projectId = initialData?.proyecto?.id
 
   const fetchExistingAttachments = useCallback(

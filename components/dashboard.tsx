@@ -201,6 +201,8 @@ export function Dashboard() {
   const brandSoft = brand.theme.soft
   const brandStrong = brand.theme.primaryStrong
   const brandMuted = brand.theme.muted
+  const isGalponsas = brand.brandKey === "galponsas"
+  const isTransgraneles = brand.brandKey === "transgraneles"
   const [lessonToEdit, setLessonToEdit] = useState<ProyectoSituacionDto | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [workflowFilter, setWorkflowFilter] = useState<string | null>(null)
@@ -736,16 +738,27 @@ export function Dashboard() {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 rounded-3xl border border-[color:var(--brand-soft)] bg-white/80 px-4 py-3 shadow-sm">
-                <Image
-                  src={brand.logoUrl}
-                  alt="Logo corporativo"
-                  width={180}
-                  height={64}
-                  className="h-10 w-auto sm:h-12"
-                  sizes="(min-width: 1024px) 180px, 150px"
-                  priority
-                />
+              <div
+                className={`flex items-center gap-3 rounded-3xl border border-[color:var(--brand-soft)] bg-white/80 px-4 py-3 shadow-sm ${isTransgraneles ? "bg-[color:var(--brand-primary)]/10 ring-1 ring-[color:var(--brand-border)]" : ""}`}
+              >
+                <div
+                  className="flex items-center justify-center rounded-xl"
+                  style={
+                    isTransgraneles
+                      ? { backgroundColor: brandPrimary, padding: "0.5rem 0.75rem" }
+                      : { padding: "0.25rem 0" }
+                  }
+                >
+                  <Image
+                    src={brand.logoUrl}
+                    alt="Logo corporativo"
+                    width={180}
+                    height={64}
+                    className={`${isGalponsas ? "h-12 sm:h-14" : "h-10 sm:h-12"} w-auto`}
+                    sizes="(min-width: 1024px) 180px, 150px"
+                    priority
+                  />
+                </div>
                 <span className="text-xs font-semibold uppercase tracking-[0.4em] text-[color:var(--brand-primary)] opacity-70">{brand.brandKey}</span>
               </div>
             </div>

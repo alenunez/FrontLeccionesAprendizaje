@@ -1,3 +1,5 @@
+import type { CSSProperties } from "react"
+
 export type BrandKey = "solla" | "distraves" | "galponsas" | "transgraneles"
 
 interface BrandTheme {
@@ -16,6 +18,17 @@ export interface BrandConfig {
   logoUrl: string
   theme: BrandTheme
 }
+
+const themeToCssVariables = (theme: BrandTheme): CSSProperties => ({
+  "--brand-primary": theme.primary,
+  "--brand-primary-strong": theme.primaryStrong,
+  "--brand-accent": theme.accent,
+  "--brand-soft": theme.soft,
+  "--brand-muted": theme.muted,
+  "--brand-border": theme.border,
+  "--brand-contrast": theme.contrast,
+  "--brand-foreground": theme.foreground,
+})
 
 // Allows local previews without depending on the authenticated email domain.
 // Accepts values: "solla", "distraves", "galponsas", "transgraneles" or the matching email domain.
@@ -114,3 +127,5 @@ export const resolveBrandKey = (email?: string | null): BrandKey => {
 
   return DEFAULT_BRAND
 }
+
+export const SOLLA_BRAND_CSS_VARS = themeToCssVariables(BRAND_CONFIGS.solla.theme)

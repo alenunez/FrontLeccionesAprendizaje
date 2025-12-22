@@ -23,12 +23,9 @@ import { useSimulatedUser } from "@/lib/user-context"
 import { canEditLesson } from "@/lib/permissions"
 import { useAuth } from "@/components/auth-provider"
 import { Spinner } from "./spinner"
+import { useBranding } from "./brand-provider"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL 
-const BRAND_COLOR = "#067138"
-const BRAND_ACCENT = "#0fa958"
-const SOLLA_LOGO_URL = "https://www.solla.com/wp-content/uploads/2022/01/logo-solla-1.png"
-
 interface LessonSummary {
   id: string
   projectOrSituation: string
@@ -198,6 +195,12 @@ export function Dashboard() {
   const loggedUser = useSimulatedUser()
   const [activeTab, setActiveTab] = useState("lessons")
   const [showForm, setShowForm] = useState(false)
+  const { brand } = useBranding()
+  const brandPrimary = brand.theme.primary
+  const brandAccent = brand.theme.accent
+  const brandSoft = brand.theme.soft
+  const brandStrong = brand.theme.primaryStrong
+  const brandMuted = brand.theme.muted
   const [lessonToEdit, setLessonToEdit] = useState<ProyectoSituacionDto | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [workflowFilter, setWorkflowFilter] = useState<string | null>(null)
@@ -657,7 +660,16 @@ export function Dashboard() {
     return Array.from(companies)
   }, [projectsByYearCompany])
 
-  const companyColorPalette = ["#067138", "#0fa958", "#45a06c", "#7fc8a9", "#0ea5e9", "#a78bfa", "#f472b6", "#f97316"]
+  const companyColorPalette = [
+    brandPrimary,
+    brandAccent,
+    brandMuted,
+    "#7fc8a9",
+    "#0ea5e9",
+    "#a78bfa",
+    "#f472b6",
+    "#f97316",
+  ]
 
   const companyColorMap = useMemo(
     () =>
@@ -706,16 +718,16 @@ export function Dashboard() {
           </div>
         </div>
       ) : null}
-      <header className="border-b border-emerald-100 bg-white/90 shadow-sm backdrop-blur-md">
+      <header className="border-b border-[color:var(--brand-soft)] bg-white/90 shadow-sm backdrop-blur-md">
         <div className="mx-auto flex w-full max-w-screen-2xl flex-col gap-6 px-4 py-8 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-10 xl:px-16 2xl:px-24">
           <div className="flex w-full flex-1 flex-col gap-4">
             <div className="flex flex-wrap items-center gap-6">
               <div className="flex min-w-[260px] flex-1 items-start gap-4">
-                <div className="rounded-2xl bg-[#067138] p-3 text-white shadow-lg">
+                <div className="rounded-2xl bg-[color:var(--brand-primary)] p-3 text-white shadow-lg">
                   <BookOpen className="h-8 w-8" />
                 </div>
                 <div className="space-y-2">
-                  <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#067138]/70">Gestión del conocimiento</p>
+                  <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[color:var(--brand-primary)] opacity-70">Gestión del conocimiento</p>
                   <h1 className="font-display text-3xl font-semibold leading-tight text-balance sm:text-4xl">
                     Sistema de Gestión de Lecciones Aprendidas
                   </h1>
@@ -724,35 +736,35 @@ export function Dashboard() {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 rounded-3xl border border-emerald-100 bg-white/80 px-4 py-3 shadow-sm">
+              <div className="flex items-center gap-3 rounded-3xl border border-[color:var(--brand-soft)] bg-white/80 px-4 py-3 shadow-sm">
                 <Image
-                  src={SOLLA_LOGO_URL}
-                  alt="Logo de Solla"
+                  src={brand.logoUrl}
+                  alt="Logo corporativo"
                   width={180}
                   height={64}
                   className="h-10 w-auto sm:h-12"
                   sizes="(min-width: 1024px) 180px, 150px"
                   priority
                 />
-                <span className="text-xs font-semibold uppercase tracking-[0.4em] text-[#067138]/70">Solla</span>
+                <span className="text-xs font-semibold uppercase tracking-[0.4em] text-[color:var(--brand-primary)] opacity-70">{brand.brandKey}</span>
               </div>
             </div>
           </div>
           <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-end lg:w-auto">
-            <div className="flex flex-wrap items-center gap-3 rounded-3xl border border-emerald-100 bg-white/80 px-4 py-3 shadow-sm sm:w-auto">
-              <Avatar className="border-2 border-[#e0f3e8]">
+            <div className="flex flex-wrap items-center gap-3 rounded-3xl border border-[color:var(--brand-soft)] bg-white/80 px-4 py-3 shadow-sm sm:w-auto">
+              <Avatar className="border-2 border-[color:var(--brand-soft)]">
                 <AvatarImage src={loggedUser.avatarUrl} alt={loggedUser.name} />
                 <AvatarFallback>{loggedUser.name.slice(0, 2).toUpperCase()}</AvatarFallback>
               </Avatar>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold text-slate-900">{loggedUser.name}</p>
                 {!isViewerOnly ? <p className="truncate text-xs text-slate-500">{loggedUser.role}</p> : null}
-                <p className="truncate text-xs text-[#067138]/80">{loggedUser.email}</p>
+                <p className="truncate text-xs text-[color:var(--brand-primary)] opacity-80">{loggedUser.email}</p>
               </div>
               <Button
                 variant="outline"
                 size="sm"
-                className="border-emerald-200 text-[#067138] hover:bg-[#e0f3e8]"
+                className="border-[color:var(--brand-soft)] text-[color:var(--brand-primary)] hover:bg-[color:var(--brand-soft)]"
                 onClick={handleLogout}
               >
                 <LogOut className="mr-2 h-4 w-4" />
@@ -762,7 +774,11 @@ export function Dashboard() {
             {!isViewerOnly ? (
               <Button
                 onClick={() => handleOpenForm()}
-                className="gap-2 rounded-full bg-[#067138] px-6 py-5 text-base font-semibold text-white shadow-xl shadow-emerald-200/60 transition hover:bg-[#05592d]"
+                className="gap-2 rounded-full px-6 py-5 text-base font-semibold text-white shadow-xl transition"
+                style={{
+                  backgroundColor: brandPrimary,
+                  boxShadow: "0 20px 40px -22px color-mix(in srgb, var(--brand-primary) 70%, transparent)",
+                }}
               >
                 <Plus className="h-4 w-4" />
                 Nueva Lección
@@ -779,7 +795,7 @@ export function Dashboard() {
           >
             <TabsTrigger
               value="lessons"
-              className="flex items-center gap-2 rounded-xl data-[state=active]:bg-[#067138] data-[state=active]:text-white data-[state=active]:shadow-lg"
+              className="flex items-center gap-2 rounded-xl data-[state=active]:bg-[color:var(--brand-primary)] data-[state=active]:text-white data-[state=active]:shadow-lg"
             >
               <BookOpen className="h-4 w-4" />
               Lecciones
@@ -787,8 +803,8 @@ export function Dashboard() {
             {showAnalyticsTab ? (
               <TabsTrigger
                 value="analytics"
-                className="flex items-center gap-2 rounded-xl data-[state=active]:bg-[#067138] data-[state=active]:text-white data-[state=active]:shadow-lg"
-              >
+              className="flex items-center gap-2 rounded-xl data-[state=active]:bg-[color:var(--brand-primary)] data-[state=active]:text-white data-[state=active]:shadow-lg"
+            >
                 <BarChart3 className="h-4 w-4" />
                 Analíticas
               </TabsTrigger>
@@ -799,11 +815,11 @@ export function Dashboard() {
             <div className="space-y-8">
               <div className="flex flex-col gap-4 xl:flex-row">
                 {/* Búsqueda Rápida */}
-                <Card className="flex-1 border border-emerald-50 bg-white/80 shadow-sm backdrop-blur-sm">
+                <Card className="flex-1 border border-[color:var(--brand-soft)] bg-white/80 shadow-sm backdrop-blur-sm">
                   <CardHeader className="pb-4">
                     <CardTitle className="flex items-center gap-3 text-xl">
-                      <div className="rounded-xl bg-[#e0f3e8] p-2">
-                        <Search className="h-5 w-5 text-[#067138]" />
+                      <div className="rounded-xl bg-[color:var(--brand-soft)] p-2">
+                        <Search className="h-5 w-5 text-[color:var(--brand-primary)]" />
                       </div>
                       Búsqueda Rápida
                     </CardTitle>
@@ -817,13 +833,13 @@ export function Dashboard() {
                           setSearchQuery(e.target.value)
                           setPageNumber(1)
                         }}
-                        className="flex-1 rounded-2xl border-slate-200 bg-white/70 focus:border-[#067138] focus:ring-[#067138]/20"
+                        className="flex-1 rounded-2xl border-slate-200 bg-white/70 focus:border-[color:var(--brand-primary)] focus:ring-[color:var(--brand-primary)]/20"
                       />
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={handleSortToggle}
-                        className="border-slate-200 bg-white text-[#067138] transition hover:bg-[#e0f3e8]"
+                        className="border-slate-200 bg-white text-[color:var(--brand-primary)] transition hover:bg-[color:var(--brand-soft)]"
                       >
                         <Filter className="mr-2 h-4 w-4" />
                         Fecha {sortDirection === "desc" ? "↓" : "↑"}
@@ -833,7 +849,7 @@ export function Dashboard() {
                 </Card>
 
                 {/* Estados del Flujo de Trabajo - Compact version */}
-                <Card className="border border-emerald-50 bg-white/80 shadow-sm backdrop-blur-sm">
+                <Card className="border border-[color:var(--brand-soft)] bg-white/80 shadow-sm backdrop-blur-sm">
                   <CardContent className="p-3">
                     <div className="flex flex-wrap items-center gap-2">
                       {[
@@ -854,8 +870,8 @@ export function Dashboard() {
                         {
                           status: "Publicado",
                           count: statusCounts["Publicado"] ?? 0,
-                          color: "bg-[#e0f3e8] hover:bg-[#d1ecde] border-emerald-200",
-                          textColor: "text-[#067138]",
+                          color: "bg-[color:var(--brand-soft)] hover:bg-[color:var(--brand-muted)] border-[color:var(--brand-soft)]",
+                          textColor: "text-[color:var(--brand-primary)]",
                           icon: "🚀",
                         },
                       ].map((stage) => (
@@ -883,7 +899,10 @@ export function Dashboard() {
                     Gestión de Lecciones
                     {workflowFilter && (
                         <div className="flex flex-wrap items-center gap-2">
-                          <Badge variant="outline" className="rounded-full border-emerald-200 bg-[#e0f3e8] text-[#067138]">
+                          <Badge
+                            variant="outline"
+                            className="rounded-full border-[color:var(--brand-soft)] bg-[color:var(--brand-soft)] text-[color:var(--brand-primary)]"
+                          >
                             Filtrado por: {workflowFilter}
                           </Badge>
                           <Button
@@ -960,7 +979,7 @@ export function Dashboard() {
                         return (
                           <div
                             key={lesson.id}
-                            className="flex flex-col gap-4 rounded-2xl border border-emerald-100 bg-white/90 p-5 shadow-sm transition-all duration-200 hover:border-[#067138]/40 hover:shadow-lg lg:flex-row lg:items-start lg:justify-between"
+                            className="flex flex-col gap-4 rounded-2xl border border-[color:var(--brand-soft)] bg-white/90 p-5 shadow-sm transition-all duration-200 hover:border-[color:var(--brand-primary)]/50 hover:shadow-lg lg:flex-row lg:items-start lg:justify-between"
                           >
                           <div className="flex-1 space-y-3">
                             {/* Proyecto o Situación - Main title */}
@@ -1017,7 +1036,7 @@ export function Dashboard() {
                               }
                               className={
                                 lesson.status === "Publicado"
-                                  ? "rounded-full bg-[#e0f3e8] text-[#067138] border-emerald-200"
+                                  ? "rounded-full bg-[color:var(--brand-soft)] text-[color:var(--brand-primary)] border-[color:var(--brand-soft)]"
                                   : lesson.status === "En Revisión"
                                     ? "bg-amber-100 text-amber-800 border-amber-200"
                                     : "rounded-full bg-slate-100 text-slate-800 border-slate-200"
@@ -1028,7 +1047,7 @@ export function Dashboard() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className={`text-[#065f46] hover:bg-[#e0f3e8] ${!isEditable ? "cursor-not-allowed opacity-60" : ""}`}
+                              className={`text-[color:var(--brand-primary)] hover:bg-[color:var(--brand-soft)] ${!isEditable ? "cursor-not-allowed opacity-60" : ""}`}
                               onClick={() => isEditable && fullLesson && handleOpenForm(fullLesson)}
                               title={
                                 isEditable
@@ -1064,7 +1083,7 @@ export function Dashboard() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="text-[#067138] hover:bg-[#e0f3e8]"
+                              className="text-[color:var(--brand-primary)] hover:bg-[color:var(--brand-soft)]"
                               onClick={() => handleViewLesson(lesson)}
                               title="Visualizar lección"
                             >
@@ -1075,7 +1094,7 @@ export function Dashboard() {
                         )
                       })}
                     {!isLoadingLessons && !fetchError && totalCount >= 0 && (
-                      <div className="flex flex-col gap-3 border-t border-emerald-50 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex flex-col gap-3 border-t border-[color:var(--brand-soft)] pt-4 sm:flex-row sm:items-center sm:justify-between">
                         <div className="text-sm text-slate-600">
                           {`Mostrando ${totalCount === 0 ? 0 : (pageNumber - 1) * pageSize + 1}-${Math.min(totalCount, pageNumber * pageSize)} de ${totalCount} resultados`}
                         </div>
@@ -1085,7 +1104,7 @@ export function Dashboard() {
                           </label>
                           <select
                             id="page-size-select"
-                            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm focus:border-[#067138] focus:outline-none focus:ring-1 focus:ring-[#067138]/30"
+                            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm focus:border-[color:var(--brand-primary)] focus:outline-none focus:ring-1 focus:ring-[color:var(--brand-primary)]/30"
                             value={pageSize}
                             onChange={(event) => handlePageSizeChange(Number(event.target.value))}
                           >
@@ -1099,7 +1118,7 @@ export function Dashboard() {
                             <Button
                               variant="outline"
                               size="sm"
-                              className="border-slate-200 text-slate-700 hover:bg-[#e0f3e8]"
+                              className="border-slate-200 text-slate-700 hover:bg-[color:var(--brand-soft)]"
                               onClick={() => handlePageChange("prev")}
                               disabled={pageNumber <= 1 || totalCount === 0}
                             >
@@ -1111,7 +1130,7 @@ export function Dashboard() {
                             <Button
                               variant="outline"
                               size="sm"
-                              className="border-slate-200 text-slate-700 hover:bg-[#e0f3e8]"
+                              className="border-slate-200 text-slate-700 hover:bg-[color:var(--brand-soft)]"
                               onClick={() => handlePageChange("next")}
                               disabled={pageNumber >= totalPages || totalCount === 0}
                             >
@@ -1130,12 +1149,12 @@ export function Dashboard() {
           {showAnalyticsTab ? (
             <TabsContent value="analytics">
               <div className="space-y-8">
-                <Card className="border border-emerald-50 bg-white/80 shadow-sm backdrop-blur-sm">
+                <Card className="border border-[color:var(--brand-soft)] bg-white/80 shadow-sm backdrop-blur-sm">
                   <CardHeader className="flex flex-col gap-3 pb-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <CardTitle className="flex items-center gap-3 text-xl">
-                        <div className="rounded-xl bg-[#e0f3e8] p-2">
-                          <BarChart3 className="h-5 w-5 text-[#067138]" />
+                        <div className="rounded-xl bg-[color:var(--brand-soft)] p-2">
+                          <BarChart3 className="h-5 w-5 text-[color:var(--brand-primary)]" />
                         </div>
                         Analíticas del Repositorio
                       </CardTitle>
@@ -1145,7 +1164,7 @@ export function Dashboard() {
                     </div>
                     <Button
                       variant="outline"
-                      className="border-emerald-200 text-[#067138] hover:bg-[#e0f3e8]"
+                      className="border-[color:var(--brand-soft)] text-[color:var(--brand-primary)] hover:bg-[color:var(--brand-soft)]"
                       onClick={() => setAnalyticsReloadKey((prev) => prev + 1)}
                     >
                       Actualizar datos
@@ -1156,15 +1175,15 @@ export function Dashboard() {
                 {analyticsError ? (
                   <Alert variant="destructive" className="border-red-200 bg-red-50">
                     <AlertTitle>Ocurrió un problema</AlertTitle>
-                    <AlertDescription>
-                      {analyticsError} {" "}
-                      <button
-                        type="button"
-                        onClick={() => setAnalyticsReloadKey((prev) => prev + 1)}
-                        className="font-semibold text-[#067138] underline"
-                      >
-                        Reintentar
-                      </button>
+                      <AlertDescription>
+                        {analyticsError} {" "}
+                        <button
+                          type="button"
+                          onClick={() => setAnalyticsReloadKey((prev) => prev + 1)}
+                          className="font-semibold text-[color:var(--brand-primary)] underline"
+                        >
+                          Reintentar
+                        </button>
                     </AlertDescription>
                   </Alert>
                 ) : null}

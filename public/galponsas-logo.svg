@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 340" role="img" aria-label="Pollos del Galpón">
+  <defs>
+    <linearGradient id="oval" x1="0%" x2="100%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#133a9a" />
+      <stop offset="100%" stop-color="#102f87" />
+    </linearGradient>
+  </defs>
+  <ellipse cx="200" cy="170" rx="190" ry="150" fill="url(#oval)" />
+  <path d="M70 110 C120 85 220 85 330 120" fill="none" stroke="#e21337" stroke-width="14" stroke-linecap="round" />
+  <path d="M320 210 C260 250 160 260 80 235" fill="none" stroke="#e21337" stroke-width="14" stroke-linecap="round" />
+  <path d="M105 135 C170 120 250 120 305 145" fill="none" stroke="#f3c316" stroke-width="12" stroke-linecap="round" />
+  <path d="M305 190 C245 210 180 210 125 195" fill="none" stroke="#f3c316" stroke-width="12" stroke-linecap="round" />
+  <g fill="#f8f9fb" font-family="'Plus Jakarta Sans', 'Public Sans', Arial, sans-serif" font-weight="800" text-anchor="middle">
+    <text x="200" y="170" font-size="60">Pollos</text>
+    <text x="200" y="225" font-size="64">del Galpón</text>
+  </g>
+  <circle cx="140" cy="150" r="18" fill="#f3c316" />
+  <circle cx="136" cy="145" r="5" fill="#e21337" />
+</svg>

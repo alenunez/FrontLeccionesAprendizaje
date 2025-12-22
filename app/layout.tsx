@@ -4,6 +4,7 @@ import './globals.css'
 import { Toaster } from '@/components/ui/toaster'
 import { AuthProvider } from '@/components/auth-provider'
 import { ConfigProvider } from '@/components/config-provider'
+import { BrandProvider } from '@/components/brand-provider'
 
 export const metadata: Metadata = {
   title: 'Sistema de Gestión de Lecciones Aprendidas',
@@ -23,7 +24,9 @@ export default function RootLayout({
     <html lang="es">
       <body className="font-sans antialiased">
         <AuthProvider>
-          <ConfigProvider>{children}</ConfigProvider>
+          <BrandProvider>
+            <ConfigProvider>{children}</ConfigProvider>
+          </BrandProvider>
         </AuthProvider>
         <Analytics />
         <Toaster />

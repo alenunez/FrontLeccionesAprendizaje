@@ -75,7 +75,8 @@ export const BRAND_CONFIGS: Record<BrandKey, BrandConfig> = {
   },
   galponsas: {
     key: "galponsas",
-    logoUrl: "/galponsas-logo.svg",
+    logoUrl:
+      "https://drive.google.com/file/d/1zLDHkpNXy-XWTKr_Nxxo8FEm2ZojHMdZ/view?usp=sharing",
     theme: {
       primary: "#efb810",
       primaryStrong: "#d79f00",

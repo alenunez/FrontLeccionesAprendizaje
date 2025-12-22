@@ -89,7 +89,7 @@ export const BRAND_CONFIGS: Record<BrandKey, BrandConfig> = {
   },
   transgraneles: {
     key: "transgraneles",
-    logoUrl: "/transgraneles-logo.svg",
+    logoUrl: "https://www.transgraneles.com.co/Content/themes/public/img/logo.png",
     theme: {
       primary: "#e0131e",
       primaryStrong: "#b50f18",

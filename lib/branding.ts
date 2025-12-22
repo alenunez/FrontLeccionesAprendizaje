@@ -19,7 +19,7 @@ export interface BrandConfig {
   theme: BrandTheme
 }
 
-const themeToCssVariables = (theme: BrandTheme): CSSProperties => ({
+export const themeToCssVariables = (theme: BrandTheme): CSSProperties => ({
   "--brand-primary": theme.primary,
   "--brand-primary-strong": theme.primaryStrong,
   "--brand-accent": theme.accent,

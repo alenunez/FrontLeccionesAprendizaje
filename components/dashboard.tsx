@@ -204,15 +204,16 @@ export function Dashboard() {
   const isGalponsas = brand.brandKey === "galponsas"
   const isTransgraneles = brand.brandKey === "transgraneles"
   const isLargeLogoBrand = isGalponsas || isTransgraneles
-  const logoWrapperSizeClasses = isLargeLogoBrand
-    ? "h-20 w-20 sm:h-24 sm:w-24 md:h-28 md:w-28"
-    : "h-12 w-32 sm:h-14 sm:w-36"
-  const logoWrapperClassName = `relative flex items-center justify-center overflow-hidden rounded-2xl ${
+  const logoConfig = isLargeLogoBrand
+    ? { width: 320, height: 140, className: "h-24 sm:h-28 md:h-32" }
+    : { width: 180, height: 64, className: "h-12 sm:h-14" }
+  const largeLogoWrapperClasses = "min-h-[110px] min-w-[230px]"
+  const logoWrapperClassName = `flex items-center justify-center rounded-2xl ${
     isTransgraneles
-      ? `bg-[color:var(--brand-primary)]/90 shadow-inner ring-1 ring-[color:var(--brand-border)]/80 ${logoWrapperSizeClasses}`
+      ? `bg-[color:var(--brand-primary)]/90 px-6 py-4 shadow-inner ring-1 ring-[color:var(--brand-border)]/80 ${largeLogoWrapperClasses}`
       : isGalponsas
-        ? `bg-white/90 shadow-inner ring-1 ring-[color:var(--brand-soft)]/80 ${logoWrapperSizeClasses}`
-        : `bg-white ${logoWrapperSizeClasses}`
+        ? `px-4 py-3 ${largeLogoWrapperClasses}`
+        : "py-1"
   }`
   const [lessonToEdit, setLessonToEdit] = useState<ProyectoSituacionDto | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
@@ -756,12 +757,13 @@ export function Dashboard() {
                   <Image
                     src={brand.logoUrl}
                     alt="Logo corporativo"
-                    fill
-                    className="object-contain"
+                    width={logoConfig.width}
+                    height={logoConfig.height}
+                    className={`${logoConfig.className} w-auto`}
                     sizes={
                       isLargeLogoBrand
-                        ? "(min-width: 1280px) 7rem, (min-width: 1024px) 6.5rem, 6rem"
-                        : "(min-width: 1024px) 9rem, 8rem"
+                        ? "(min-width: 1280px) 260px, (min-width: 1024px) 220px, 200px"
+                        : "(min-width: 1024px) 180px, 150px"
                     }
                     priority
                   />

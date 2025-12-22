@@ -203,14 +203,16 @@ export function Dashboard() {
   const brandMuted = brand.theme.muted
   const isGalponsas = brand.brandKey === "galponsas"
   const isTransgraneles = brand.brandKey === "transgraneles"
-  const logoConfig = isGalponsas
-    ? { width: 260, height: 96, className: "h-20 sm:h-24" }
-    : { width: 180, height: 64, className: "h-10 sm:h-12" }
+  const isLargeLogoBrand = isGalponsas || isTransgraneles
+  const logoConfig = isLargeLogoBrand
+    ? { width: 320, height: 140, className: "h-24 sm:h-28 md:h-32" }
+    : { width: 180, height: 64, className: "h-12 sm:h-14" }
+  const largeLogoWrapperClasses = "min-h-[110px] min-w-[230px]"
   const logoWrapperClassName = `flex items-center justify-center rounded-2xl ${
     isTransgraneles
-      ? "bg-[color:var(--brand-primary)]/90 px-5 py-3 shadow-inner ring-1 ring-[color:var(--brand-border)]/80"
+      ? `bg-[color:var(--brand-primary)]/90 px-6 py-4 shadow-inner ring-1 ring-[color:var(--brand-border)]/80 ${largeLogoWrapperClasses}`
       : isGalponsas
-        ? "px-3 py-3"
+        ? `px-4 py-3 ${largeLogoWrapperClasses}`
         : "py-1"
   }`
   const [lessonToEdit, setLessonToEdit] = useState<ProyectoSituacionDto | null>(null)
@@ -758,7 +760,11 @@ export function Dashboard() {
                     width={logoConfig.width}
                     height={logoConfig.height}
                     className={`${logoConfig.className} w-auto`}
-                    sizes={isGalponsas ? "(min-width: 1024px) 240px, 200px" : "(min-width: 1024px) 180px, 150px"}
+                    sizes={
+                      isLargeLogoBrand
+                        ? "(min-width: 1280px) 260px, (min-width: 1024px) 220px, 200px"
+                        : "(min-width: 1024px) 180px, 150px"
+                    }
                     priority
                   />
                 </div>

@@ -1217,7 +1217,7 @@ export function Dashboard() {
                                     borderRadius: "8px",
                                   }}
                                 />
-                                <Bar dataKey="total" fill={BRAND_COLOR} radius={[4, 4, 0, 0]} />
+                                <Bar dataKey="total" fill={brandPrimary} radius={[4, 4, 0, 0]} />
                               </BarChart>
                             </ResponsiveContainer>
                           )}
@@ -1253,7 +1253,7 @@ export function Dashboard() {
                                     key={status}
                                     dataKey={status}
                                     stackId="estado"
-                                    fill={statusColorMap[status] ?? BRAND_ACCENT}
+                                    fill={statusColorMap[status] ?? brandAccent}
                                     radius={[4, 4, 0, 0]}
                                   />
                                 ))}
@@ -1287,7 +1287,7 @@ export function Dashboard() {
                                       borderRadius: "8px",
                                     }}
                                   />
-                                  <Bar dataKey="promedio" fill={BRAND_COLOR} radius={[4, 4, 0, 0]} />
+                                  <Bar dataKey="promedio" fill={brandPrimary} radius={[4, 4, 0, 0]} />
                                 </BarChart>
                               </ResponsiveContainer>
                             )}
@@ -1317,7 +1317,7 @@ export function Dashboard() {
                                       borderRadius: "8px",
                                     }}
                                   />
-                                  <Bar dataKey="promedio" fill={BRAND_ACCENT} radius={[4, 4, 0, 0]} />
+                                  <Bar dataKey="promedio" fill={brandAccent} radius={[4, 4, 0, 0]} />
                                 </BarChart>
                               </ResponsiveContainer>
                             )}
@@ -1353,7 +1353,7 @@ export function Dashboard() {
                                   <Bar
                                     key={company}
                                     dataKey={company}
-                                    fill={companyColorMap[company] ?? BRAND_COLOR}
+                                    fill={companyColorMap[company] ?? brandPrimary}
                                     radius={[4, 4, 0, 0]}
                                   />
                                 ))}

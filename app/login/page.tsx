@@ -16,7 +16,11 @@ function LoginPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { brand } = useBranding()
+  const isTransgraneles = brand.brandKey === "transgraneles"
   const brandCssVars = useMemo(() => themeToCssVariables(brand.theme), [brand.theme])
+  const logoWrapperClassName = `flex items-center justify-center rounded-xl ${
+    isTransgraneles ? "bg-[color:var(--brand-primary)] px-3 py-2 shadow-inner ring-1 ring-[color:var(--brand-border)]" : ""
+  }`
 
   useEffect(() => {
     const redirect = searchParams.get("redirect")
@@ -60,15 +64,17 @@ function LoginPageContent() {
           <CardContent className="grid gap-10 p-8 md:grid-cols-[1.05fr_0.95fr] md:p-12">
             <div className="flex flex-col gap-8 text-[color:var(--brand-foreground)]">
               <div className="flex items-center gap-4 rounded-2xl bg-white/80 p-4 shadow-inner shadow-[color:var(--brand-soft)]">
-                <div className="relative h-14 w-36 md:h-16 md:w-44">
-                  <Image
-                    src={brand.logoUrl}
-                    alt="Logo corporativo"
-                    fill
-                    className="object-contain drop-shadow"
-                    sizes="(min-width: 768px) 11rem, 9rem"
-                    priority
-                  />
+                <div className={logoWrapperClassName}>
+                  <div className="relative h-14 w-36 md:h-16 md:w-44">
+                    <Image
+                      src={brand.logoUrl}
+                      alt="Logo corporativo"
+                      fill
+                      className="object-contain drop-shadow"
+                      sizes="(min-width: 768px) 11rem, 9rem"
+                      priority
+                    />
+                  </div>
                 </div>
                 <div className="hidden h-12 w-px bg-gradient-to-b from-[color:var(--brand-soft)] via-[color:var(--brand-border)] to-[color:var(--brand-soft)] md:block" />
                 <div className="space-y-1">

@@ -18,14 +18,15 @@ function LoginPageContent() {
   const { brand } = useBranding()
   const isTransgraneles = brand.brandKey === "transgraneles"
   const isGalponsas = brand.brandKey === "galponsas"
+  const isLargeLogoBrand = isGalponsas || isTransgraneles
   const brandCssVars = useMemo(() => themeToCssVariables(brand.theme), [brand.theme])
   const logoWrapperClassName = `flex items-center justify-center rounded-2xl ${
     isTransgraneles
-      ? "bg-[color:var(--brand-primary)]/90 px-4 py-2.5 shadow-inner ring-1 ring-[color:var(--brand-border)]/80"
+      ? "bg-[color:var(--brand-primary)]/90 px-5 py-3 shadow-inner ring-1 ring-[color:var(--brand-border)]/80"
       : ""
   }`
-  const logoContainerClassName = isGalponsas
-    ? "relative h-16 w-44 md:h-20 md:w-52"
+  const logoContainerClassName = isLargeLogoBrand
+    ? "relative h-20 w-52 md:h-24 md:w-64"
     : "relative h-14 w-36 md:h-16 md:w-44"
 
   useEffect(() => {

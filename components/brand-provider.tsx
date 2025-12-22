@@ -1,6 +1,7 @@
 "use client"
 
 import { createContext, useContext, useEffect, useMemo, type ReactNode } from "react"
+import { usePathname } from "next/navigation"
 
 import { useAuth } from "./auth-provider"
 import { BRAND_CONFIGS, resolveBrandKey, type BrandConfig, type BrandKey } from "@/lib/branding"
@@ -25,8 +26,14 @@ const APPLY_AS_CSS_VARIABLES: Array<keyof BrandConfig["theme"]> = [
 
 export function BrandProvider({ children }: { children: ReactNode }) {
   const { session } = useAuth()
+  const pathname = usePathname()
 
-  const brandKey = useMemo(() => resolveBrandKey(session?.user?.email), [session?.user?.email])
+  const isLoginExperience = pathname?.startsWith("/login") || pathname?.startsWith("/redirect")
+
+  const brandKey = useMemo(() => {
+    if (isLoginExperience) return "solla"
+    return resolveBrandKey(session?.user?.email)
+  }, [isLoginExperience, session?.user?.email])
   const brand = BRAND_CONFIGS[brandKey]
 
   useEffect(() => {

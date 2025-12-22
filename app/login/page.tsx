@@ -22,11 +22,11 @@ function LoginPageContent() {
   const brandCssVars = useMemo(() => themeToCssVariables(brand.theme), [brand.theme])
   const logoWrapperClassName = `flex items-center justify-center rounded-2xl ${
     isTransgraneles
-      ? "bg-[color:var(--brand-primary)]/90 px-5 py-3 shadow-inner ring-1 ring-[color:var(--brand-border)]/80"
-      : ""
+      ? "bg-[color:var(--brand-primary)]/90 p-2 shadow-inner ring-1 ring-[color:var(--brand-border)]/80"
+      : "p-1"
   }`
   const logoContainerClassName = isLargeLogoBrand
-    ? "relative h-20 w-52 md:h-24 md:w-64"
+    ? "relative h-24 w-24 md:h-28 md:w-28"
     : "relative h-14 w-36 md:h-16 md:w-44"
 
   useEffect(() => {
@@ -78,7 +78,11 @@ function LoginPageContent() {
                       alt="Logo corporativo"
                       fill
                       className="object-contain drop-shadow"
-                      sizes={isGalponsas ? "(min-width: 768px) 13rem, 11rem" : "(min-width: 768px) 11rem, 9rem"}
+                      sizes={
+                        isLargeLogoBrand
+                          ? "(min-width: 768px) 7rem, 6rem"
+                          : "(min-width: 768px) 11rem, 9rem"
+                      }
                       priority
                     />
                   </div>

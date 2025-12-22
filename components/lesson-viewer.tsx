@@ -222,7 +222,7 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 px-3 py-6 sm:px-4 sm:py-8">
-      <Card className="w-full max-w-6xl max-h-[calc(100vh-2rem)] sm:max-h-[95vh] rounded-3xl border border-emerald-100 shadow-2xl break-words flex flex-col overflow-hidden text-[15px] leading-relaxed sm:text-base pt-0">
+      <Card className="w-full max-w-6xl max-h-[calc(100vh-2rem)] sm:max-h-[95vh] rounded-3xl border border-[color:var(--brand-soft)] shadow-2xl break-words flex flex-col overflow-hidden text-[15px] leading-relaxed sm:text-base pt-0">
         <CardHeader className="sticky top-0 z-20 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-gradient-to-r from-[#0b7c4a] via-[#199a59] to-[#3f8f68] px-4 py-4 sm:px-6 sm:py-5 text-white shadow-md rounded-none sm:rounded-b-2xl">
           <div className="space-y-0.5">
             <CardTitle className="text-xl font-bold text-white">Visualización del Proyecto</CardTitle>
@@ -240,12 +240,12 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
           </Button>
         </CardHeader>
 
-        <CardContent className="space-y-10 bg-gradient-to-b from-[#f4fff9] via-white to-[#f0fbf4] p-6 sm:p-8 flex-1 overflow-y-auto">
+        <CardContent className="space-y-10 bg-gradient-to-b from-[color:var(--brand-soft)] via-white to-[color:var(--brand-muted)] p-6 sm:p-8 flex-1 overflow-y-auto">
           <section className="space-y-4">
-            <div className="flex flex-col gap-3 rounded-3xl border border-emerald-100 bg-white/80 p-6 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#067138]/70">Proyecto o situación</p>
+            <div className="flex flex-col gap-3 rounded-3xl border border-[color:var(--brand-soft)] bg-white/80 p-6 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[color:var(--brand-primary)]/70">Proyecto o situación</p>
               <h2 className="text-2xl font-semibold text-slate-900 break-words">{safeText(proyecto.descripcion)}</h2>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#067138]/70">Aplicación práctica</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--brand-primary)]/70">Aplicación práctica</p>
               <p className="text-sm text-slate-600 break-words">{safeText(proyecto.aplicacionPractica)}</p>
             </div>
 
@@ -297,7 +297,7 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
               }].map((item) => (
                 <div
                   key={item.label}
-                  className="rounded-2xl border border-emerald-50 bg-white/80 p-4 shadow-sm"
+                  className="rounded-2xl border border-[color:var(--brand-soft)] bg-white/80 p-4 shadow-sm"
                 >
                   <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
                     {item.icon}
@@ -312,17 +312,17 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
           <section className="space-y-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#067138]/70">Eventos</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[color:var(--brand-primary)]/70">Eventos</p>
                 <h3 className="text-xl font-semibold text-slate-900">Contexto de aprendizaje</h3>
                 <p className="text-sm text-slate-600">Visualiza lo que ocurrió, sus impactos y las acciones tomadas.</p>
               </div>
-              <Badge className="rounded-full bg-[#e0f3e8] text-[#067138]">
+              <Badge className="rounded-full bg-[color:var(--brand-soft)] text-[color:var(--brand-primary)]">
                 {eventos.length} evento{eventos.length === 1 ? "" : "s"}
               </Badge>
             </div>
 
             {eventos.length === 0 && (
-              <div className="rounded-3xl border border-dashed border-emerald-200 bg-white/70 p-6 text-center text-sm text-slate-500">
+              <div className="rounded-3xl border border-dashed border-[color:var(--brand-soft)] bg-white/70 p-6 text-center text-sm text-slate-500">
                 No se registran eventos para este proyecto.
               </div>
             )}
@@ -375,7 +375,7 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
               )
 
               return (
-                <div key={`evento-${index}`} className="space-y-4 rounded-3xl border border-emerald-100 bg-white/80 p-6 shadow-sm">
+                <div key={`evento-${index}`} className="space-y-4 rounded-3xl border border-[color:var(--brand-soft)] bg-white/80 p-6 shadow-sm">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Evento #{index + 1}</p>
@@ -384,16 +384,16 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      <Badge variant="outline" className="rounded-full border-emerald-200 text-[#067138]">
+                      <Badge variant="outline" className="rounded-full border-[color:var(--brand-soft)] text-[color:var(--brand-primary)]">
                         {impactos.length} impacto{impactos.length === 1 ? "" : "s"}
                       </Badge>
-                      <Badge variant="outline" className="rounded-full border-emerald-200 text-[#067138]">
+                      <Badge variant="outline" className="rounded-full border-[color:var(--brand-soft)] text-[color:var(--brand-primary)]">
                         {acciones.length} acción{acciones.length === 1 ? "" : "es"}
                       </Badge>
-                      <Badge variant="outline" className="rounded-full border-emerald-200 text-[#067138]">
+                      <Badge variant="outline" className="rounded-full border-[color:var(--brand-soft)] text-[color:var(--brand-primary)]">
                         {resultados.length} resultado{resultados.length === 1 ? "" : "s"}
                       </Badge>
-                      <Badge variant="outline" className="rounded-full border-emerald-200 text-[#067138]">
+                      <Badge variant="outline" className="rounded-full border-[color:var(--brand-soft)] text-[color:var(--brand-primary)]">
                         {lecciones.length} lección{lecciones.length === 1 ? "" : "es"}
                       </Badge>
                     </div>
@@ -468,16 +468,16 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
             })}
           </section>
 
-          <section className="space-y-4 rounded-3xl border border-emerald-100 bg-white/80 p-6 shadow-sm">
+          <section className="space-y-4 rounded-3xl border border-[color:var(--brand-soft)] bg-white/80 p-6 shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#067138]/70">Adjuntos</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[color:var(--brand-primary)]/70">Adjuntos</p>
                 <h3 className="text-xl font-semibold text-slate-900">Archivos relacionados</h3>
                 <p className="text-sm text-slate-600">
                   Consulta y descarga los archivos asociados a este proyecto o situación.
                 </p>
               </div>
-              <Badge className="rounded-full bg-[#e0f3e8] text-[#067138]">
+              <Badge className="rounded-full bg-[color:var(--brand-soft)] text-[color:var(--brand-primary)]">
                 {attachments.length} adjunto{attachments.length === 1 ? "" : "s"}
               </Badge>
             </div>
@@ -486,7 +486,7 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
 
             {isLoadingAttachments && (
               <div className="flex items-center gap-2 text-sm text-slate-600">
-                <Loader2 className="h-4 w-4 animate-spin text-[#067138]" />
+                <Loader2 className="h-4 w-4 animate-spin text-[color:var(--brand-primary)]" />
                 Cargando adjuntos...
               </div>
             )}
@@ -502,7 +502,7 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
                   return (
                     <div
                       key={downloadKey}
-                      className="flex flex-wrap items-center gap-3 rounded-2xl border border-emerald-50 bg-[#f8fdf9] p-4 shadow-inner"
+                      className="flex flex-wrap items-center gap-3 rounded-2xl border border-[color:var(--brand-soft)] bg-[#f8fdf9] p-4 shadow-inner"
                     >
                       <div className="flex-1 min-w-[200px]">
                         <p className="font-medium text-slate-900 break-words">
@@ -516,7 +516,7 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="gap-2 border-[#8fd0ab] text-[#065f46] hover:bg-[#e0f3e8]"
+                    className="gap-2 border-[#8fd0ab] text-[#065f46] hover:bg-[color:var(--brand-soft)]"
                     onClick={() => handleDownload(attachment)}
                     disabled={downloadingAttachmentId === downloadKey}
                   >
@@ -557,16 +557,16 @@ interface EventColumnProps {
 
 function EventColumn({ title, subtitle, items }: EventColumnProps) {
   return (
-    <div className="flex min-w-0 flex-col gap-3 rounded-3xl border border-emerald-50 bg-[#f8fdf9] p-4 shadow-inner">
+    <div className="flex min-w-0 flex-col gap-3 rounded-3xl border border-[color:var(--brand-soft)] bg-[#f8fdf9] p-4 shadow-inner">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#067138]/70">{subtitle}</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[color:var(--brand-primary)]/70">{subtitle}</p>
         <h4 className="text-base font-semibold text-slate-900">{title}</h4>
       </div>
       {items.length === 0 && <p className="text-sm text-slate-500">Sin información disponible.</p>}
       {items.length > 0 && (
         <ul className="space-y-3">
           {items.map((item, index) => (
-            <li key={item.id} className="min-w-0 rounded-2xl border border-emerald-100 bg-white/80 p-3 shadow-sm">
+            <li key={item.id} className="min-w-0 rounded-2xl border border-[color:var(--brand-soft)] bg-white/80 p-3 shadow-sm">
               <div className="text-xs font-semibold text-slate-500">#{index + 1}</div>
               <p className="text-sm font-medium text-slate-900 break-words break-all whitespace-pre-wrap">{item.descripcion}</p>
               {item.relations && item.relations.length > 0 && (
@@ -579,7 +579,7 @@ function EventColumn({ title, subtitle, items }: EventColumnProps) {
                       <Badge
                         key={`${item.id}-${relation}-${relationIndex}`}
                         variant="outline"
-                        className="!flex w-full max-w-full items-start justify-start rounded-full border-emerald-200 text-left text-[11px] text-[#067138] break-words break-all !whitespace-pre-wrap !overflow-hidden !shrink leading-snug"
+                        className="!flex w-full max-w-full items-start justify-start rounded-full border-[color:var(--brand-soft)] text-left text-[11px] text-[color:var(--brand-primary)] break-words break-all !whitespace-pre-wrap !overflow-hidden !shrink leading-snug"
                       >
                         {relation}
                       </Badge>

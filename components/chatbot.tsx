@@ -172,10 +172,10 @@ export function ChatBot() {
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[calc(100vh-200px)]">
       {/* Chat Interface */}
       <div className="lg:col-span-3">
-        <Card className="h-full flex flex-col border border-emerald-50 bg-white/80 shadow-sm backdrop-blur-sm">
-          <CardHeader className="pb-4 border-b border-emerald-100 bg-gradient-to-r from-[#f4fff9] via-white to-[#d8f5e6]">
+        <Card className="h-full flex flex-col border border-[color:var(--brand-soft)] bg-white/80 shadow-sm backdrop-blur-sm">
+          <CardHeader className="pb-4 border-b border-[color:var(--brand-soft)] bg-gradient-to-r from-[color:var(--brand-soft)] via-white to-[color:var(--brand-muted)]">
             <CardTitle className="flex items-center gap-3 text-xl">
-              <div className="rounded-lg bg-[#067138] p-2 text-white">
+              <div className="rounded-lg bg-[color:var(--brand-primary)] p-2 text-white">
                 <MessageCircle className="h-5 w-5" />
               </div>
               Consultor IA de Lecciones Aprendidas
@@ -192,14 +192,16 @@ export function ChatBot() {
                     className={`flex gap-3 ${message.type === "user" ? "justify-end" : "justify-start"}`}
                   >
                     {message.type === "bot" && (
-                      <div className="rounded-full bg-[#e0f3e8] p-2">
-                        <Bot className="h-4 w-4 text-[#067138]" />
+                      <div className="rounded-full bg-[color:var(--brand-soft)] p-2">
+                        <Bot className="h-4 w-4 text-[color:var(--brand-primary)]" />
                       </div>
                     )}
 
                     <div
                       className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                        message.type === "user" ? "bg-[#067138] text-white" : "bg-slate-100 text-slate-900"
+                        message.type === "user"
+                          ? "bg-[color:var(--brand-primary)] text-white"
+                          : "bg-slate-100 text-slate-900"
                       }`}
                     >
                       <div className="whitespace-pre-wrap text-sm leading-relaxed">{message.content}</div>
@@ -232,10 +234,10 @@ export function ChatBot() {
                   </div>
                 ))}
 
-                {isTyping && (
+                    {isTyping && (
                   <div className="flex gap-3 justify-start">
-                    <div className="rounded-full bg-[#e0f3e8] p-2">
-                      <Bot className="h-4 w-4 text-[#067138]" />
+                    <div className="rounded-full bg-[color:var(--brand-soft)] p-2">
+                      <Bot className="h-4 w-4 text-[color:var(--brand-primary)]" />
                     </div>
                     <div className="bg-slate-100 rounded-2xl px-4 py-3">
                       <div className="flex gap-1">
@@ -263,13 +265,13 @@ export function ChatBot() {
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyPress={handleKeyPress}
                   placeholder="Pregunta sobre lecciones aprendidas..."
-                  className="flex-1 border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30"
+                  className="flex-1 border-slate-200 focus:border-[color:var(--brand-primary)] focus:ring-[color:var(--brand-primary)]/30"
                   disabled={isTyping}
                 />
                 <Button
                   onClick={handleSendMessage}
                   disabled={!inputValue.trim() || isTyping}
-                  className="rounded-full bg-[#067138] px-6 hover:bg-[#05592d]"
+                  className="rounded-full bg-[color:var(--brand-primary)] px-6 hover:bg-[color:var(--brand-primary-strong)]"
                 >
                   <Send className="h-4 w-4" />
                 </Button>
@@ -294,7 +296,7 @@ export function ChatBot() {
               <Button
                 key={index}
                 variant="outline"
-                className="h-auto w-full justify-start rounded-2xl border-slate-200 bg-white p-3 text-left text-sm hover:bg-[#e0f3e8]"
+                className="h-auto w-full justify-start rounded-2xl border-slate-200 bg-white p-3 text-left text-sm hover:bg-[color:var(--brand-soft)]"
                 onClick={() => setInputValue(query)}
               >
                 <Search className="h-4 w-4 mr-2 text-slate-400" />
@@ -312,7 +314,7 @@ export function ChatBot() {
           <CardContent className="space-y-4">
             <div className="flex justify-between items-center">
               <span className="text-sm text-slate-600">Lecciones Disponibles</span>
-              <Badge variant="secondary" className="rounded-full bg-[#e0f3e8] text-[#067138]">
+              <Badge variant="secondary" className="rounded-full bg-[color:var(--brand-soft)] text-[color:var(--brand-primary)]">
                 {lessonsDatabase.length}
               </Badge>
             </div>

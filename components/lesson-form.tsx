@@ -1601,7 +1601,7 @@ useEffect(() => {
                   placeholder={`${placeholder} ${index + 1}`}
                   rows={2}
                   maxLength={EVENT_TABLE_TEXTAREA_MAX_LENGTH}
-                  className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30"
+                  className="border-slate-200 focus:border-[color:var(--brand-primary)] focus:ring-[color:var(--brand-primary)]/30"
                 />
                 {renderCharLimitNotice(row.description, EVENT_TABLE_TEXTAREA_MAX_LENGTH)}
               </div>
@@ -1659,7 +1659,7 @@ useEffect(() => {
           type="button"
           variant="outline"
           onClick={() => (relationKey ? addRowWithRelations(setter, relationKey) : addRow(setter))}
-          className="gap-2 border-[#8fd0ab] text-[#067138] hover:bg-[#e0f3e8]"
+          className="gap-2 border-[color:var(--brand-border)] text-[color:var(--brand-primary)] hover:bg-[color:var(--brand-soft)]"
         >
           <Plus className="h-4 w-4" />
           Agregar
@@ -1693,7 +1693,7 @@ useEffect(() => {
                 placeholder={`${placeholder} ${index + 1}`}
                 rows={2}
                 maxLength={EVENT_TABLE_TEXTAREA_MAX_LENGTH}
-                className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30"
+                className="border-slate-200 focus:border-[color:var(--brand-primary)] focus:ring-[color:var(--brand-primary)]/30"
               />
               {renderCharLimitNotice(row.description, EVENT_TABLE_TEXTAREA_MAX_LENGTH)}
             </div>
@@ -1714,7 +1714,7 @@ useEffect(() => {
           type="button"
           variant="outline"
           onClick={() => addRow(setter)}
-          className="gap-2 border-[#8fd0ab] text-[#067138] hover:bg-[#e0f3e8]"
+          className="gap-2 border-[color:var(--brand-border)] text-[color:var(--brand-primary)] hover:bg-[color:var(--brand-soft)]"
         >
           <Plus className="h-4 w-4" />
           Agregar
@@ -2132,7 +2132,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                         size="sm"
                         onClick={() => handleWorkflowAction(action)}
                         disabled={isChangingStatus || isSubmitting}
-                        className="gap-2 border-[#8fd0ab] text-[#065f46] hover:bg-[#e0f3e8]"
+                        className="gap-2 border-[color:var(--brand-border)] text-[#065f46] hover:bg-[color:var(--brand-soft)]"
                       >
                         {isChangingStatus ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
@@ -2167,7 +2167,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
             <CardContent className="space-y-8 p-6 sm:p-8">
               {/* ENCABEZADO - Información General hasta Anexos */}
               <div className="space-y-6">
-                <div className="border-l-4 border-[#067138] pl-4">
+                <div className="border-l-4 border-[color:var(--brand-primary)] pl-4">
                   <h3 className="text-xl font-bold text-slate-900">Información General</h3>
                   <p className="text-base text-slate-600">Datos básicos del evento o situación</p>
                 </div>
@@ -2205,7 +2205,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                     value={formData.fecha}
                     onChange={(e) => setFormData({ ...formData, fecha: e.target.value })}
                     max={todayIso}
-                    className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30"
+                    className="border-slate-200 focus:border-[color:var(--brand-primary)] focus:ring-[color:var(--brand-primary)]/30"
                     required
                   />
                 </div>
@@ -2217,7 +2217,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                     value={formData.proceso}
                     onValueChange={(value) => setFormData({ ...formData, proceso: value })}
                   >
-                    <SelectTrigger className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30">
+                    <SelectTrigger className="border-slate-200 focus:border-[color:var(--brand-primary)] focus:ring-[color:var(--brand-primary)]/30">
                       <SelectValue placeholder="Seleccionar proceso" />
                     </SelectTrigger>
                     <SelectContent>
@@ -2249,7 +2249,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                       })
                     }
                   >
-                    <SelectTrigger className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30">
+                    <SelectTrigger className="border-slate-200 focus:border-[color:var(--brand-primary)] focus:ring-[color:var(--brand-primary)]/30">
                       <SelectValue placeholder="Seleccionar compañía" />
                     </SelectTrigger>
                     <SelectContent>
@@ -2276,7 +2276,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                     onValueChange={(value) => setFormData({ ...formData, sede: value })}
                     disabled={!formData.compania}
                   >
-                    <SelectTrigger className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30">
+                    <SelectTrigger className="border-slate-200 focus:border-[color:var(--brand-primary)] focus:ring-[color:var(--brand-primary)]/30">
                       <SelectValue placeholder="Seleccionar sede" />
                     </SelectTrigger>
                     <SelectContent>
@@ -2308,7 +2308,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                         setFormData({ ...formData, responsable: e.target.value, responsableCorreo: "" })
                       }}
                       placeholder="Buscar responsable"
-                      className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30"
+                      className="border-slate-200 focus:border-[color:var(--brand-primary)] focus:ring-[color:var(--brand-primary)]/30"
                       required
                     />
                     {showResponsableDropdown && (responsableQuery || responsableSuggestions.length > 0) && (
@@ -2355,7 +2355,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                     placeholder="Descripción detallada del proyecto o situación"
                     rows={3}
                     maxLength={DEFAULT_TEXTAREA_MAX_LENGTH}
-                    className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30"
+                    className="border-slate-200 focus:border-[color:var(--brand-primary)] focus:ring-[color:var(--brand-primary)]/30"
                     required
                   />
                   {renderCharLimitNotice(formData.proyectoOSituacion, DEFAULT_TEXTAREA_MAX_LENGTH)}
@@ -2371,7 +2371,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                     placeholder="¿Cómo y donde puede usarse lo aprendido?"
                     rows={3}
                     maxLength={APPLICACION_PRACTICA_MAX_LENGTH}
-                    className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30"
+                    className="border-slate-200 focus:border-[color:var(--brand-primary)] focus:ring-[color:var(--brand-primary)]/30"
                     required
                   />
                   {renderCharLimitNotice(formData.aplicacionPractica, APPLICACION_PRACTICA_MAX_LENGTH)}
@@ -2382,7 +2382,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                     Nivel de Acceso *
                   </Label>
                   <Select value={nivelAcceso} onValueChange={(value: "Público" | "Privado") => setNivelAcceso(value)}>
-                    <SelectTrigger className="border-slate-200 focus:border-[#067138]">
+                    <SelectTrigger className="border-slate-200 focus:border-[color:var(--brand-primary)]">
                       <SelectValue placeholder="Seleccionar nivel de acceso" />
                     </SelectTrigger>
                     <SelectContent>
@@ -2406,7 +2406,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                             type="button"
                             variant="outline"
                             onClick={() => setShowUserDropdown(!showUserDropdown)}
-                            className="w-full justify-between border-slate-200 focus:border-[#067138]"
+                            className="w-full justify-between border-slate-200 focus:border-[color:var(--brand-primary)]"
                           >
                             <span className="text-slate-600">
                               {expandedSelectedLectores.length === 0
@@ -2423,7 +2423,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                                   value={lectorQuery}
                                   onChange={(e) => setLectorQuery(e.target.value)}
                                   placeholder="Buscar lectores"
-                                  className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30"
+                                  className="border-slate-200 focus:border-[color:var(--brand-primary)] focus:ring-[color:var(--brand-primary)]/30"
                                 />
                               </div>
                               <div className="max-h-56 overflow-y-auto">
@@ -2469,7 +2469,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                             <Badge
                               key={user.id}
                               variant="secondary"
-                              className="gap-1 rounded-full bg-[#e0f3e8] text-[#067138]"
+                              className="gap-1 rounded-full bg-[color:var(--brand-soft)] text-[color:var(--brand-primary)]"
                             >
                               {user.name}
                               <Button
@@ -2477,7 +2477,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => removeUser(user.id)}
-                                className="h-4 w-4 p-0 text-[#067138] hover:bg-[#cbeed8]"
+                                className="h-4 w-4 p-0 text-[color:var(--brand-primary)] hover:bg-[color:var(--brand-muted)]"
                               >
                                 <X className="h-3 w-3" />
                               </Button>
@@ -2554,7 +2554,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => openEditEventDialog(evento)}
-                                className="text-[#067138] hover:bg-[#e0f3e8]"
+                                className="text-[color:var(--brand-primary)] hover:bg-[color:var(--brand-soft)]"
                               >
                                 <Edit className="h-4 w-4" />
                               </Button>
@@ -2587,7 +2587,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
 
             {/* Anexos Section */}
             <div className="space-y-6">
-              <div className="border-l-4 border-[#067138] pl-4">
+              <div className="border-l-4 border-[color:var(--brand-primary)] pl-4">
                 <h3 className="text-xl font-bold text-slate-900">Anexos</h3>
                 <p className="text-base text-slate-600">Adjunte documentos, imágenes o archivos relacionados</p>
               </div>
@@ -2608,7 +2608,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
 
                   {isLoadingExistingAttachments && (
                     <div className="flex items-center gap-2 text-base text-slate-600">
-                      <Loader2 className="h-4 w-4 animate-spin text-[#067138]" /> Cargando adjuntos...
+                      <Loader2 className="h-4 w-4 animate-spin text-[color:var(--brand-primary)]" /> Cargando adjuntos...
                     </div>
                   )}
 
@@ -2641,7 +2641,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                                 type="button"
                                 variant="outline"
                                 size="sm"
-                                className="w-full gap-2 border-[#8fd0ab] text-[#065f46] hover:bg-[#e0f3e8] sm:w-auto"
+                                className="w-full gap-2 border-[color:var(--brand-border)] text-[#065f46] hover:bg-[color:var(--brand-soft)] sm:w-auto"
                                 onClick={() => handleExistingAttachmentDownload(attachment)}
                                 disabled={downloadingExistingAttachmentId === attachmentKey}
                               >
@@ -2717,7 +2717,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                                 type="button"
                                 variant="default"
                                 size="sm"
-                                className="w-full gap-2 bg-[#067138] text-white hover:bg-[#05592d] sm:w-auto"
+                                className="w-full gap-2 bg-[color:var(--brand-primary)] text-white hover:bg-[color:var(--brand-primary-strong)] sm:w-auto"
                                 onClick={() => savePendingExistingAttachment(attachment)}
                                 disabled={
                                   !isEditable ||
@@ -2864,7 +2864,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
           </CardContent>
         </fieldset>
 
-          <div className="flex flex-col gap-3 border-t border-emerald-100 bg-[#f4fff9] p-6 text-right sm:flex-row sm:justify-end">
+        <div className="flex flex-col gap-3 border-t border-[color:var(--brand-soft)] bg-[color:var(--brand-muted)] p-6 text-right sm:flex-row sm:justify-end">
             <Button
               type="button"
               variant="outline"
@@ -2876,7 +2876,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
             <Button
               type="submit"
               disabled={isSubmitting || !isEditable}
-              className="gap-2 rounded-full bg-[#067138] px-6 py-5 text-base font-semibold text-white shadow-lg shadow-emerald-200/60 hover:bg-[#05592d] disabled:opacity-70"
+              className="gap-2 rounded-full bg-[color:var(--brand-primary)] px-6 py-5 text-base font-semibold text-white shadow-lg shadow-[color:var(--brand-soft)]/60 hover:bg-[color:var(--brand-primary-strong)] disabled:opacity-70"
             >
               {isSubmitting ? (
                 <>
@@ -2903,7 +2903,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
     >
           <div className="space-y-6 px-6 pt-6 pb-4">
             <div className="space-y-3">
-              <div className="border-l-4 border-[#067138] pl-4">
+              <div className="border-l-4 border-[color:var(--brand-primary)] pl-4">
                 <h3 className="text-lg font-bold text-slate-900">Evento (Qué ocurrió)</h3>
               </div>
               <Textarea
@@ -2913,7 +2913,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                 placeholder="Describa el evento relacionado con esta lección"
                 rows={3}
                 maxLength={EVENT_DESCRIPTION_MAX_LENGTH}
-                className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30"
+                className="border-slate-200 focus:border-[color:var(--brand-primary)] focus:ring-[color:var(--brand-primary)]/30"
                 required
               />
               {renderCharLimitNotice(currentEvent.evento, EVENT_DESCRIPTION_MAX_LENGTH)}

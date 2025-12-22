@@ -99,7 +99,7 @@ export function LessonsList({ searchQuery }: LessonsListProps) {
       case "Publicado":
         return "bg-green-100 text-green-800 border-green-200"
       case "Aprobada":
-        return "bg-[#e0f3e8] text-[#067138] border-emerald-200"
+        return "bg-[color:var(--brand-soft)] text-[color:var(--brand-primary)] border-[color:var(--brand-soft)]"
       case "En Revisión":
         return "bg-amber-100 text-amber-800 border-amber-200"
       case "Borrador":
@@ -129,8 +129,8 @@ export function LessonsList({ searchQuery }: LessonsListProps) {
       <Card className="border border-emerald-50 bg-white/80 shadow-sm backdrop-blur-sm">
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center gap-3 text-xl">
-            <div className="rounded-lg bg-[#e0f3e8] p-2">
-              <Filter className="h-5 w-5 text-[#067138]" />
+            <div className="rounded-lg bg-[color:var(--brand-soft)] p-2">
+              <Filter className="h-5 w-5 text-[color:var(--brand-primary)]" />
             </div>
             Filtros
           </CardTitle>
@@ -140,7 +140,7 @@ export function LessonsList({ searchQuery }: LessonsListProps) {
             <div className="space-y-3">
               <label className="text-sm font-semibold text-slate-700">Categoría</label>
               <Select value={filterCategory} onValueChange={setFilterCategory}>
-                <SelectTrigger className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30">
+                <SelectTrigger className="border-slate-200 focus:border-[color:var(--brand-primary)] focus:ring-[color:var(--brand-primary)]/30">
                   <SelectValue placeholder="Todas las categorías" />
                 </SelectTrigger>
                 <SelectContent>
@@ -156,7 +156,7 @@ export function LessonsList({ searchQuery }: LessonsListProps) {
             <div className="space-y-3">
               <label className="text-sm font-semibold text-slate-700">Estado</label>
               <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="border-slate-200 focus:border-[#067138] focus:ring-[#067138]/30">
+                <SelectTrigger className="border-slate-200 focus:border-[color:var(--brand-primary)] focus:ring-[color:var(--brand-primary)]/30">
                   <SelectValue placeholder="Todos los estados" />
                 </SelectTrigger>
                 <SelectContent>
@@ -175,7 +175,7 @@ export function LessonsList({ searchQuery }: LessonsListProps) {
                   setFilterCategory("all")
                   setFilterStatus("all")
                 }}
-                className="w-full rounded-full border-[#8fd0ab] text-[#067138] hover:bg-[#e0f3e8]"
+                className="w-full rounded-full border-[color:var(--brand-border)] text-[color:var(--brand-primary)] hover:bg-[color:var(--brand-soft)]"
               >
                 Limpiar Filtros
               </Button>
@@ -184,7 +184,7 @@ export function LessonsList({ searchQuery }: LessonsListProps) {
         </CardContent>
       </Card>
 
-      <Card className="border border-emerald-50 bg-white/80 shadow-sm backdrop-blur-sm">
+      <Card className="border border-[color:var(--brand-soft)] bg-white/80 shadow-sm backdrop-blur-sm">
         <CardHeader className="pb-4">
           <CardTitle className="text-xl">Lecciones Aprendidas</CardTitle>
           <CardDescription className="text-slate-600">
@@ -196,13 +196,16 @@ export function LessonsList({ searchQuery }: LessonsListProps) {
             {filteredLessons.map((lesson) => (
               <div
                 key={lesson.id}
-                className="rounded-2xl border border-emerald-100 bg-white/90 p-6 transition-all duration-200 hover:border-[#067138]/40 hover:shadow-lg"
+                className="rounded-2xl border border-[color:var(--brand-soft)] bg-white/90 p-6 transition-all duration-200 hover:border-[color:var(--brand-primary)]/50 hover:shadow-lg"
               >
                 <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                   <div className="space-y-3 flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-3">
                       <h3 className="font-bold text-lg text-slate-900 text-balance">{lesson.title}</h3>
-                      <Badge variant="outline" className="rounded-full border-emerald-200 bg-[#e0f3e8] text-[#067138] font-medium">
+                      <Badge
+                        variant="outline"
+                        className="rounded-full border-[color:var(--brand-soft)] bg-[color:var(--brand-soft)] text-[color:var(--brand-primary)] font-medium"
+                      >
                         {lesson.category}
                       </Badge>
                     </div>
@@ -224,10 +227,10 @@ export function LessonsList({ searchQuery }: LessonsListProps) {
                     </div>
                   </div>
                   <div className="flex flex-wrap items-center gap-2 md:ml-4">
-                    <Button variant="ghost" size="sm" className="text-[#067138] hover:bg-[#e0f3e8]">
+                    <Button variant="ghost" size="sm" className="text-[color:var(--brand-primary)] hover:bg-[color:var(--brand-soft)]">
                       <Eye className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="sm" className="text-[#067138] hover:bg-[#e0f3e8]">
+                    <Button variant="ghost" size="sm" className="text-[color:var(--brand-primary)] hover:bg-[color:var(--brand-soft)]">
                       <Edit className="h-4 w-4" />
                     </Button>
                   </div>

@@ -29,6 +29,14 @@
   --chart-3: #8fd0ab;
   --chart-4: #4a8f68;
   --chart-5: #cbeed8;
+  --brand-primary: #067138;
+  --brand-primary-strong: #05592d;
+  --brand-accent: #0fa958;
+  --brand-soft: #e0f3e8;
+  --brand-muted: #cbeed8;
+  --brand-border: #8fd0ab;
+  --brand-contrast: #ffffff;
+  --brand-foreground: #0b2a18;
   --radius: 1rem;
   --sidebar: #f4fff9;
   --sidebar-foreground: #0b2a18;

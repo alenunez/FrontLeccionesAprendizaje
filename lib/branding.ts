@@ -30,10 +30,6 @@ export const themeToCssVariables = (theme: BrandTheme): CSSProperties => ({
   "--brand-foreground": theme.foreground,
 })
 
-// Allows local previews without depending on the authenticated email domain.
-// Accepts values: "solla", "distraves", "galponsas", "transgraneles" or the matching email domain.
-const BRAND_OVERRIDE = process.env.NEXT_PUBLIC_BRAND_OVERRIDE?.trim().toLowerCase()
-
 const BRAND_DOMAIN_MAP: Record<string, BrandKey> = {
   "solla.com": "solla",
   "distraves.com": "distraves",
@@ -104,28 +100,11 @@ export const BRAND_CONFIGS: Record<BrandKey, BrandConfig> = {
   },
 }
 
-const normalizeBrandKey = (value?: string | null): BrandKey | undefined => {
-  if (!value) return undefined
-  const normalized = value.trim().toLowerCase()
-
-  if ((Object.keys(BRAND_CONFIGS) as BrandKey[]).includes(normalized as BrandKey)) {
-    return normalized as BrandKey
-  }
-
-  const domainMatch = BRAND_DOMAIN_MAP[normalized]
-  if (domainMatch) return domainMatch
-
-  return undefined
-}
-
 export const resolveBrandKey = (email?: string | null): BrandKey => {
-  const override = normalizeBrandKey(BRAND_OVERRIDE)
-  if (override) return override
-
-  // El inicio de sesión siempre debe usar la experiencia de Solla sin depender
-  // del dominio del correo electrónico. Se conserva solo el valor por defecto
-  // configurado en el proyecto o mediante la variable de entorno.
-  void email
+  const emailDomain = email?.split("@")[1]?.trim().toLowerCase()
+  if (emailDomain && emailDomain in BRAND_DOMAIN_MAP) {
+    return BRAND_DOMAIN_MAP[emailDomain]
+  }
 
   return DEFAULT_BRAND
 }

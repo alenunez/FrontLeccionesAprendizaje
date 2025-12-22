@@ -76,7 +76,7 @@ export const BRAND_CONFIGS: Record<BrandKey, BrandConfig> = {
   galponsas: {
     key: "galponsas",
     logoUrl:
-      "https://drive.google.com/file/d/1zLDHkpNXy-XWTKr_Nxxo8FEm2ZojHMdZ/view?usp=sharing",
+      "/spg.png",
     theme: {
       primary: "#efb810",
       primaryStrong: "#d79f00",
@@ -90,7 +90,7 @@ export const BRAND_CONFIGS: Record<BrandKey, BrandConfig> = {
   },
   transgraneles: {
     key: "transgraneles",
-    logoUrl: "https://www.transgraneles.com.co/Content/themes/public/img/logo.png",
+    logoUrl: "/transgraneles.png",
     theme: {
       primary: "#e0131e",
       primaryStrong: "#b50f18",

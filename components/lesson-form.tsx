@@ -37,6 +37,7 @@ import { useAuth } from "@/components/auth-provider"
 import { useConfig } from "@/components/config-provider"
 import type { AuthSession } from "@/lib/auth"
 import { SOLLA_BRAND_CSS_VARS } from "@/lib/branding"
+import { useBranding } from "./brand-provider"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
 
@@ -530,6 +531,8 @@ const [sedeInicialAplicada, setSedeInicialAplicada] = useState(false);
   const canRenameExistingAttachments = false
   const { config } = useConfig()
   const { session } = useAuth()
+  const { brandKey } = useBranding()
+  const isGalponsasBrand = brandKey === "galponsas"
   const DEFAULT_TEXTAREA_MAX_LENGTH = config.textareaMaxLength
   const APPLICACION_PRACTICA_MAX_LENGTH = config.aplicacionPracticaMaxLength
   const EVENT_DESCRIPTION_MAX_LENGTH = config.eventDescriptionMaxLength
@@ -2505,7 +2508,9 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                 <Button
                   type="button"
                   onClick={openAddEventDialog}
-                  className="w-full gap-2 bg-purple-600 text-base hover:bg-purple-700 sm:w-auto"
+                  className={`w-full gap-2 bg-purple-600 text-base hover:bg-purple-700 sm:w-auto ${
+                    isGalponsasBrand ? "text-white" : "text-[color:var(--brand-contrast)]"
+                  }`}
                 >
                   <Plus className="h-4 w-4" />
                   Agregar Evento
@@ -2977,7 +2982,9 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
             <Button
               type="button"
               onClick={saveEvent}
-              className="bg-purple-600 hover:bg-purple-700"
+              className={`bg-purple-600 hover:bg-purple-700 ${
+                isGalponsasBrand ? "text-white" : "text-[color:var(--brand-contrast)]"
+              }`}
               disabled={isSubmitting || !currentEvent.evento.trim()}
             >
               <Save className="h-4 w-4 mr-2" />

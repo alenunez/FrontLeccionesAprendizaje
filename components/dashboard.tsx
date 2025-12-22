@@ -203,6 +203,16 @@ export function Dashboard() {
   const brandMuted = brand.theme.muted
   const isGalponsas = brand.brandKey === "galponsas"
   const isTransgraneles = brand.brandKey === "transgraneles"
+  const logoConfig = isGalponsas
+    ? { width: 220, height: 80, className: "h-16 sm:h-20" }
+    : { width: 180, height: 64, className: "h-10 sm:h-12" }
+  const logoWrapperClassName = `flex items-center justify-center rounded-xl ${
+    isTransgraneles
+      ? "bg-[color:var(--brand-primary)] px-4 py-3 shadow-inner ring-1 ring-[color:var(--brand-border)]"
+      : isGalponsas
+        ? "px-3 py-3"
+        : "py-1"
+  }`
   const [lessonToEdit, setLessonToEdit] = useState<ProyectoSituacionDto | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [workflowFilter, setWorkflowFilter] = useState<string | null>(null)
@@ -741,21 +751,14 @@ export function Dashboard() {
               <div
                 className={`flex items-center gap-3 rounded-3xl border border-[color:var(--brand-soft)] bg-white/80 px-4 py-3 shadow-sm ${isTransgraneles ? "bg-[color:var(--brand-primary)]/10 ring-1 ring-[color:var(--brand-border)]" : ""}`}
               >
-                <div
-                  className="flex items-center justify-center rounded-xl"
-                  style={
-                    isTransgraneles
-                      ? { backgroundColor: brandPrimary, padding: "0.5rem 0.75rem" }
-                      : { padding: "0.25rem 0" }
-                  }
-                >
+                <div className={logoWrapperClassName}>
                   <Image
                     src={brand.logoUrl}
                     alt="Logo corporativo"
-                    width={180}
-                    height={64}
-                    className={`${isGalponsas ? "h-12 sm:h-14" : "h-10 sm:h-12"} w-auto`}
-                    sizes="(min-width: 1024px) 180px, 150px"
+                    width={logoConfig.width}
+                    height={logoConfig.height}
+                    className={`${logoConfig.className} w-auto`}
+                    sizes={isGalponsas ? "(min-width: 1024px) 220px, 180px" : "(min-width: 1024px) 180px, 150px"}
                     priority
                   />
                 </div>

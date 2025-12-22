@@ -2815,8 +2815,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                       Subir archivos
                     </Button>
                     <span className="text-sm text-slate-500 text-justify sm:text-left">
-                      Formatos soportados: PDF, Word, Excel, PowerPoint, imágenes, texto. Hasta {MAX_ATTACHMENTS} archivos de
-                      {MAX_FILE_SIZE_TEXT} cada uno.
+                      Formatos soportados: PDF, Word, Excel, PowerPoint, imágenes, texto. Hasta {MAX_ATTACHMENTS} archivos de {MAX_FILE_SIZE_TEXT} cada uno.
                     </span>
                   </div>
 

@@ -1,20 +1,22 @@
 "use client"
 
 import Image from "next/image"
-import { Suspense, useEffect } from "react"
+import { Suspense, useEffect, useMemo } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/card"
 import { useAuth } from "@/components/auth-provider"
 import { consumeRedirectPath, saveRedirectPath } from "@/lib/auth"
-import { BRAND_CONFIGS, SOLLA_BRAND_CSS_VARS } from "@/lib/branding"
+import { useBranding } from "@/components/brand-provider"
+import { themeToCssVariables } from "@/lib/branding"
 
 function LoginPageContent() {
   const { signIn, session, loading, error } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const brand = BRAND_CONFIGS.solla
+  const { brand } = useBranding()
+  const brandCssVars = useMemo(() => themeToCssVariables(brand.theme), [brand.theme])
 
   useEffect(() => {
     const redirect = searchParams.get("redirect")
@@ -33,7 +35,7 @@ function LoginPageContent() {
   return (
     <div
       className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[color:var(--brand-soft)] via-white to-[color:var(--brand-muted)]"
-      style={SOLLA_BRAND_CSS_VARS}
+      style={brandCssVars}
     >
       <div className="absolute inset-0">
         <Image

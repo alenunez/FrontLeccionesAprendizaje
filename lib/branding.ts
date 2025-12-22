@@ -122,9 +122,10 @@ export const resolveBrandKey = (email?: string | null): BrandKey => {
   const override = normalizeBrandKey(BRAND_OVERRIDE)
   if (override) return override
 
-  const emailDomain = email?.split("@")[1]?.toLowerCase()
-  const brandFromDomain = normalizeBrandKey(emailDomain)
-  if (brandFromDomain) return brandFromDomain
+  // El inicio de sesión siempre debe usar la experiencia de Solla sin depender
+  // del dominio del correo electrónico. Se conserva solo el valor por defecto
+  // configurado en el proyecto o mediante la variable de entorno.
+  void email
 
   return DEFAULT_BRAND
 }

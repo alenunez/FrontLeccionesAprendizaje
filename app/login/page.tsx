@@ -17,10 +17,16 @@ function LoginPageContent() {
   const searchParams = useSearchParams()
   const { brand } = useBranding()
   const isTransgraneles = brand.brandKey === "transgraneles"
+  const isGalponsas = brand.brandKey === "galponsas"
   const brandCssVars = useMemo(() => themeToCssVariables(brand.theme), [brand.theme])
-  const logoWrapperClassName = `flex items-center justify-center rounded-xl ${
-    isTransgraneles ? "bg-[color:var(--brand-primary)] px-3 py-2 shadow-inner ring-1 ring-[color:var(--brand-border)]" : ""
+  const logoWrapperClassName = `flex items-center justify-center rounded-2xl ${
+    isTransgraneles
+      ? "bg-[color:var(--brand-primary)]/90 px-4 py-2.5 shadow-inner ring-1 ring-[color:var(--brand-border)]/80"
+      : ""
   }`
+  const logoContainerClassName = isGalponsas
+    ? "relative h-16 w-44 md:h-20 md:w-52"
+    : "relative h-14 w-36 md:h-16 md:w-44"
 
   useEffect(() => {
     const redirect = searchParams.get("redirect")
@@ -65,13 +71,13 @@ function LoginPageContent() {
             <div className="flex flex-col gap-8 text-[color:var(--brand-foreground)]">
               <div className="flex items-center gap-4 rounded-2xl bg-white/80 p-4 shadow-inner shadow-[color:var(--brand-soft)]">
                 <div className={logoWrapperClassName}>
-                  <div className="relative h-14 w-36 md:h-16 md:w-44">
+                  <div className={logoContainerClassName}>
                     <Image
                       src={brand.logoUrl}
                       alt="Logo corporativo"
                       fill
                       className="object-contain drop-shadow"
-                      sizes="(min-width: 768px) 11rem, 9rem"
+                      sizes={isGalponsas ? "(min-width: 768px) 13rem, 11rem" : "(min-width: 768px) 11rem, 9rem"}
                       priority
                     />
                   </div>

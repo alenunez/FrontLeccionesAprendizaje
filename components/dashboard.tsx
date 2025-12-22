@@ -204,11 +204,11 @@ export function Dashboard() {
   const isGalponsas = brand.brandKey === "galponsas"
   const isTransgraneles = brand.brandKey === "transgraneles"
   const logoConfig = isGalponsas
-    ? { width: 220, height: 80, className: "h-16 sm:h-20" }
+    ? { width: 260, height: 96, className: "h-20 sm:h-24" }
     : { width: 180, height: 64, className: "h-10 sm:h-12" }
-  const logoWrapperClassName = `flex items-center justify-center rounded-xl ${
+  const logoWrapperClassName = `flex items-center justify-center rounded-2xl ${
     isTransgraneles
-      ? "bg-[color:var(--brand-primary)] px-4 py-3 shadow-inner ring-1 ring-[color:var(--brand-border)]"
+      ? "bg-[color:var(--brand-primary)]/90 px-5 py-3 shadow-inner ring-1 ring-[color:var(--brand-border)]/80"
       : isGalponsas
         ? "px-3 py-3"
         : "py-1"
@@ -758,7 +758,7 @@ export function Dashboard() {
                     width={logoConfig.width}
                     height={logoConfig.height}
                     className={`${logoConfig.className} w-auto`}
-                    sizes={isGalponsas ? "(min-width: 1024px) 220px, 180px" : "(min-width: 1024px) 180px, 150px"}
+                    sizes={isGalponsas ? "(min-width: 1024px) 240px, 200px" : "(min-width: 1024px) 180px, 150px"}
                     priority
                   />
                 </div>

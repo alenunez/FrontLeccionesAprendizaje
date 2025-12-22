@@ -36,6 +36,7 @@ import { flattenEventoDto } from "@/lib/event-normalizer"
 import { useAuth } from "@/components/auth-provider"
 import { useConfig } from "@/components/config-provider"
 import type { AuthSession } from "@/lib/auth"
+import { SOLLA_BRAND_CSS_VARS } from "@/lib/branding"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
 
@@ -2090,7 +2091,10 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
   const todayIso = useMemo(() => new Date().toISOString().split("T")[0], [])
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-3 backdrop-blur-sm sm:p-4 md:p-6">
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-3 backdrop-blur-sm sm:p-4 md:p-6"
+      style={SOLLA_BRAND_CSS_VARS}
+    >
       <Card className="w-full h-full max-h-screen max-w-full p-0 sm:h-auto sm:max-h-[92vh] sm:max-w-6xl border border-emerald-100 bg-white shadow-2xl rounded-2xl sm:rounded-3xl overflow-hidden flex flex-col text-[15px] leading-relaxed sm:text-base">
         <CardHeader className="sticky top-0 z-20 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-gradient-to-r from-[#0b7c4a] via-[#199a59] to-[#3f8f68] px-4 py-4 sm:px-6 sm:py-5 text-white shadow-md rounded-none sm:rounded-b-2xl">
           <div className="space-y-0.5">

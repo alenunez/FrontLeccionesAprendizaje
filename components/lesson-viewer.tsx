@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import type { ProyectoSituacionDto } from "@/types/lessons"
 import { flattenEventoDto } from "@/lib/event-normalizer"
+import { SOLLA_BRAND_CSS_VARS } from "@/lib/branding"
 import {
   CalendarDays,
   Download,
@@ -221,8 +222,11 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 px-3 py-6 sm:px-4 sm:py-8">
-      <Card className="w-full max-w-6xl max-h-[calc(100vh-2rem)] sm:max-h-[95vh] rounded-3xl border border-[color:var(--brand-soft)] shadow-2xl break-words flex flex-col overflow-hidden text-[15px] leading-relaxed sm:text-base pt-0">
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 px-3 py-6 sm:px-4 sm:py-8"
+      style={SOLLA_BRAND_CSS_VARS}
+    >
+      <Card className="w-full max-w-6xl max-h-[calc(100vh-2rem)] sm:max-h-[95vh] rounded-3xl border border-slate-200 shadow-2xl break-words flex flex-col overflow-hidden text-[15px] leading-relaxed sm:text-base pt-0 bg-white">
         <CardHeader className="sticky top-0 z-20 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-gradient-to-r from-[#0b7c4a] via-[#199a59] to-[#3f8f68] px-4 py-4 sm:px-6 sm:py-5 text-white shadow-md rounded-none sm:rounded-b-2xl">
           <div className="space-y-0.5">
             <CardTitle className="text-xl font-bold text-white">Visualización del Proyecto</CardTitle>
@@ -240,9 +244,9 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
           </Button>
         </CardHeader>
 
-        <CardContent className="space-y-10 bg-gradient-to-b from-[color:var(--brand-soft)] via-white to-[color:var(--brand-muted)] p-6 sm:p-8 flex-1 overflow-y-auto">
+        <CardContent className="space-y-10 bg-white p-6 sm:p-8 flex-1 overflow-y-auto">
           <section className="space-y-4">
-            <div className="flex flex-col gap-3 rounded-3xl border border-[color:var(--brand-soft)] bg-white/80 p-6 shadow-sm">
+            <div className="flex flex-col gap-3 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[color:var(--brand-primary)]/70">Proyecto o situación</p>
               <h2 className="text-2xl font-semibold text-slate-900 break-words">{safeText(proyecto.descripcion)}</h2>
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--brand-primary)]/70">Aplicación práctica</p>
@@ -297,7 +301,7 @@ export function LessonViewer({ lesson, onClose }: LessonViewerProps) {
               }].map((item) => (
                 <div
                   key={item.label}
-                  className="rounded-2xl border border-[color:var(--brand-soft)] bg-white/80 p-4 shadow-sm"
+                  className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
                 >
                   <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
                     {item.icon}

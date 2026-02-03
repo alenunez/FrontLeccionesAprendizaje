@@ -25,6 +25,7 @@ import { useAuth } from "@/components/auth-provider"
 import { Spinner } from "./spinner"
 import { useBranding } from "./brand-provider"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { BRAND_CONFIGS } from "@/lib/branding"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL 
 interface LessonSummary {
@@ -178,6 +179,23 @@ const normalizeEstadoKey = (value?: string | null): string | null => {
     .toLowerCase()
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "")
+}
+
+const normalizeCompanyKey = (value?: string | null): string => {
+  if (!value) return ""
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/\s+/g, "")
+}
+
+const COMPANY_COLOR_OVERRIDES: Record<string, string> = {
+  solla: BRAND_CONFIGS.solla.theme.primary,
+  distraves: BRAND_CONFIGS.distraves.theme.primary,
+  galponsas: BRAND_CONFIGS.galponsas.theme.primary,
+  spg: BRAND_CONFIGS.galponsas.theme.primary,
+  transgraneles: BRAND_CONFIGS.transgraneles.theme.primaryStrong,
 }
 
 const normalizeEstadoPayload = (payload: unknown): Array<{ id?: string | number; descripcion?: string; titulo?: string }> => {
@@ -677,7 +695,7 @@ export function Dashboard() {
   const companyColorPalette = [
     brandPrimary,
     brandAccent,
-    brandMuted,
+    brandStrong,
     "#7fc8a9",
     "#0ea5e9",
     "#a78bfa",
@@ -688,7 +706,9 @@ export function Dashboard() {
   const companyColorMap = useMemo(
     () =>
       projectYearCompanies.reduce((acc, company, index) => {
-        acc[company] = companyColorPalette[index % companyColorPalette.length]
+        const normalizedCompany = normalizeCompanyKey(company)
+        const fallback = companyColorPalette[index % companyColorPalette.length]
+        acc[company] = COMPANY_COLOR_OVERRIDES[normalizedCompany] ?? fallback
         return acc
       }, {} as Record<string, string>),
     [projectYearCompanies],
@@ -707,7 +727,9 @@ export function Dashboard() {
   const processCompanyColorMap = useMemo(
     () =>
       processCompanyNames.reduce((acc, company, index) => {
-        acc[company] = companyColorPalette[index % companyColorPalette.length]
+        const normalizedCompany = normalizeCompanyKey(company)
+        const fallback = companyColorPalette[index % companyColorPalette.length]
+        acc[company] = COMPANY_COLOR_OVERRIDES[normalizedCompany] ?? fallback
         return acc
       }, {} as Record<string, string>),
     [processCompanyNames],
@@ -1253,6 +1275,40 @@ export function Dashboard() {
                 ) : (
                   <div className="space-y-8">
                     <Card className="shadow-sm border border-emerald-50 bg-white/80 backdrop-blur-sm">
+                      <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                        <div>
+                          <CardTitle className="text-lg">Filtros de analítica</CardTitle>
+                          <CardDescription>Aplica filtros para refinar los reportes por estado.</CardDescription>
+                        </div>
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                          <span className="text-sm font-medium text-slate-600">Estado</span>
+                          <Select
+                            value={analyticsEstadoId ? String(analyticsEstadoId) : "all"}
+                            onValueChange={(value) => setAnalyticsEstadoId(value === "all" ? null : value)}
+                          >
+                            <SelectTrigger className="h-10 w-full min-w-[220px] border-slate-200 focus:border-[color:var(--brand-primary)] focus:ring-[color:var(--brand-primary)]/30 sm:w-[240px]">
+                              <SelectValue placeholder="Todos los estados" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">Todos los estados</SelectItem>
+                              {estadoOptions.length > 0 ? (
+                                estadoOptions.map((estado) => (
+                                  <SelectItem key={estado.id} value={String(estado.id)}>
+                                    {estado.descripcion}
+                                  </SelectItem>
+                                ))
+                              ) : (
+                                <SelectItem value="sin-estados" disabled>
+                                  Sin estados disponibles
+                                </SelectItem>
+                              )}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </CardHeader>
+                    </Card>
+
+                    <Card className="shadow-sm border border-emerald-50 bg-white/80 backdrop-blur-sm">
                       <CardHeader>
                         <CardTitle className="text-lg">Cantidad de proyectos o situaciones publicadas por compañía</CardTitle>
                         <CardDescription>Total de proyectos o situaciones registrados por empresa</CardDescription>
@@ -1364,31 +1420,6 @@ export function Dashboard() {
                         <div>
                           <CardTitle className="text-lg">Proyectos o situaciones por año y compañía</CardTitle>
                           <CardDescription>Evolución anual de proyectos o situaciones por empresa</CardDescription>
-                        </div>
-                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                          <span className="text-sm font-medium text-slate-600">Estado</span>
-                          <Select
-                            value={analyticsEstadoId ? String(analyticsEstadoId) : "all"}
-                            onValueChange={(value) => setAnalyticsEstadoId(value === "all" ? null : value)}
-                          >
-                            <SelectTrigger className="h-10 w-full min-w-[220px] border-slate-200 focus:border-[color:var(--brand-primary)] focus:ring-[color:var(--brand-primary)]/30 sm:w-[240px]">
-                              <SelectValue placeholder="Todos los estados" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">Todos los estados</SelectItem>
-                              {estadoOptions.length > 0 ? (
-                                estadoOptions.map((estado) => (
-                                  <SelectItem key={estado.id} value={String(estado.id)}>
-                                    {estado.descripcion}
-                                  </SelectItem>
-                                ))
-                              ) : (
-                                <SelectItem value="sin-estados" disabled>
-                                  Sin estados disponibles
-                                </SelectItem>
-                              )}
-                            </SelectContent>
-                          </Select>
                         </div>
                       </CardHeader>
                       <CardContent>

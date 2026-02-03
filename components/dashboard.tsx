@@ -473,7 +473,7 @@ export function Dashboard() {
       try {
         const [projectsCompanyPayload, statusByCompanyPayload, avgEventsPayload, avgLessonsPayload, projectsByYearPayload] =
           await Promise.all([
-            fetchReport<unknown>(`${API_BASE_URL}/Reportes/proyectos-por-compania`),
+            fetchReport<unknown>(`${API_BASE_URL}/Reportes/proyectos-publicados-por-compania`),
             fetchReport<unknown>(`${API_BASE_URL}/Reportes/proyectos-por-estado-compania`),
             fetchReport<unknown>(`${API_BASE_URL}/Reportes/promedio-eventos-proyecto-compania`),
             fetchReport<unknown>(`${API_BASE_URL}/Reportes/promedio-lecciones-proyecto-compania`),
@@ -1219,7 +1219,7 @@ export function Dashboard() {
                   <div className="space-y-8">
                     <Card className="shadow-sm border border-emerald-50 bg-white/80 backdrop-blur-sm">
                       <CardHeader>
-                        <CardTitle className="text-lg">Cantidad de proyectos o situaciones por compañía</CardTitle>
+                        <CardTitle className="text-lg">Cantidad de proyectos o situaciones publicadas por compañía</CardTitle>
                         <CardDescription>Total de proyectos o situaciones registrados por empresa</CardDescription>
                       </CardHeader>
                       <CardContent>

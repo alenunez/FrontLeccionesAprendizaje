@@ -264,7 +264,12 @@ export function Dashboard() {
   const [analyticsReloadKey, setAnalyticsReloadKey] = useState(0)
   const [isGeneratingPresentation, setIsGeneratingPresentation] = useState(false)
   const [presentationLessonId, setPresentationLessonId] = useState<string | null>(null)
-  const [analyticsEstadoId, setAnalyticsEstadoId] = useState<string | number | null>(null)
+  const [processEstadoId, setProcessEstadoId] = useState<string | number | null>(null)
+  const [yearEstadoId, setYearEstadoId] = useState<string | number | null>(null)
+  const [isLoadingProcessReport, setIsLoadingProcessReport] = useState(false)
+  const [isLoadingYearReport, setIsLoadingYearReport] = useState(false)
+  const [processReportError, setProcessReportError] = useState<string | null>(null)
+  const [yearReportError, setYearReportError] = useState<string | null>(null)
   const isViewerOnly = loggedUser.isUsuarioCreate === false
   const showAnalyticsTab = !isViewerOnly
   const normalizedUserEmail = normalizeEmail(session?.user?.email ?? loggedUser.email)
@@ -498,29 +503,13 @@ export function Dashboard() {
       setIsLoadingAnalytics(true)
       setAnalyticsError(null)
       try {
-        const analyticsParams = new URLSearchParams()
-        if (analyticsEstadoId !== null && analyticsEstadoId !== "") {
-          analyticsParams.set("idEstado", `${analyticsEstadoId}`)
-        }
-        const queryString = analyticsParams.toString()
-        const projectsByYearUrl = queryString
-          ? `${API_BASE_URL}/Reportes/proyectos-por-anio-compania?${analyticsParams.toString()}`
-          : `${API_BASE_URL}/Reportes/proyectos-por-anio-compania`
-        const projectsByProcessUrl = queryString
-          ? `${API_BASE_URL}/Reportes/proyectos-por-proceso-compania?${analyticsParams.toString()}`
-          : `${API_BASE_URL}/Reportes/proyectos-por-proceso-compania`
-        const [projectsCompanyPayload, statusByCompanyPayload, projectsByYearPayload, projectsByProcessPayload] =
-          await Promise.all([
-            fetchReport<unknown>(`${API_BASE_URL}/Reportes/proyectos-publicados-por-compania`),
-            fetchReport<unknown>(`${API_BASE_URL}/Reportes/proyectos-por-estado-compania`),
-            fetchReport<unknown>(projectsByYearUrl),
-            fetchReport<unknown>(projectsByProcessUrl),
-          ])
+        const [projectsCompanyPayload, statusByCompanyPayload] = await Promise.all([
+          fetchReport<unknown>(`${API_BASE_URL}/Reportes/proyectos-publicados-por-compania`),
+          fetchReport<unknown>(`${API_BASE_URL}/Reportes/proyectos-por-estado-compania`),
+        ])
 
         setProjectsByCompany(normalizeReportArray<ProjectsByCompanyReport>(projectsCompanyPayload))
         setProjectsByStatusCompany(normalizeReportArray<ProjectStatusByCompanyReport>(statusByCompanyPayload))
-        setProjectsByYearCompany(normalizeReportArray<ProjectsByYearCompanyReport>(projectsByYearPayload))
-        setProjectsByProcessCompany(normalizeReportArray<ProjectsByProcessCompanyReport>(projectsByProcessPayload))
       } catch (error) {
         if ((error as Error).name !== "AbortError") {
           setAnalyticsError("No fue posible cargar las analíticas. Intenta nuevamente.")
@@ -534,7 +523,91 @@ export function Dashboard() {
     fetchAnalytics()
 
     return () => controller.abort()
-  }, [analyticsEstadoId, authHeaders, showAnalyticsTab, analyticsReloadKey])
+  }, [authHeaders, showAnalyticsTab, analyticsReloadKey])
+
+  useEffect(() => {
+    if (!showAnalyticsTab) return
+
+    const controller = new AbortController()
+
+    const fetchReport = async <T,>(url: string): Promise<T> => {
+      const response = await fetch(url, { headers: authHeaders, signal: controller.signal })
+      if (!response.ok) {
+        throw new Error(`Error al cargar el reporte: ${response.status}`)
+      }
+      return (await response.json()) as T
+    }
+
+    const fetchProjectsByProcess = async () => {
+      setIsLoadingProcessReport(true)
+      setProcessReportError(null)
+      try {
+        const analyticsParams = new URLSearchParams()
+        if (processEstadoId !== null && processEstadoId !== "") {
+          analyticsParams.set("idEstado", `${processEstadoId}`)
+        }
+        const queryString = analyticsParams.toString()
+        const projectsByProcessUrl = queryString
+          ? `${API_BASE_URL}/Reportes/proyectos-por-proceso-compania?${analyticsParams.toString()}`
+          : `${API_BASE_URL}/Reportes/proyectos-por-proceso-compania`
+        const projectsByProcessPayload = await fetchReport<unknown>(projectsByProcessUrl)
+        setProjectsByProcessCompany(normalizeReportArray<ProjectsByProcessCompanyReport>(projectsByProcessPayload))
+      } catch (error) {
+        if ((error as Error).name !== "AbortError") {
+          setProcessReportError("No fue posible cargar el reporte de procesos. Intenta nuevamente.")
+          console.error("Error al cargar reporte de procesos", error)
+        }
+      } finally {
+        setIsLoadingProcessReport(false)
+      }
+    }
+
+    fetchProjectsByProcess()
+
+    return () => controller.abort()
+  }, [authHeaders, showAnalyticsTab, analyticsReloadKey, processEstadoId])
+
+  useEffect(() => {
+    if (!showAnalyticsTab) return
+
+    const controller = new AbortController()
+
+    const fetchReport = async <T,>(url: string): Promise<T> => {
+      const response = await fetch(url, { headers: authHeaders, signal: controller.signal })
+      if (!response.ok) {
+        throw new Error(`Error al cargar el reporte: ${response.status}`)
+      }
+      return (await response.json()) as T
+    }
+
+    const fetchProjectsByYear = async () => {
+      setIsLoadingYearReport(true)
+      setYearReportError(null)
+      try {
+        const analyticsParams = new URLSearchParams()
+        if (yearEstadoId !== null && yearEstadoId !== "") {
+          analyticsParams.set("idEstado", `${yearEstadoId}`)
+        }
+        const queryString = analyticsParams.toString()
+        const projectsByYearUrl = queryString
+          ? `${API_BASE_URL}/Reportes/proyectos-por-anio-compania?${analyticsParams.toString()}`
+          : `${API_BASE_URL}/Reportes/proyectos-por-anio-compania`
+        const projectsByYearPayload = await fetchReport<unknown>(projectsByYearUrl)
+        setProjectsByYearCompany(normalizeReportArray<ProjectsByYearCompanyReport>(projectsByYearPayload))
+      } catch (error) {
+        if ((error as Error).name !== "AbortError") {
+          setYearReportError("No fue posible cargar el reporte por año. Intenta nuevamente.")
+          console.error("Error al cargar reporte por año", error)
+        }
+      } finally {
+        setIsLoadingYearReport(false)
+      }
+    }
+
+    fetchProjectsByYear()
+
+    return () => controller.abort()
+  }, [authHeaders, showAnalyticsTab, analyticsReloadKey, yearEstadoId])
 
   // const handleGeneratePPTX = (lesson: any) => {
   //   // Simulate PPTX generation
@@ -1275,40 +1348,6 @@ export function Dashboard() {
                 ) : (
                   <div className="space-y-8">
                     <Card className="shadow-sm border border-emerald-50 bg-white/80 backdrop-blur-sm">
-                      <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                        <div>
-                          <CardTitle className="text-lg">Filtros de analítica</CardTitle>
-                          <CardDescription>Aplica filtros para refinar los reportes por estado.</CardDescription>
-                        </div>
-                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                          <span className="text-sm font-medium text-slate-600">Estado</span>
-                          <Select
-                            value={analyticsEstadoId ? String(analyticsEstadoId) : "all"}
-                            onValueChange={(value) => setAnalyticsEstadoId(value === "all" ? null : value)}
-                          >
-                            <SelectTrigger className="h-10 w-full min-w-[220px] border-slate-200 focus:border-[color:var(--brand-primary)] focus:ring-[color:var(--brand-primary)]/30 sm:w-[240px]">
-                              <SelectValue placeholder="Todos los estados" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">Todos los estados</SelectItem>
-                              {estadoOptions.length > 0 ? (
-                                estadoOptions.map((estado) => (
-                                  <SelectItem key={estado.id} value={String(estado.id)}>
-                                    {estado.descripcion}
-                                  </SelectItem>
-                                ))
-                              ) : (
-                                <SelectItem value="sin-estados" disabled>
-                                  Sin estados disponibles
-                                </SelectItem>
-                              )}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </CardHeader>
-                    </Card>
-
-                    <Card className="shadow-sm border border-emerald-50 bg-white/80 backdrop-blur-sm">
                       <CardHeader>
                         <CardTitle className="text-lg">Cantidad de proyectos o situaciones publicadas por compañía</CardTitle>
                         <CardDescription>Total de proyectos o situaciones registrados por empresa</CardDescription>
@@ -1378,13 +1417,57 @@ export function Dashboard() {
                     </Card>
 
                     <Card className="shadow-sm border border-emerald-50 bg-white/80 backdrop-blur-sm">
-                      <CardHeader>
-                        <CardTitle className="text-lg">Cantidad de procesos por proyecto o situación y compañía</CardTitle>
-                        <CardDescription>Procesos registrados por proyecto o situación según la empresa</CardDescription>
+                      <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                        <div>
+                          <CardTitle className="text-lg">Cantidad de procesos por proyecto o situación y compañía</CardTitle>
+                          <CardDescription>Procesos registrados por proyecto o situación según la empresa</CardDescription>
+                        </div>
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                          <span className="text-sm font-medium text-slate-600">Estado</span>
+                          <Select
+                            value={processEstadoId ? String(processEstadoId) : "all"}
+                            onValueChange={(value) => setProcessEstadoId(value === "all" ? null : value)}
+                          >
+                            <SelectTrigger className="h-10 w-full min-w-[220px] border-slate-200 focus:border-[color:var(--brand-primary)] focus:ring-[color:var(--brand-primary)]/30 sm:w-[240px]">
+                              <SelectValue placeholder="Todos los estados" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">Todos los estados</SelectItem>
+                              {estadoOptions.length > 0 ? (
+                                estadoOptions.map((estado) => (
+                                  <SelectItem key={estado.id} value={String(estado.id)}>
+                                    {estado.descripcion}
+                                  </SelectItem>
+                                ))
+                              ) : (
+                                <SelectItem value="sin-estados" disabled>
+                                  Sin estados disponibles
+                                </SelectItem>
+                              )}
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </CardHeader>
                       <CardContent>
                         <div className="h-96">
-                          {projectsByProcessCompanyChartData.length === 0 ? (
+                          {isLoadingProcessReport ? (
+                            <div className="flex h-full flex-col items-center justify-center gap-2 text-sm text-slate-600">
+                              <Spinner />
+                              Cargando reporte de procesos...
+                            </div>
+                          ) : processReportError ? (
+                            <div className="flex h-full flex-col items-center justify-center gap-3 text-sm text-slate-600">
+                              <p>{processReportError}</p>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="border-slate-200 text-[color:var(--brand-primary)] hover:bg-[color:var(--brand-soft)]"
+                                onClick={() => setAnalyticsReloadKey((prev) => prev + 1)}
+                              >
+                                Reintentar
+                              </Button>
+                            </div>
+                          ) : projectsByProcessCompanyChartData.length === 0 ? (
                             <p className="text-sm text-slate-600">No hay datos disponibles para mostrar.</p>
                           ) : (
                             <ResponsiveContainer width="100%" height="100%">
@@ -1421,10 +1504,52 @@ export function Dashboard() {
                           <CardTitle className="text-lg">Proyectos o situaciones por año y compañía</CardTitle>
                           <CardDescription>Evolución anual de proyectos o situaciones por empresa</CardDescription>
                         </div>
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                          <span className="text-sm font-medium text-slate-600">Estado</span>
+                          <Select
+                            value={yearEstadoId ? String(yearEstadoId) : "all"}
+                            onValueChange={(value) => setYearEstadoId(value === "all" ? null : value)}
+                          >
+                            <SelectTrigger className="h-10 w-full min-w-[220px] border-slate-200 focus:border-[color:var(--brand-primary)] focus:ring-[color:var(--brand-primary)]/30 sm:w-[240px]">
+                              <SelectValue placeholder="Todos los estados" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">Todos los estados</SelectItem>
+                              {estadoOptions.length > 0 ? (
+                                estadoOptions.map((estado) => (
+                                  <SelectItem key={estado.id} value={String(estado.id)}>
+                                    {estado.descripcion}
+                                  </SelectItem>
+                                ))
+                              ) : (
+                                <SelectItem value="sin-estados" disabled>
+                                  Sin estados disponibles
+                                </SelectItem>
+                              )}
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </CardHeader>
                       <CardContent>
                         <div className="h-96">
-                          {projectsByYearChartData.length === 0 ? (
+                          {isLoadingYearReport ? (
+                            <div className="flex h-full flex-col items-center justify-center gap-2 text-sm text-slate-600">
+                              <Spinner />
+                              Cargando reporte por año...
+                            </div>
+                          ) : yearReportError ? (
+                            <div className="flex h-full flex-col items-center justify-center gap-3 text-sm text-slate-600">
+                              <p>{yearReportError}</p>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="border-slate-200 text-[color:var(--brand-primary)] hover:bg-[color:var(--brand-soft)]"
+                                onClick={() => setAnalyticsReloadKey((prev) => prev + 1)}
+                              >
+                                Reintentar
+                              </Button>
+                            </div>
+                          ) : projectsByYearChartData.length === 0 ? (
                             <p className="text-sm text-slate-600">No hay datos disponibles para mostrar.</p>
                           ) : (
                             <ResponsiveContainer width="100%" height="100%">

@@ -209,6 +209,61 @@ const normalizeEstadoPayload = (payload: unknown): Array<{ id?: string | number;
 
 const normalizeEmail = (value?: string | null): string => value?.trim().toLowerCase() ?? ""
 
+const renderValueBubble = (props: {
+  x?: number
+  y?: number
+  width?: number
+  height?: number
+  value?: number | string
+  fill?: string
+}) => {
+  const { x, y, width, height, value, fill } = props
+  if (value == null || value === 0 || x == null || y == null || width == null || height == null) return null
+  const label = `${value}`
+  const labelWidth = Math.max(28, label.length * 7 + 12)
+  const labelHeight = 20
+  const centerX = x + width / 2
+  const boxX = centerX - labelWidth / 2
+  const boxY = y - labelHeight - 6
+  const textColor = fill ?? "#1f2937"
+
+  return (
+    <g>
+      <rect x={boxX} y={boxY} width={labelWidth} height={labelHeight} rx={6} ry={6} fill="#ffffff" stroke="#e2e8f0" />
+      <text x={centerX} y={boxY + labelHeight / 2 + 4} textAnchor="middle" fill={textColor} fontSize={11} fontWeight={500}>
+        {label}
+      </text>
+    </g>
+  )
+}
+
+const renderValueBubbleHorizontal = (props: {
+  x?: number
+  y?: number
+  width?: number
+  height?: number
+  value?: number | string
+  fill?: string
+}) => {
+  const { x, y, width, height, value, fill } = props
+  if (value == null || value === 0 || x == null || y == null || width == null || height == null) return null
+  const label = `${value}`
+  const labelWidth = Math.max(28, label.length * 7 + 12)
+  const labelHeight = 20
+  const boxX = x + width + 8
+  const boxY = y + height / 2 - labelHeight / 2
+  const textColor = fill ?? "#1f2937"
+
+  return (
+    <g>
+      <rect x={boxX} y={boxY} width={labelWidth} height={labelHeight} rx={6} ry={6} fill="#ffffff" stroke="#e2e8f0" />
+      <text x={boxX + labelWidth / 2} y={boxY + labelHeight / 2 + 4} textAnchor="middle" fill={textColor} fontSize={11} fontWeight={500}>
+        {label}
+      </text>
+    </g>
+  )
+}
+
 export function Dashboard() {
   const { session, signOut } = useAuth()
   const loggedUser = useSimulatedUser()
@@ -1384,7 +1439,7 @@ export function Dashboard() {
                                 />
                                 <Bar dataKey="total" fill={brandPrimary} radius={[4, 4, 0, 0]}>
                                   {showCompanyValues ? (
-                                    <LabelList dataKey="total" position="top" fill="#1f2937" fontSize={11} />
+                                    <LabelList dataKey="total" content={renderValueBubble} />
                                   ) : null}
                                 </Bar>
                               </BarChart>
@@ -1434,7 +1489,7 @@ export function Dashboard() {
                                     radius={[4, 4, 0, 0]}
                                   >
                                     {showStatusValues ? (
-                                      <LabelList dataKey={status} position="center" fill="#ffffff" fontSize={10} />
+                                      <LabelList dataKey={status} content={renderValueBubble} />
                                     ) : null}
                                   </Bar>
                                 ))}
@@ -1528,7 +1583,7 @@ export function Dashboard() {
                                     radius={[0, 4, 4, 0]}
                                   >
                                     {showProcessValues ? (
-                                      <LabelList dataKey={company} position="right" fill="#1f2937" fontSize={10} />
+                                      <LabelList dataKey={company} content={renderValueBubbleHorizontal} />
                                     ) : null}
                                   </Bar>
                                 ))}
@@ -1622,7 +1677,7 @@ export function Dashboard() {
                                     radius={[4, 4, 0, 0]}
                                   >
                                     {showYearValues ? (
-                                      <LabelList dataKey={company} position="top" fill="#1f2937" fontSize={10} />
+                                      <LabelList dataKey={company} content={renderValueBubble} />
                                     ) : null}
                                   </Bar>
                                 ))}

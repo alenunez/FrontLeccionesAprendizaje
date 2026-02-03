@@ -24,6 +24,7 @@ import { canEditLesson } from "@/lib/permissions"
 import { useAuth } from "@/components/auth-provider"
 import { Spinner } from "./spinner"
 import { useBranding } from "./brand-provider"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL 
 interface LessonSummary {
@@ -79,6 +80,11 @@ interface ProjectsByYearCompanyReport {
   totalProyectoSituaciones?: number
   totalProyectosSituaciones?: number
   nombre?: string | null
+}
+
+interface EstadoOption {
+  id: string | number
+  descripcion: string
 }
 
 const normalizeLessonsResponse = (payload: unknown): ProyectoSituacionDto[] => {
@@ -230,6 +236,7 @@ export function Dashboard() {
     publicado: 0,
   })
   const [estadoIds, setEstadoIds] = useState<Record<string, string | number | undefined>>({})
+  const [estadoOptions, setEstadoOptions] = useState<EstadoOption[]>([])
   const PAGE_SIZE_OPTIONS = [5, 10, 15] as const
   const [pageNumber, setPageNumber] = useState(1)
   const [pageSize, setPageSize] = useState<number>(PAGE_SIZE_OPTIONS[1])
@@ -246,6 +253,7 @@ export function Dashboard() {
   const [analyticsReloadKey, setAnalyticsReloadKey] = useState(0)
   const [isGeneratingPresentation, setIsGeneratingPresentation] = useState(false)
   const [presentationLessonId, setPresentationLessonId] = useState<string | null>(null)
+  const [analyticsEstadoId, setAnalyticsEstadoId] = useState<string | number | null>(null)
   const isViewerOnly = loggedUser.isUsuarioCreate === false
   const showAnalyticsTab = !isViewerOnly
   const normalizedUserEmail = normalizeEmail(session?.user?.email ?? loggedUser.email)
@@ -267,6 +275,13 @@ export function Dashboard() {
         }
         const payload = await response.json()
         const estados = normalizeEstadoPayload(payload)
+        const nextEstadoOptions = estados
+          .map((estado) => ({
+            id: estado.id ?? "",
+            descripcion: estado.descripcion ?? estado.titulo ?? "Sin estado",
+          }))
+          .filter((estado) => estado.id !== "")
+        setEstadoOptions(nextEstadoOptions)
         setEstadoIds((prev) => {
           const next = { ...prev }
           estados.forEach((estado) => {
@@ -287,7 +302,7 @@ export function Dashboard() {
     fetchEstados()
 
     return () => controller.abort()
-  }, [])
+  }, [authHeaders])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -472,13 +487,20 @@ export function Dashboard() {
       setIsLoadingAnalytics(true)
       setAnalyticsError(null)
       try {
+        const analyticsParams = new URLSearchParams()
+        if (analyticsEstadoId !== null && analyticsEstadoId !== "") {
+          analyticsParams.set("idEstado", `${analyticsEstadoId}`)
+        }
+        const projectsByYearUrl = analyticsParams.toString()
+          ? `${API_BASE_URL}/Reportes/proyectos-por-anio-compania?${analyticsParams.toString()}`
+          : `${API_BASE_URL}/Reportes/proyectos-por-anio-compania`
         const [projectsCompanyPayload, statusByCompanyPayload, avgEventsPayload, avgLessonsPayload, projectsByYearPayload] =
           await Promise.all([
             fetchReport<unknown>(`${API_BASE_URL}/Reportes/proyectos-publicados-por-compania`),
             fetchReport<unknown>(`${API_BASE_URL}/Reportes/proyectos-por-estado-compania`),
             fetchReport<unknown>(`${API_BASE_URL}/Reportes/promedio-eventos-proyecto-compania`),
             fetchReport<unknown>(`${API_BASE_URL}/Reportes/promedio-lecciones-proyecto-compania`),
-            fetchReport<unknown>(`${API_BASE_URL}/Reportes/proyectos-por-anio-compania`),
+            fetchReport<unknown>(projectsByYearUrl),
           ])
 
         setProjectsByCompany(normalizeReportArray<ProjectsByCompanyReport>(projectsCompanyPayload))
@@ -499,7 +521,7 @@ export function Dashboard() {
     fetchAnalytics()
 
     return () => controller.abort()
-  }, [authHeaders, showAnalyticsTab, analyticsReloadKey])
+  }, [analyticsEstadoId, authHeaders, showAnalyticsTab, analyticsReloadKey])
 
   // const handleGeneratePPTX = (lesson: any) => {
   //   // Simulate PPTX generation
@@ -1350,9 +1372,36 @@ export function Dashboard() {
                     </div>
 
                     <Card className="shadow-sm border border-emerald-50 bg-white/80 backdrop-blur-sm">
-                      <CardHeader>
-                        <CardTitle className="text-lg">Proyectos o situaciones por año y compañía</CardTitle>
-                        <CardDescription>Evolución anual de proyectos o situaciones por empresa</CardDescription>
+                      <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                        <div>
+                          <CardTitle className="text-lg">Proyectos o situaciones por año y compañía</CardTitle>
+                          <CardDescription>Evolución anual de proyectos o situaciones por empresa</CardDescription>
+                        </div>
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                          <span className="text-sm font-medium text-slate-600">Estado</span>
+                          <Select
+                            value={analyticsEstadoId ? String(analyticsEstadoId) : "all"}
+                            onValueChange={(value) => setAnalyticsEstadoId(value === "all" ? null : value)}
+                          >
+                            <SelectTrigger className="h-10 w-full min-w-[220px] border-slate-200 focus:border-[color:var(--brand-primary)] focus:ring-[color:var(--brand-primary)]/30 sm:w-[240px]">
+                              <SelectValue placeholder="Todos los estados" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">Todos los estados</SelectItem>
+                              {estadoOptions.length > 0 ? (
+                                estadoOptions.map((estado) => (
+                                  <SelectItem key={estado.id} value={String(estado.id)}>
+                                    {estado.descripcion}
+                                  </SelectItem>
+                                ))
+                              ) : (
+                                <SelectItem value="sin-estados" disabled>
+                                  Sin estados disponibles
+                                </SelectItem>
+                              )}
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </CardHeader>
                       <CardContent>
                         <div className="h-96">

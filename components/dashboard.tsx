@@ -414,8 +414,9 @@ export function Dashboard() {
       normalizedUserEmail !== "" &&
       (normalizedUserEmail === autorEmail || normalizedUserEmail === responsableEmail)
     const isAdmin = userRole.trim().toLowerCase() === "administrador"
+    const isPublished = lesson.status?.trim() === "Publicado"
 
-    return isAdmin || isOwner
+    return (isAdmin || isOwner) && isPublished
   }
 
   const handleViewLesson = (lesson: LessonSummary) => {

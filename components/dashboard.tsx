@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BookOpen, Plus, Search, Filter, Eye, BarChart3, Presentation, LogOut, Edit3 } from "lucide-react"
 import { LessonForm } from "./lesson-form"
 import { LessonViewer } from "./lesson-viewer"
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts"
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, LabelList } from "recharts"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
 import type {
@@ -26,6 +26,7 @@ import { Spinner } from "./spinner"
 import { useBranding } from "./brand-provider"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { BRAND_CONFIGS } from "@/lib/branding"
+import { Checkbox } from "@/components/ui/checkbox"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL 
 interface LessonSummary {
@@ -266,6 +267,10 @@ export function Dashboard() {
   const [presentationLessonId, setPresentationLessonId] = useState<string | null>(null)
   const [processEstadoId, setProcessEstadoId] = useState<string | number | null>(null)
   const [yearEstadoId, setYearEstadoId] = useState<string | number | null>(null)
+  const [showCompanyValues, setShowCompanyValues] = useState(false)
+  const [showStatusValues, setShowStatusValues] = useState(false)
+  const [showProcessValues, setShowProcessValues] = useState(false)
+  const [showYearValues, setShowYearValues] = useState(false)
   const [isLoadingProcessReport, setIsLoadingProcessReport] = useState(false)
   const [isLoadingYearReport, setIsLoadingYearReport] = useState(false)
   const [processReportError, setProcessReportError] = useState<string | null>(null)
@@ -1351,6 +1356,14 @@ export function Dashboard() {
                       <CardHeader>
                         <CardTitle className="text-lg">Cantidad de proyectos o situaciones publicadas por compañía</CardTitle>
                         <CardDescription>Total de proyectos o situaciones registrados por empresa</CardDescription>
+                        <div className="flex items-center gap-2 text-xs text-slate-600">
+                          <Checkbox
+                            id="toggle-company-values"
+                            checked={showCompanyValues}
+                            onCheckedChange={(value) => setShowCompanyValues(Boolean(value))}
+                          />
+                          <label htmlFor="toggle-company-values">Mostrar valores</label>
+                        </div>
                       </CardHeader>
                       <CardContent>
                         <div className="h-80">
@@ -1369,7 +1382,11 @@ export function Dashboard() {
                                     borderRadius: "8px",
                                   }}
                                 />
-                                <Bar dataKey="total" fill={brandPrimary} radius={[4, 4, 0, 0]} />
+                                <Bar dataKey="total" fill={brandPrimary} radius={[4, 4, 0, 0]}>
+                                  {showCompanyValues ? (
+                                    <LabelList dataKey="total" position="top" fill="#1f2937" fontSize={11} />
+                                  ) : null}
+                                </Bar>
                               </BarChart>
                             </ResponsiveContainer>
                           )}
@@ -1381,6 +1398,14 @@ export function Dashboard() {
                       <CardHeader>
                         <CardTitle className="text-lg">Cantidad de proyectos o situaciones por estado y compañía</CardTitle>
                         <CardDescription>Distribución de estados (borrador, en revisión, publicado) para cada empresa</CardDescription>
+                        <div className="flex items-center gap-2 text-xs text-slate-600">
+                          <Checkbox
+                            id="toggle-status-values"
+                            checked={showStatusValues}
+                            onCheckedChange={(value) => setShowStatusValues(Boolean(value))}
+                          />
+                          <label htmlFor="toggle-status-values">Mostrar valores</label>
+                        </div>
                       </CardHeader>
                       <CardContent>
                         <div className="h-96">
@@ -1407,7 +1432,11 @@ export function Dashboard() {
                                     stackId="estado"
                                     fill={statusColorMap[status] ?? brandAccent}
                                     radius={[4, 4, 0, 0]}
-                                  />
+                                  >
+                                    {showStatusValues ? (
+                                      <LabelList dataKey={status} position="center" fill="#ffffff" fontSize={10} />
+                                    ) : null}
+                                  </Bar>
                                 ))}
                               </BarChart>
                             </ResponsiveContainer>
@@ -1446,6 +1475,14 @@ export function Dashboard() {
                               )}
                             </SelectContent>
                           </Select>
+                          <div className="flex items-center gap-2 text-xs text-slate-600 sm:pl-4">
+                            <Checkbox
+                              id="toggle-process-values"
+                              checked={showProcessValues}
+                              onCheckedChange={(value) => setShowProcessValues(Boolean(value))}
+                            />
+                            <label htmlFor="toggle-process-values">Mostrar valores</label>
+                          </div>
                         </div>
                       </CardHeader>
                       <CardContent>
@@ -1489,7 +1526,11 @@ export function Dashboard() {
                                     dataKey={company}
                                     fill={processCompanyColorMap[company] ?? brandPrimary}
                                     radius={[0, 4, 4, 0]}
-                                  />
+                                  >
+                                    {showProcessValues ? (
+                                      <LabelList dataKey={company} position="right" fill="#1f2937" fontSize={10} />
+                                    ) : null}
+                                  </Bar>
                                 ))}
                               </BarChart>
                             </ResponsiveContainer>
@@ -1528,6 +1569,14 @@ export function Dashboard() {
                               )}
                             </SelectContent>
                           </Select>
+                          <div className="flex items-center gap-2 text-xs text-slate-600 sm:pl-4">
+                            <Checkbox
+                              id="toggle-year-values"
+                              checked={showYearValues}
+                              onCheckedChange={(value) => setShowYearValues(Boolean(value))}
+                            />
+                            <label htmlFor="toggle-year-values">Mostrar valores</label>
+                          </div>
                         </div>
                       </CardHeader>
                       <CardContent>
@@ -1571,7 +1620,11 @@ export function Dashboard() {
                                     dataKey={company}
                                     fill={companyColorMap[company] ?? brandPrimary}
                                     radius={[4, 4, 0, 0]}
-                                  />
+                                  >
+                                    {showYearValues ? (
+                                      <LabelList dataKey={company} position="top" fill="#1f2937" fontSize={10} />
+                                    ) : null}
+                                  </Bar>
                                 ))}
                               </BarChart>
                             </ResponsiveContainer>

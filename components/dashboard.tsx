@@ -54,24 +54,6 @@ interface ProjectStatusByCompanyReport {
   nombre?: string | null
 }
 
-interface AverageEventsByCompanyReport {
-  totalEventosProyecto?: number
-  totalProyectosSituaciones?: number
-  promedioEventosPorProyecto?: number
-  companiaId?: string | number
-  companiaNombre?: string | null
-  nombre?: string | null
-}
-
-interface AverageLessonsByCompanyReport {
-  totalLeccionesProyecto?: number
-  totalProyectosSituaciones?: number
-  promedioLeccionesPorProyecto?: number
-  companiaId?: string | number
-  companiaNombre?: string | null
-  nombre?: string | null
-}
-
 interface ProjectsByYearCompanyReport {
   anio?: number
   companiaId?: string | number
@@ -80,6 +62,18 @@ interface ProjectsByYearCompanyReport {
   totalProyectoSituaciones?: number
   totalProyectosSituaciones?: number
   nombre?: string | null
+}
+
+interface ProjectsByProcessCompanyReport {
+  id?: string | number
+  nombre?: string | null
+  companias?: Array<{
+    id?: string | number
+    nombre?: string | null
+    companiaNombre?: string | null
+    totalProyectoSituaciones?: number
+    totalProyectosSituaciones?: number
+  }>
 }
 
 interface EstadoOption {
@@ -245,9 +239,8 @@ export function Dashboard() {
   const [estadoFilterId, setEstadoFilterId] = useState<string | number | null>(null)
   const [projectsByCompany, setProjectsByCompany] = useState<ProjectsByCompanyReport[]>([])
   const [projectsByStatusCompany, setProjectsByStatusCompany] = useState<ProjectStatusByCompanyReport[]>([])
-  const [averageEventsByCompany, setAverageEventsByCompany] = useState<AverageEventsByCompanyReport[]>([])
-  const [averageLessonsByCompany, setAverageLessonsByCompany] = useState<AverageLessonsByCompanyReport[]>([])
   const [projectsByYearCompany, setProjectsByYearCompany] = useState<ProjectsByYearCompanyReport[]>([])
+  const [projectsByProcessCompany, setProjectsByProcessCompany] = useState<ProjectsByProcessCompanyReport[]>([])
   const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(false)
   const [analyticsError, setAnalyticsError] = useState<string | null>(null)
   const [analyticsReloadKey, setAnalyticsReloadKey] = useState(0)
@@ -491,23 +484,25 @@ export function Dashboard() {
         if (analyticsEstadoId !== null && analyticsEstadoId !== "") {
           analyticsParams.set("idEstado", `${analyticsEstadoId}`)
         }
-        const projectsByYearUrl = analyticsParams.toString()
+        const queryString = analyticsParams.toString()
+        const projectsByYearUrl = queryString
           ? `${API_BASE_URL}/Reportes/proyectos-por-anio-compania?${analyticsParams.toString()}`
           : `${API_BASE_URL}/Reportes/proyectos-por-anio-compania`
-        const [projectsCompanyPayload, statusByCompanyPayload, avgEventsPayload, avgLessonsPayload, projectsByYearPayload] =
+        const projectsByProcessUrl = queryString
+          ? `${API_BASE_URL}/Reportes/proyectos-por-proceso-compania?${analyticsParams.toString()}`
+          : `${API_BASE_URL}/Reportes/proyectos-por-proceso-compania`
+        const [projectsCompanyPayload, statusByCompanyPayload, projectsByYearPayload, projectsByProcessPayload] =
           await Promise.all([
             fetchReport<unknown>(`${API_BASE_URL}/Reportes/proyectos-publicados-por-compania`),
             fetchReport<unknown>(`${API_BASE_URL}/Reportes/proyectos-por-estado-compania`),
-            fetchReport<unknown>(`${API_BASE_URL}/Reportes/promedio-eventos-proyecto-compania`),
-            fetchReport<unknown>(`${API_BASE_URL}/Reportes/promedio-lecciones-proyecto-compania`),
             fetchReport<unknown>(projectsByYearUrl),
+            fetchReport<unknown>(projectsByProcessUrl),
           ])
 
         setProjectsByCompany(normalizeReportArray<ProjectsByCompanyReport>(projectsCompanyPayload))
         setProjectsByStatusCompany(normalizeReportArray<ProjectStatusByCompanyReport>(statusByCompanyPayload))
-        setAverageEventsByCompany(normalizeReportArray<AverageEventsByCompanyReport>(avgEventsPayload))
-        setAverageLessonsByCompany(normalizeReportArray<AverageLessonsByCompanyReport>(avgLessonsPayload))
         setProjectsByYearCompany(normalizeReportArray<ProjectsByYearCompanyReport>(projectsByYearPayload))
+        setProjectsByProcessCompany(normalizeReportArray<ProjectsByProcessCompanyReport>(projectsByProcessPayload))
       } catch (error) {
         if ((error as Error).name !== "AbortError") {
           setAnalyticsError("No fue posible cargar las analíticas. Intenta nuevamente.")
@@ -673,24 +668,6 @@ export function Dashboard() {
     [projectsByStatusCompany, statusKeys],
   )
 
-  const averageEventsChartData = useMemo(
-    () =>
-      averageEventsByCompany.map((item) => ({
-        compania: getCompanyName(item),
-        promedio: Number(item.promedioEventosPorProyecto ?? 0),
-      })),
-    [averageEventsByCompany],
-  )
-
-  const averageLessonsChartData = useMemo(
-    () =>
-      averageLessonsByCompany.map((item) => ({
-        compania: getCompanyName(item),
-        promedio: Number(item.promedioLeccionesPorProyecto ?? 0),
-      })),
-    [averageLessonsByCompany],
-  )
-
   const projectYearCompanies = useMemo(() => {
     const companies = new Set<string>()
     projectsByYearCompany.forEach((item) => companies.add(getCompanyName(item)))
@@ -715,6 +692,41 @@ export function Dashboard() {
         return acc
       }, {} as Record<string, string>),
     [projectYearCompanies],
+  )
+
+  const processCompanyNames = useMemo(() => {
+    const companies = new Set<string>()
+    projectsByProcessCompany.forEach((item) => {
+      item.companias?.forEach((company) => {
+        companies.add(getCompanyName(company))
+      })
+    })
+    return Array.from(companies)
+  }, [projectsByProcessCompany])
+
+  const processCompanyColorMap = useMemo(
+    () =>
+      processCompanyNames.reduce((acc, company, index) => {
+        acc[company] = companyColorPalette[index % companyColorPalette.length]
+        return acc
+      }, {} as Record<string, string>),
+    [processCompanyNames],
+  )
+
+  const projectsByProcessCompanyChartData = useMemo(
+    () =>
+      projectsByProcessCompany.map((process) => {
+        const entry: Record<string, number | string> = { proceso: process.nombre ?? "Sin proceso" }
+        processCompanyNames.forEach((company) => {
+          entry[company] = 0
+        })
+        process.companias?.forEach((company) => {
+          const companyName = getCompanyName(company)
+          entry[companyName] = getTotalProjectsValue(company)
+        })
+        return entry
+      }),
+    [processCompanyNames, projectsByProcessCompany],
   )
 
   const projectsByYearChartData = useMemo(() => {
@@ -1309,67 +1321,43 @@ export function Dashboard() {
                       </CardContent>
                     </Card>
 
-                    <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-                      <Card className="shadow-sm border border-emerald-50 bg-white/80 backdrop-blur-sm">
-                        <CardHeader>
-                          <CardTitle className="text-lg">Promedio de eventos por proyecto o situación y compañía</CardTitle>
-                          <CardDescription>Eventos registrados en promedio por cada proyecto o situación</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="h-72">
-                            {averageEventsChartData.length === 0 ? (
-                              <p className="text-sm text-slate-600">No hay datos disponibles para mostrar.</p>
-                            ) : (
-                              <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={averageEventsChartData}>
-                                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                                  <XAxis dataKey="compania" tick={{ fontSize: 12 }} />
-                                  <YAxis tick={{ fontSize: 12 }} />
-                                  <Tooltip
-                                    contentStyle={{
-                                      backgroundColor: "white",
-                                      border: "1px solid #e2e8f0",
-                                      borderRadius: "8px",
-                                    }}
+                    <Card className="shadow-sm border border-emerald-50 bg-white/80 backdrop-blur-sm">
+                      <CardHeader>
+                        <CardTitle className="text-lg">Cantidad de procesos por proyecto o situación y compañía</CardTitle>
+                        <CardDescription>Procesos registrados por proyecto o situación según la empresa</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="h-96">
+                          {projectsByProcessCompanyChartData.length === 0 ? (
+                            <p className="text-sm text-slate-600">No hay datos disponibles para mostrar.</p>
+                          ) : (
+                            <ResponsiveContainer width="100%" height="100%">
+                              <BarChart data={projectsByProcessCompanyChartData} layout="vertical">
+                                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                                <XAxis type="number" tick={{ fontSize: 12 }} />
+                                <YAxis dataKey="proceso" type="category" tick={{ fontSize: 12 }} width={180} />
+                                <Tooltip
+                                  contentStyle={{
+                                    backgroundColor: "white",
+                                    border: "1px solid #e2e8f0",
+                                    borderRadius: "8px",
+                                  }}
+                                />
+                                <Legend wrapperStyle={{ fontSize: "12px" }} />
+                                {processCompanyNames.map((company) => (
+                                  <Bar
+                                    key={company}
+                                    dataKey={company}
+                                    fill={processCompanyColorMap[company] ?? brandPrimary}
+                                    radius={[0, 4, 4, 0]}
                                   />
-                                  <Bar dataKey="promedio" fill={brandPrimary} radius={[4, 4, 0, 0]} />
-                                </BarChart>
-                              </ResponsiveContainer>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      <Card className="shadow-sm border border-emerald-50 bg-white/80 backdrop-blur-sm">
-                        <CardHeader>
-                          <CardTitle className="text-lg">Promedio de lecciones por proyecto o situación y compañía</CardTitle>
-                          <CardDescription>Lecciones aprendidas promedio registradas por proyecto o situación</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="h-72">
-                            {averageLessonsChartData.length === 0 ? (
-                              <p className="text-sm text-slate-600">No hay datos disponibles para mostrar.</p>
-                            ) : (
-                              <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={averageLessonsChartData}>
-                                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                                  <XAxis dataKey="compania" tick={{ fontSize: 12 }} />
-                                  <YAxis tick={{ fontSize: 12 }} />
-                                  <Tooltip
-                                    contentStyle={{
-                                      backgroundColor: "white",
-                                      border: "1px solid #e2e8f0",
-                                      borderRadius: "8px",
-                                    }}
-                                  />
-                                  <Bar dataKey="promedio" fill={brandAccent} radius={[4, 4, 0, 0]} />
-                                </BarChart>
-                              </ResponsiveContainer>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
+                                ))}
+                              </BarChart>
+                            </ResponsiveContainer>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
 
                     <Card className="shadow-sm border border-emerald-50 bg-white/80 backdrop-blur-sm">
                       <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">

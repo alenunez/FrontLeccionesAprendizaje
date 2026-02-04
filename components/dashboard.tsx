@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BookOpen, Plus, Search, Filter, Eye, BarChart3, Presentation, LogOut, Edit3 } from "lucide-react"
 import { LessonForm } from "./lesson-form"
 import { LessonViewer } from "./lesson-viewer"
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, LabelList } from "recharts"
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
 import type {
@@ -208,61 +208,6 @@ const normalizeEstadoPayload = (payload: unknown): Array<{ id?: string | number;
 }
 
 const normalizeEmail = (value?: string | null): string => value?.trim().toLowerCase() ?? ""
-
-const renderValueBubble = (props: {
-  x?: number
-  y?: number
-  width?: number
-  height?: number
-  value?: number | string
-  fill?: string
-}) => {
-  const { x, y, width, height, value, fill } = props
-  if (value == null || value === 0 || x == null || y == null || width == null || height == null) return null
-  const label = `${value}`
-  const labelWidth = Math.max(28, label.length * 7 + 12)
-  const labelHeight = 20
-  const centerX = x + width / 2
-  const boxX = centerX - labelWidth / 2
-  const boxY = y - labelHeight - 6
-  const textColor = fill ?? "#1f2937"
-
-  return (
-    <g>
-      <rect x={boxX} y={boxY} width={labelWidth} height={labelHeight} rx={6} ry={6} fill="#ffffff" stroke="#e2e8f0" />
-      <text x={centerX} y={boxY + labelHeight / 2 + 4} textAnchor="middle" fill={textColor} fontSize={11} fontWeight={500}>
-        {label}
-      </text>
-    </g>
-  )
-}
-
-const renderValueBubbleHorizontal = (props: {
-  x?: number
-  y?: number
-  width?: number
-  height?: number
-  value?: number | string
-  fill?: string
-}) => {
-  const { x, y, width, height, value, fill } = props
-  if (value == null || value === 0 || x == null || y == null || width == null || height == null) return null
-  const label = `${value}`
-  const labelWidth = Math.max(28, label.length * 7 + 12)
-  const labelHeight = 20
-  const boxX = x + width + 8
-  const boxY = y + height / 2 - labelHeight / 2
-  const textColor = fill ?? "#1f2937"
-
-  return (
-    <g>
-      <rect x={boxX} y={boxY} width={labelWidth} height={labelHeight} rx={6} ry={6} fill="#ffffff" stroke="#e2e8f0" />
-      <text x={boxX + labelWidth / 2} y={boxY + labelHeight / 2 + 4} textAnchor="middle" fill={textColor} fontSize={11} fontWeight={500}>
-        {label}
-      </text>
-    </g>
-  )
-}
 
 export function Dashboard() {
   const { session, signOut } = useAuth()
@@ -1430,17 +1375,16 @@ export function Dashboard() {
                                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                                 <XAxis dataKey="compania" tick={{ fontSize: 12 }} />
                                 <YAxis tick={{ fontSize: 12 }} />
-                                <Tooltip
-                                  contentStyle={{
-                                    backgroundColor: "white",
-                                    border: "1px solid #e2e8f0",
-                                    borderRadius: "8px",
-                                  }}
-                                />
+                                {showCompanyValues ? (
+                                  <Tooltip
+                                    contentStyle={{
+                                      backgroundColor: "white",
+                                      border: "1px solid #e2e8f0",
+                                      borderRadius: "8px",
+                                    }}
+                                  />
+                                ) : null}
                                 <Bar dataKey="total" fill={brandPrimary} radius={[4, 4, 0, 0]}>
-                                  {showCompanyValues ? (
-                                    <LabelList dataKey="total" content={renderValueBubble} />
-                                  ) : null}
                                 </Bar>
                               </BarChart>
                             </ResponsiveContainer>
@@ -1472,13 +1416,15 @@ export function Dashboard() {
                                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                                 <XAxis dataKey="compania" tick={{ fontSize: 12 }} />
                                 <YAxis tick={{ fontSize: 12 }} />
-                                <Tooltip
-                                  contentStyle={{
-                                    backgroundColor: "white",
-                                    border: "1px solid #e2e8f0",
-                                    borderRadius: "8px",
-                                  }}
-                                />
+                                {showStatusValues ? (
+                                  <Tooltip
+                                    contentStyle={{
+                                      backgroundColor: "white",
+                                      border: "1px solid #e2e8f0",
+                                      borderRadius: "8px",
+                                    }}
+                                  />
+                                ) : null}
                                 <Legend wrapperStyle={{ fontSize: "12px" }} />
                                 {statusKeys.map((status) => (
                                   <Bar
@@ -1488,9 +1434,6 @@ export function Dashboard() {
                                     fill={statusColorMap[status] ?? brandAccent}
                                     radius={[4, 4, 0, 0]}
                                   >
-                                    {showStatusValues ? (
-                                      <LabelList dataKey={status} content={renderValueBubble} />
-                                    ) : null}
                                   </Bar>
                                 ))}
                               </BarChart>
@@ -1567,13 +1510,15 @@ export function Dashboard() {
                                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                                 <XAxis type="number" tick={{ fontSize: 12 }} />
                                 <YAxis dataKey="proceso" type="category" tick={{ fontSize: 12 }} width={180} />
-                                <Tooltip
-                                  contentStyle={{
-                                    backgroundColor: "white",
-                                    border: "1px solid #e2e8f0",
-                                    borderRadius: "8px",
-                                  }}
-                                />
+                                {showProcessValues ? (
+                                  <Tooltip
+                                    contentStyle={{
+                                      backgroundColor: "white",
+                                      border: "1px solid #e2e8f0",
+                                      borderRadius: "8px",
+                                    }}
+                                  />
+                                ) : null}
                                 <Legend wrapperStyle={{ fontSize: "12px" }} />
                                 {processCompanyNames.map((company) => (
                                   <Bar
@@ -1582,9 +1527,6 @@ export function Dashboard() {
                                     fill={processCompanyColorMap[company] ?? brandPrimary}
                                     radius={[0, 4, 4, 0]}
                                   >
-                                    {showProcessValues ? (
-                                      <LabelList dataKey={company} content={renderValueBubbleHorizontal} />
-                                    ) : null}
                                   </Bar>
                                 ))}
                               </BarChart>
@@ -1661,13 +1603,15 @@ export function Dashboard() {
                                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                                 <XAxis dataKey="anio" tick={{ fontSize: 12 }} />
                                 <YAxis tick={{ fontSize: 12 }} />
-                                <Tooltip
-                                  contentStyle={{
-                                    backgroundColor: "white",
-                                    border: "1px solid #e2e8f0",
-                                    borderRadius: "8px",
-                                  }}
-                                />
+                                {showYearValues ? (
+                                  <Tooltip
+                                    contentStyle={{
+                                      backgroundColor: "white",
+                                      border: "1px solid #e2e8f0",
+                                      borderRadius: "8px",
+                                    }}
+                                  />
+                                ) : null}
                                 <Legend wrapperStyle={{ fontSize: "12px" }} />
                                 {projectYearCompanies.map((company) => (
                                   <Bar
@@ -1676,9 +1620,6 @@ export function Dashboard() {
                                     fill={companyColorMap[company] ?? brandPrimary}
                                     radius={[4, 4, 0, 0]}
                                   >
-                                    {showYearValues ? (
-                                      <LabelList dataKey={company} content={renderValueBubble} />
-                                    ) : null}
                                   </Bar>
                                 ))}
                               </BarChart>

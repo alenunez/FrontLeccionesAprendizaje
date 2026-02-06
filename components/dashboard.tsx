@@ -165,7 +165,7 @@ const buildTooltipValueAccessor =
   }
 
 const buildStatusSummaryLabel =
-  (statuses: string[]) =>
+  (statuses: string[], colorMap: Record<string, string>) =>
   ({
     x,
     y,
@@ -176,13 +176,19 @@ const buildStatusSummaryLabel =
       return null
     }
 
-    const lines = statuses.map((status) => `${status}: ${payload[status] ?? 0}`)
-    const maxChars = Math.max(...lines.map((line) => line.length), 0)
+    const companyLabel = String(payload.compania ?? "Sin compañía")
+    const lines = statuses.map((status) => ({
+      label: status,
+      value: payload[status] ?? 0,
+      color: colorMap[status] ?? "#0f172a",
+    }))
+    const lineLabels = [companyLabel, ...lines.map((line) => `${line.label}: ${line.value}`)]
+    const maxChars = Math.max(...lineLabels.map((line) => line.length), 0)
     const padding = 6
     const lineHeight = 16
     const estimatedCharWidth = 6.5
     const boxWidth = Math.max(120, Math.ceil(maxChars * estimatedCharWidth) + padding * 2)
-    const boxHeight = lines.length * lineHeight + padding * 2
+    const boxHeight = lineLabels.length * lineHeight + padding * 2
     const originX = (x ?? 0) + (width ?? 0) / 2 - boxWidth / 2
     const rawY = (y ?? 0) - boxHeight - 8
     const originY = rawY < 0 ? 0 : rawY
@@ -199,15 +205,24 @@ const buildStatusSummaryLabel =
           fill="white"
           stroke="#e2e8f0"
         />
+        <text
+          x={originX + padding}
+          y={originY + padding + lineHeight * 0.85}
+          fontSize={12}
+          fontWeight={600}
+          fill="#0f172a"
+        >
+          {companyLabel}
+        </text>
         {lines.map((line, index) => (
           <text
-            key={line}
+            key={line.label}
             x={originX + padding}
-            y={originY + padding + lineHeight * (index + 0.85)}
+            y={originY + padding + lineHeight * (index + 1.85)}
             fontSize={12}
-            fill="#0f172a"
+            fill={line.color}
           >
-            {line}
+            {`${line.label}: ${line.value}`}
           </text>
         ))}
       </g>
@@ -1502,19 +1517,8 @@ export function Dashboard() {
                                     fill={statusColorMap[status] ?? brandAccent}
                                     radius={[4, 4, 0, 0]}
                                   >
-                                    {showStatusValues ? (
-                                      <>
-                                        <LabelList
-                                          dataKey={status}
-                                          position="top"
-                                          fontSize={12}
-                                          fill="#0f172a"
-                                          valueAccessor={buildTooltipValueAccessor(status, status)}
-                                        />
-                                        {index === statusKeys.length - 1 ? (
-                                          <LabelList content={buildStatusSummaryLabel(statusKeys)} />
-                                        ) : null}
-                                      </>
+                                    {showStatusValues && index === statusKeys.length - 1 ? (
+                                      <LabelList content={buildStatusSummaryLabel(statusKeys, statusColorMap)} />
                                     ) : null}
                                   </Bar>
                                 ))}

@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BookOpen, Plus, Search, Filter, Eye, BarChart3, Presentation, LogOut, Edit3 } from "lucide-react"
 import { LessonForm } from "./lesson-form"
 import { LessonViewer } from "./lesson-viewer"
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts"
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, LabelList } from "recharts"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
 import type {
@@ -1375,16 +1375,17 @@ export function Dashboard() {
                                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                                 <XAxis dataKey="compania" tick={{ fontSize: 12 }} />
                                 <YAxis tick={{ fontSize: 12 }} />
-                                {showCompanyValues ? (
-                                  <Tooltip
-                                    contentStyle={{
-                                      backgroundColor: "white",
-                                      border: "1px solid #e2e8f0",
-                                      borderRadius: "8px",
-                                    }}
-                                  />
-                                ) : null}
+                                <Tooltip
+                                  contentStyle={{
+                                    backgroundColor: "white",
+                                    border: "1px solid #e2e8f0",
+                                    borderRadius: "8px",
+                                  }}
+                                />
                                 <Bar dataKey="total" fill={brandPrimary} radius={[4, 4, 0, 0]}>
+                                  {showCompanyValues ? (
+                                    <LabelList dataKey="total" position="top" fontSize={12} fill="#0f172a" />
+                                  ) : null}
                                 </Bar>
                               </BarChart>
                             </ResponsiveContainer>
@@ -1416,15 +1417,13 @@ export function Dashboard() {
                                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                                 <XAxis dataKey="compania" tick={{ fontSize: 12 }} />
                                 <YAxis tick={{ fontSize: 12 }} />
-                                {showStatusValues ? (
-                                  <Tooltip
-                                    contentStyle={{
-                                      backgroundColor: "white",
-                                      border: "1px solid #e2e8f0",
-                                      borderRadius: "8px",
-                                    }}
-                                  />
-                                ) : null}
+                                <Tooltip
+                                  contentStyle={{
+                                    backgroundColor: "white",
+                                    border: "1px solid #e2e8f0",
+                                    borderRadius: "8px",
+                                  }}
+                                />
                                 <Legend wrapperStyle={{ fontSize: "12px" }} />
                                 {statusKeys.map((status) => (
                                   <Bar
@@ -1434,6 +1433,9 @@ export function Dashboard() {
                                     fill={statusColorMap[status] ?? brandAccent}
                                     radius={[4, 4, 0, 0]}
                                   >
+                                    {showStatusValues ? (
+                                      <LabelList dataKey={status} position="top" fontSize={12} fill="#0f172a" />
+                                    ) : null}
                                   </Bar>
                                 ))}
                               </BarChart>
@@ -1510,15 +1512,13 @@ export function Dashboard() {
                                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                                 <XAxis type="number" tick={{ fontSize: 12 }} />
                                 <YAxis dataKey="proceso" type="category" tick={{ fontSize: 12 }} width={180} />
-                                {showProcessValues ? (
-                                  <Tooltip
-                                    contentStyle={{
-                                      backgroundColor: "white",
-                                      border: "1px solid #e2e8f0",
-                                      borderRadius: "8px",
-                                    }}
-                                  />
-                                ) : null}
+                                <Tooltip
+                                  contentStyle={{
+                                    backgroundColor: "white",
+                                    border: "1px solid #e2e8f0",
+                                    borderRadius: "8px",
+                                  }}
+                                />
                                 <Legend wrapperStyle={{ fontSize: "12px" }} />
                                 {processCompanyNames.map((company) => (
                                   <Bar
@@ -1527,6 +1527,9 @@ export function Dashboard() {
                                     fill={processCompanyColorMap[company] ?? brandPrimary}
                                     radius={[0, 4, 4, 0]}
                                   >
+                                    {showProcessValues ? (
+                                      <LabelList dataKey={company} position="right" fontSize={12} fill="#0f172a" />
+                                    ) : null}
                                   </Bar>
                                 ))}
                               </BarChart>
@@ -1603,15 +1606,13 @@ export function Dashboard() {
                                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                                 <XAxis dataKey="anio" tick={{ fontSize: 12 }} />
                                 <YAxis tick={{ fontSize: 12 }} />
-                                {showYearValues ? (
-                                  <Tooltip
-                                    contentStyle={{
-                                      backgroundColor: "white",
-                                      border: "1px solid #e2e8f0",
-                                      borderRadius: "8px",
-                                    }}
-                                  />
-                                ) : null}
+                                <Tooltip
+                                  contentStyle={{
+                                    backgroundColor: "white",
+                                    border: "1px solid #e2e8f0",
+                                    borderRadius: "8px",
+                                  }}
+                                />
                                 <Legend wrapperStyle={{ fontSize: "12px" }} />
                                 {projectYearCompanies.map((company) => (
                                   <Bar
@@ -1620,6 +1621,9 @@ export function Dashboard() {
                                     fill={companyColorMap[company] ?? brandPrimary}
                                     radius={[4, 4, 0, 0]}
                                   >
+                                    {showYearValues ? (
+                                      <LabelList dataKey={company} position="top" fontSize={12} fill="#0f172a" />
+                                    ) : null}
                                   </Bar>
                                 ))}
                               </BarChart>

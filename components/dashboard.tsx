@@ -153,6 +153,16 @@ const formatDate = (value?: string): string => {
   })
 }
 
+const buildTooltipValueAccessor =
+  (label: string, dataKey: string) =>
+  (entry: { payload?: Record<string, number | string | null | undefined> }): string => {
+    const value = entry.payload?.[dataKey]
+    if (value == null) {
+      return `${label}: 0`
+    }
+    return `${label}: ${value}`
+  }
+
 const mapLessons = (payload: ProyectoSituacionDto[]): LessonSummary[] =>
   payload.map((item, index) => {
     const proyecto = item.proyecto ?? {}
@@ -1384,7 +1394,13 @@ export function Dashboard() {
                                 />
                                 <Bar dataKey="total" fill={brandPrimary} radius={[4, 4, 0, 0]}>
                                   {showCompanyValues ? (
-                                    <LabelList dataKey="total" position="top" fontSize={12} fill="#0f172a" />
+                                    <LabelList
+                                      dataKey="total"
+                                      position="top"
+                                      fontSize={12}
+                                      fill="#0f172a"
+                                      valueAccessor={buildTooltipValueAccessor("total", "total")}
+                                    />
                                   ) : null}
                                 </Bar>
                               </BarChart>
@@ -1434,7 +1450,13 @@ export function Dashboard() {
                                     radius={[4, 4, 0, 0]}
                                   >
                                     {showStatusValues ? (
-                                      <LabelList dataKey={status} position="top" fontSize={12} fill="#0f172a" />
+                                      <LabelList
+                                        dataKey={status}
+                                        position="top"
+                                        fontSize={12}
+                                        fill="#0f172a"
+                                        valueAccessor={buildTooltipValueAccessor(status, status)}
+                                      />
                                     ) : null}
                                   </Bar>
                                 ))}
@@ -1528,7 +1550,13 @@ export function Dashboard() {
                                     radius={[0, 4, 4, 0]}
                                   >
                                     {showProcessValues ? (
-                                      <LabelList dataKey={company} position="right" fontSize={12} fill="#0f172a" />
+                                      <LabelList
+                                        dataKey={company}
+                                        position="right"
+                                        fontSize={12}
+                                        fill="#0f172a"
+                                        valueAccessor={buildTooltipValueAccessor(company, company)}
+                                      />
                                     ) : null}
                                   </Bar>
                                 ))}
@@ -1622,7 +1650,13 @@ export function Dashboard() {
                                     radius={[4, 4, 0, 0]}
                                   >
                                     {showYearValues ? (
-                                      <LabelList dataKey={company} position="top" fontSize={12} fill="#0f172a" />
+                                      <LabelList
+                                        dataKey={company}
+                                        position="top"
+                                        fontSize={12}
+                                        fill="#0f172a"
+                                        valueAccessor={buildTooltipValueAccessor(company, company)}
+                                      />
                                     ) : null}
                                   </Bar>
                                 ))}

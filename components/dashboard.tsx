@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BookOpen, Plus, Search, Filter, Eye, BarChart3, Presentation, LogOut, Edit3 } from "lucide-react"
 import { LessonForm } from "./lesson-form"
 import { LessonViewer } from "./lesson-viewer"
+import type { LabelProps } from "recharts"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, LabelList } from "recharts"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -161,6 +162,56 @@ const buildTooltipValueAccessor =
       return `${label}: 0`
     }
     return `${label}: ${value}`
+  }
+
+const buildStatusSummaryLabel =
+  (statuses: string[]) =>
+  ({
+    x,
+    y,
+    width,
+    payload,
+  }: LabelProps & { payload?: Record<string, number | string | null | undefined> }): JSX.Element | null => {
+    if (!payload || statuses.length === 0) {
+      return null
+    }
+
+    const lines = statuses.map((status) => `${status}: ${payload[status] ?? 0}`)
+    const maxChars = Math.max(...lines.map((line) => line.length), 0)
+    const padding = 6
+    const lineHeight = 16
+    const estimatedCharWidth = 6.5
+    const boxWidth = Math.max(120, Math.ceil(maxChars * estimatedCharWidth) + padding * 2)
+    const boxHeight = lines.length * lineHeight + padding * 2
+    const originX = (x ?? 0) + (width ?? 0) / 2 - boxWidth / 2
+    const rawY = (y ?? 0) - boxHeight - 8
+    const originY = rawY < 0 ? 0 : rawY
+
+    return (
+      <g>
+        <rect
+          x={originX}
+          y={originY}
+          width={boxWidth}
+          height={boxHeight}
+          rx={8}
+          ry={8}
+          fill="white"
+          stroke="#e2e8f0"
+        />
+        {lines.map((line, index) => (
+          <text
+            key={line}
+            x={originX + padding}
+            y={originY + padding + lineHeight * (index + 0.85)}
+            fontSize={12}
+            fill="#0f172a"
+          >
+            {line}
+          </text>
+        ))}
+      </g>
+    )
   }
 
 const mapLessons = (payload: ProyectoSituacionDto[]): LessonSummary[] =>
@@ -1433,15 +1484,17 @@ export function Dashboard() {
                                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                                 <XAxis dataKey="compania" tick={{ fontSize: 12 }} />
                                 <YAxis tick={{ fontSize: 12 }} />
-                                <Tooltip
-                                  contentStyle={{
-                                    backgroundColor: "white",
-                                    border: "1px solid #e2e8f0",
-                                    borderRadius: "8px",
-                                  }}
-                                />
+                                {showStatusValues ? null : (
+                                  <Tooltip
+                                    contentStyle={{
+                                      backgroundColor: "white",
+                                      border: "1px solid #e2e8f0",
+                                      borderRadius: "8px",
+                                    }}
+                                  />
+                                )}
                                 <Legend wrapperStyle={{ fontSize: "12px" }} />
-                                {statusKeys.map((status) => (
+                                {statusKeys.map((status, index) => (
                                   <Bar
                                     key={status}
                                     dataKey={status}
@@ -1450,13 +1503,18 @@ export function Dashboard() {
                                     radius={[4, 4, 0, 0]}
                                   >
                                     {showStatusValues ? (
-                                      <LabelList
-                                        dataKey={status}
-                                        position="top"
-                                        fontSize={12}
-                                        fill="#0f172a"
-                                        valueAccessor={buildTooltipValueAccessor(status, status)}
-                                      />
+                                      <>
+                                        <LabelList
+                                          dataKey={status}
+                                          position="top"
+                                          fontSize={12}
+                                          fill="#0f172a"
+                                          valueAccessor={buildTooltipValueAccessor(status, status)}
+                                        />
+                                        {index === statusKeys.length - 1 ? (
+                                          <LabelList content={buildStatusSummaryLabel(statusKeys)} />
+                                        ) : null}
+                                      </>
                                     ) : null}
                                   </Bar>
                                 ))}

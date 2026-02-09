@@ -160,6 +160,7 @@ const buildSingleValueTooltipLabel =
     titleFallback,
     valueLabel,
     valueKey,
+    data,
     valueColor = "#0f172a",
     orientation = "vertical",
   }: {
@@ -167,6 +168,7 @@ const buildSingleValueTooltipLabel =
     titleFallback: string
     valueLabel: string
     valueKey: string
+    data?: Array<Record<string, number | string | null | undefined>>
     valueColor?: string
     orientation?: "vertical" | "horizontal"
   }) =>
@@ -176,13 +178,20 @@ const buildSingleValueTooltipLabel =
     width,
     height,
     payload,
-  }: LabelProps & { payload?: Record<string, number | string | null | undefined> }): JSX.Element | null => {
-    if (!payload) {
+    index,
+  }: LabelProps & {
+    payload?: Record<string, number | string | null | undefined>
+    index?: number
+  }): JSX.Element | null => {
+    const resolvedPayload =
+      payload ?? (index != null && data ? (data[index] as Record<string, number | string | null | undefined>) : undefined)
+
+    if (!resolvedPayload) {
       return null
     }
 
-    const title = String(payload[titleKey] ?? titleFallback)
-    const value = payload[valueKey] ?? 0
+    const title = String(resolvedPayload[titleKey] ?? titleFallback)
+    const value = resolvedPayload[valueKey] ?? 0
     const lines = [title, `${valueLabel}: ${value}`]
     const maxChars = Math.max(...lines.map((line) => line.length), 0)
     const padding = 6
@@ -233,8 +242,12 @@ const buildSingleValueTooltipLabel =
     )
   }
 
-const buildStatusSummaryLabel = (statuses: string[], colorMap: Record<string, string>) => {
-  const renderedIndexes = new Set<number>()
+const buildStatusSummaryLabel = (
+  statuses: string[],
+  colorMap: Record<string, string>,
+  data?: Array<Record<string, number | string | null | undefined>>,
+) => {
+  const renderedKeys = new Set<string>()
 
   return ({
     x,
@@ -243,20 +256,28 @@ const buildStatusSummaryLabel = (statuses: string[], colorMap: Record<string, st
     payload,
     index,
   }: LabelProps & { payload?: Record<string, number | string | null | undefined>; index?: number }): JSX.Element | null => {
-    if (!payload || statuses.length === 0 || index == null) {
+    if (statuses.length === 0) {
       return null
     }
 
-    if (renderedIndexes.has(index)) {
+    const resolvedPayload =
+      payload ?? (data && index != null ? (data[index] as Record<string, number | string | null | undefined>) : undefined)
+
+    if (!resolvedPayload) {
       return null
     }
 
-    renderedIndexes.add(index)
+    const companyLabel = String(resolvedPayload.compania ?? "Sin compañía")
+    const renderKey = index != null ? `index-${index}` : `company-${companyLabel}`
 
-    const companyLabel = String(payload.compania ?? "Sin compañía")
+    if (renderedKeys.has(renderKey)) {
+      return null
+    }
+
+    renderedKeys.add(renderKey)
     const lines = statuses.map((status) => ({
       label: status,
-      value: payload[status] ?? 0,
+      value: resolvedPayload[status] ?? 0,
       color: colorMap[status] ?? "#0f172a",
     }))
     const lineLabels = [companyLabel, ...lines.map((line) => `${line.label}: ${line.value}`)]
@@ -905,8 +926,6 @@ export function Dashboard() {
     [statusKeys],
   )
 
-  const statusSummaryLabel = buildStatusSummaryLabel(statusKeys, statusColorMap)
-
   const projectStatusChartData = useMemo(
     () =>
       projectsByStatusCompany.map((company) => {
@@ -919,6 +938,8 @@ export function Dashboard() {
       }),
     [projectsByStatusCompany, statusKeys],
   )
+
+  const statusSummaryLabel = buildStatusSummaryLabel(statusKeys, statusColorMap, projectStatusChartData)
 
   const projectYearCompanies = useMemo(() => {
     const companies = new Set<string>()
@@ -1546,6 +1567,7 @@ export function Dashboard() {
                                         titleFallback: "Sin compañía",
                                         valueLabel: "total",
                                         valueKey: "total",
+                                        data: projectsByCompanyChartData,
                                       })}
                                     />
                                   ) : null}
@@ -1697,6 +1719,7 @@ export function Dashboard() {
                                           titleFallback: "Sin proceso",
                                           valueLabel: company,
                                           valueKey: company,
+                                          data: projectsByProcessCompanyChartData,
                                           valueColor: processCompanyColorMap[company] ?? brandPrimary,
                                           orientation: "horizontal",
                                         })}
@@ -1800,6 +1823,7 @@ export function Dashboard() {
                                           titleFallback: "Sin año",
                                           valueLabel: company,
                                           valueKey: company,
+                                          data: projectsByYearChartData,
                                           valueColor: companyColorMap[company] ?? brandPrimary,
                                         })}
                                       />

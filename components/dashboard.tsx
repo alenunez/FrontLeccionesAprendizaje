@@ -154,14 +154,83 @@ const formatDate = (value?: string): string => {
   })
 }
 
-const buildTooltipValueAccessor =
-  (label: string, dataKey: string) =>
-  (entry: { payload?: Record<string, number | string | null | undefined> }): string => {
-    const value = entry.payload?.[dataKey]
-    if (value == null) {
-      return `${label}: 0`
+const buildSingleValueTooltipLabel =
+  ({
+    titleKey,
+    titleFallback,
+    valueLabel,
+    valueKey,
+    valueColor = "#0f172a",
+    orientation = "vertical",
+  }: {
+    titleKey: string
+    titleFallback: string
+    valueLabel: string
+    valueKey: string
+    valueColor?: string
+    orientation?: "vertical" | "horizontal"
+  }) =>
+  ({
+    x,
+    y,
+    width,
+    height,
+    payload,
+  }: LabelProps & { payload?: Record<string, number | string | null | undefined> }): JSX.Element | null => {
+    if (!payload) {
+      return null
     }
-    return `${label}: ${value}`
+
+    const title = String(payload[titleKey] ?? titleFallback)
+    const value = payload[valueKey] ?? 0
+    const lines = [title, `${valueLabel}: ${value}`]
+    const maxChars = Math.max(...lines.map((line) => line.length), 0)
+    const padding = 6
+    const lineHeight = 16
+    const estimatedCharWidth = 6.5
+    const boxWidth = Math.max(120, Math.ceil(maxChars * estimatedCharWidth) + padding * 2)
+    const boxHeight = lines.length * lineHeight + padding * 2
+    const originX =
+      orientation === "horizontal"
+        ? (x ?? 0) + (width ?? 0) + 8
+        : (x ?? 0) + (width ?? 0) / 2 - boxWidth / 2
+    const rawOriginY =
+      orientation === "horizontal"
+        ? (y ?? 0) + (height ?? 0) / 2 - boxHeight / 2
+        : (y ?? 0) - boxHeight - 8
+    const originY = rawOriginY < 0 ? 0 : rawOriginY
+
+    return (
+      <g>
+        <rect
+          x={originX}
+          y={originY}
+          width={boxWidth}
+          height={boxHeight}
+          rx={8}
+          ry={8}
+          fill="white"
+          stroke="#e2e8f0"
+        />
+        <text
+          x={originX + padding}
+          y={originY + padding + lineHeight * 0.85}
+          fontSize={12}
+          fontWeight={600}
+          fill="#0f172a"
+        >
+          {title}
+        </text>
+        <text
+          x={originX + padding}
+          y={originY + padding + lineHeight * 1.85}
+          fontSize={12}
+          fill={valueColor}
+        >
+          {`${valueLabel}: ${value}`}
+        </text>
+      </g>
+    )
   }
 
 const buildStatusSummaryLabel =
@@ -1462,10 +1531,12 @@ export function Dashboard() {
                                   {showCompanyValues ? (
                                     <LabelList
                                       dataKey="total"
-                                      position="top"
-                                      fontSize={12}
-                                      fill="#0f172a"
-                                      valueAccessor={buildTooltipValueAccessor("total", "total")}
+                                      content={buildSingleValueTooltipLabel({
+                                        titleKey: "compania",
+                                        titleFallback: "Sin compañía",
+                                        valueLabel: "total",
+                                        valueKey: "total",
+                                      })}
                                     />
                                   ) : null}
                                 </Bar>
@@ -1614,10 +1685,14 @@ export function Dashboard() {
                                     {showProcessValues ? (
                                       <LabelList
                                         dataKey={company}
-                                        position="right"
-                                        fontSize={12}
-                                        fill="#0f172a"
-                                        valueAccessor={buildTooltipValueAccessor(company, company)}
+                                        content={buildSingleValueTooltipLabel({
+                                          titleKey: "proceso",
+                                          titleFallback: "Sin proceso",
+                                          valueLabel: company,
+                                          valueKey: company,
+                                          valueColor: processCompanyColorMap[company] ?? brandPrimary,
+                                          orientation: "horizontal",
+                                        })}
                                       />
                                     ) : null}
                                   </Bar>
@@ -1714,10 +1789,13 @@ export function Dashboard() {
                                     {showYearValues ? (
                                       <LabelList
                                         dataKey={company}
-                                        position="top"
-                                        fontSize={12}
-                                        fill="#0f172a"
-                                        valueAccessor={buildTooltipValueAccessor(company, company)}
+                                        content={buildSingleValueTooltipLabel({
+                                          titleKey: "anio",
+                                          titleFallback: "Sin año",
+                                          valueLabel: company,
+                                          valueKey: company,
+                                          valueColor: companyColorMap[company] ?? brandPrimary,
+                                        })}
                                       />
                                     ) : null}
                                   </Bar>

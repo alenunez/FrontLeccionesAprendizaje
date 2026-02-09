@@ -160,6 +160,7 @@ const buildSingleValueTooltipLabel =
     titleFallback,
     valueLabel,
     valueKey,
+    data,
     valueColor = "#0f172a",
     orientation = "vertical",
   }: {
@@ -167,6 +168,7 @@ const buildSingleValueTooltipLabel =
     titleFallback: string
     valueLabel: string
     valueKey: string
+    data?: Array<Record<string, number | string | null | undefined>>
     valueColor?: string
     orientation?: "vertical" | "horizontal"
   }) =>
@@ -176,13 +178,20 @@ const buildSingleValueTooltipLabel =
     width,
     height,
     payload,
-  }: LabelProps & { payload?: Record<string, number | string | null | undefined> }): JSX.Element | null => {
-    if (!payload) {
+    index,
+  }: LabelProps & {
+    payload?: Record<string, number | string | null | undefined>
+    index?: number
+  }): JSX.Element | null => {
+    const resolvedPayload =
+      payload ?? (index != null && data ? (data[index] as Record<string, number | string | null | undefined>) : undefined)
+
+    if (!resolvedPayload) {
       return null
     }
 
-    const title = String(payload[titleKey] ?? titleFallback)
-    const value = payload[valueKey] ?? 0
+    const title = String(resolvedPayload[titleKey] ?? titleFallback)
+    const value = resolvedPayload[valueKey] ?? 0
     const lines = [title, `${valueLabel}: ${value}`]
     const maxChars = Math.max(...lines.map((line) => line.length), 0)
     const padding = 6
@@ -1546,6 +1555,7 @@ export function Dashboard() {
                                         titleFallback: "Sin compañía",
                                         valueLabel: "total",
                                         valueKey: "total",
+                                        data: projectsByCompanyChartData,
                                       })}
                                     />
                                   ) : null}
@@ -1697,6 +1707,7 @@ export function Dashboard() {
                                           titleFallback: "Sin proceso",
                                           valueLabel: company,
                                           valueKey: company,
+                                          data: projectsByProcessCompanyChartData,
                                           valueColor: processCompanyColorMap[company] ?? brandPrimary,
                                           orientation: "horizontal",
                                         })}
@@ -1800,6 +1811,7 @@ export function Dashboard() {
                                           titleFallback: "Sin año",
                                           valueLabel: company,
                                           valueKey: company,
+                                          data: projectsByYearChartData,
                                           valueColor: companyColorMap[company] ?? brandPrimary,
                                         })}
                                       />

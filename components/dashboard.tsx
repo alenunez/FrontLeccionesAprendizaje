@@ -1611,17 +1611,20 @@ export function Dashboard() {
                                   />
                                 )}
                                 <Legend wrapperStyle={{ fontSize: "12px" }} />
-                                {statusKeys.map((status) => (
-                                  <Bar
-                                    key={status}
-                                    dataKey={status}
-                                    stackId="estado"
-                                    fill={statusColorMap[status] ?? brandAccent}
-                                    radius={[4, 4, 0, 0]}
-                                  >
-                                    {showStatusValues ? <LabelList content={statusSummaryLabel} /> : null}
-                                  </Bar>
-                                ))}
+                                {statusKeys.map((status, index) => {
+                                  const isTopStatus = index === statusKeys.length - 1
+                                  return (
+                                    <Bar
+                                      key={status}
+                                      dataKey={status}
+                                      stackId="estado"
+                                      fill={statusColorMap[status] ?? brandAccent}
+                                      radius={[4, 4, 0, 0]}
+                                    >
+                                      {showStatusValues && isTopStatus ? <LabelList content={statusSummaryLabel} /> : null}
+                                    </Bar>
+                                  )
+                                })}
                               </BarChart>
                             </ResponsiveContainer>
                           )}

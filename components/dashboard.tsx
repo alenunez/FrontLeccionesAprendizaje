@@ -242,7 +242,11 @@ const buildSingleValueTooltipLabel =
     )
   }
 
-const buildStatusSummaryLabel = (statuses: string[], colorMap: Record<string, string>) => {
+const buildStatusSummaryLabel = (
+  statuses: string[],
+  colorMap: Record<string, string>,
+  data?: Array<Record<string, number | string | null | undefined>>,
+) => {
   const renderedIndexes = new Set<number>()
 
   return ({
@@ -252,7 +256,14 @@ const buildStatusSummaryLabel = (statuses: string[], colorMap: Record<string, st
     payload,
     index,
   }: LabelProps & { payload?: Record<string, number | string | null | undefined>; index?: number }): JSX.Element | null => {
-    if (!payload || statuses.length === 0 || index == null) {
+    if (statuses.length === 0 || index == null) {
+      return null
+    }
+
+    const resolvedPayload =
+      payload ?? (data && index != null ? (data[index] as Record<string, number | string | null | undefined>) : undefined)
+
+    if (!resolvedPayload) {
       return null
     }
 
@@ -262,10 +273,10 @@ const buildStatusSummaryLabel = (statuses: string[], colorMap: Record<string, st
 
     renderedIndexes.add(index)
 
-    const companyLabel = String(payload.compania ?? "Sin compañía")
+    const companyLabel = String(resolvedPayload.compania ?? "Sin compañía")
     const lines = statuses.map((status) => ({
       label: status,
-      value: payload[status] ?? 0,
+      value: resolvedPayload[status] ?? 0,
       color: colorMap[status] ?? "#0f172a",
     }))
     const lineLabels = [companyLabel, ...lines.map((line) => `${line.label}: ${line.value}`)]
@@ -914,8 +925,6 @@ export function Dashboard() {
     [statusKeys],
   )
 
-  const statusSummaryLabel = buildStatusSummaryLabel(statusKeys, statusColorMap)
-
   const projectStatusChartData = useMemo(
     () =>
       projectsByStatusCompany.map((company) => {
@@ -928,6 +937,8 @@ export function Dashboard() {
       }),
     [projectsByStatusCompany, statusKeys],
   )
+
+  const statusSummaryLabel = buildStatusSummaryLabel(statusKeys, statusColorMap, projectStatusChartData)
 
   const projectYearCompanies = useMemo(() => {
     const companies = new Set<string>()

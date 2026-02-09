@@ -1105,6 +1105,18 @@ export function Dashboard() {
     return Array.from(yearMap.values()).sort((a, b) => Number(a.anio) - Number(b.anio))
   }, [projectsByYearCompany])
 
+  const yearTooltipProps = showYearValues
+    ? {}
+    : {
+        position: { x: 0, y: 0 },
+        wrapperStyle: {
+          left: "auto",
+          right: 16,
+          top: 16,
+          pointerEvents: "none",
+        } as const,
+      }
+
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-[#f4fff9] via-white to-[#d8f5e6] text-slate-900">
       {isGeneratingPresentation ? (
@@ -1912,6 +1924,7 @@ export function Dashboard() {
                                     border: "1px solid #e2e8f0",
                                     borderRadius: "8px",
                                   }}
+                                  {...yearTooltipProps}
                                 />
                                 <Legend wrapperStyle={{ fontSize: "12px" }} />
                                 {projectYearCompanies.map((company) => (

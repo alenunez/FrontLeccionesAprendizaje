@@ -84,6 +84,11 @@ interface EstadoOption {
   descripcion: string
 }
 
+interface CompanyOption {
+  id: string | number
+  nombre: string
+}
+
 const normalizeLessonsResponse = (payload: unknown): ProyectoSituacionDto[] => {
   if (Array.isArray(payload)) {
     return payload as ProyectoSituacionDto[]
@@ -384,6 +389,20 @@ const normalizeEstadoPayload = (payload: unknown): Array<{ id?: string | number;
   return []
 }
 
+const normalizeCompanyPayload = (
+  payload: unknown,
+): Array<{ id?: string | number; Id?: string | number; nombre?: string | null; Nombre?: string | null; name?: string | null; Name?: string | null }> => {
+  const record = (payload ?? {}) as {
+    items?: Array<{ id?: string | number; nombre?: string | null }>
+    data?: unknown
+  }
+  if (Array.isArray(record.items)) return record.items
+  if (Array.isArray(record.data)) return record.data as Array<{ id?: string | number; nombre?: string | null }>
+  if (Array.isArray(payload)) return payload as Array<{ id?: string | number; nombre?: string | null }>
+  if (payload && typeof payload === "object") return [payload as { id?: string | number; nombre?: string | null }]
+  return []
+}
+
 const normalizeEmail = (value?: string | null): string => value?.trim().toLowerCase() ?? ""
 
 export function Dashboard() {
@@ -427,6 +446,7 @@ export function Dashboard() {
   })
   const [estadoIds, setEstadoIds] = useState<Record<string, string | number | undefined>>({})
   const [estadoOptions, setEstadoOptions] = useState<EstadoOption[]>([])
+  const [companyOptions, setCompanyOptions] = useState<CompanyOption[]>([])
   const PAGE_SIZE_OPTIONS = [5, 10, 15] as const
   const [pageNumber, setPageNumber] = useState(1)
   const [pageSize, setPageSize] = useState<number>(PAGE_SIZE_OPTIONS[1])
@@ -443,6 +463,7 @@ export function Dashboard() {
   const [isGeneratingPresentation, setIsGeneratingPresentation] = useState(false)
   const [presentationLessonId, setPresentationLessonId] = useState<string | null>(null)
   const [processEstadoId, setProcessEstadoId] = useState<string | number | null>(null)
+  const [processCompanyId, setProcessCompanyId] = useState<string | number | null>(null)
   const [yearEstadoId, setYearEstadoId] = useState<string | number | null>(null)
   const [showCompanyValues, setShowCompanyValues] = useState(false)
   const [showStatusValues, setShowStatusValues] = useState(false)
@@ -501,6 +522,38 @@ export function Dashboard() {
 
     return () => controller.abort()
   }, [authHeaders])
+
+  useEffect(() => {
+    if (!showAnalyticsTab) return
+
+    const controller = new AbortController()
+
+    const fetchCompanies = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/Compania`, { signal: controller.signal, headers: authHeaders })
+        if (!response.ok) {
+          throw new Error(`Error al cargar compañías: ${response.status}`)
+        }
+        const payload = await response.json()
+        const companies = normalizeCompanyPayload(payload)
+          .map((company, index) => ({
+            id: String(company.id ?? company.Id ?? index),
+            nombre: company.nombre ?? company.Nombre ?? company.name ?? company.Name ?? "Sin compañía",
+          }))
+          .filter((company) => company.id !== "")
+        setCompanyOptions(companies)
+        setProcessCompanyId((prev) => prev ?? (companies.length > 0 ? companies[0].id : null))
+      } catch (error) {
+        if ((error as Error).name !== "AbortError") {
+          console.error("No fue posible cargar compañías", error)
+        }
+      }
+    }
+
+    fetchCompanies()
+
+    return () => controller.abort()
+  }, [authHeaders, showAnalyticsTab])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -723,16 +776,30 @@ export function Dashboard() {
     const fetchProjectsByProcess = async () => {
       setIsLoadingProcessReport(true)
       setProcessReportError(null)
+      if (!processCompanyId) {
+        setProjectsByProcessCompany([])
+        setIsLoadingProcessReport(false)
+        return
+      }
       try {
         const analyticsParams = new URLSearchParams()
         if (processEstadoId !== null && processEstadoId !== "") {
           analyticsParams.set("idEstado", `${processEstadoId}`)
         }
+        analyticsParams.set("idCompania", `${processCompanyId}`)
         const queryString = analyticsParams.toString()
         const projectsByProcessUrl = queryString
           ? `${API_BASE_URL}/Reportes/proyectos-por-proceso-compania?${analyticsParams.toString()}`
           : `${API_BASE_URL}/Reportes/proyectos-por-proceso-compania`
-        const projectsByProcessPayload = await fetchReport<unknown>(projectsByProcessUrl)
+        const response = await fetch(projectsByProcessUrl, { headers: authHeaders, signal: controller.signal })
+        if (response.status === 204) {
+          setProjectsByProcessCompany([])
+          return
+        }
+        if (!response.ok) {
+          throw new Error(`Error al cargar el reporte: ${response.status}`)
+        }
+        const projectsByProcessPayload = (await response.json()) as unknown
         setProjectsByProcessCompany(normalizeReportArray<ProjectsByProcessCompanyReport>(projectsByProcessPayload))
       } catch (error) {
         if ((error as Error).name !== "AbortError") {
@@ -747,7 +814,7 @@ export function Dashboard() {
     fetchProjectsByProcess()
 
     return () => controller.abort()
-  }, [authHeaders, showAnalyticsTab, analyticsReloadKey, processEstadoId])
+  }, [authHeaders, showAnalyticsTab, analyticsReloadKey, processEstadoId, processCompanyId])
 
   useEffect(() => {
     if (!showAnalyticsTab) return
@@ -1645,30 +1712,57 @@ export function Dashboard() {
                           <CardTitle className="text-lg">Cantidad de procesos por proyecto o situación y compañía</CardTitle>
                           <CardDescription>Procesos registrados por proyecto o situación según la empresa</CardDescription>
                         </div>
-                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                          <span className="text-sm font-medium text-slate-600">Estado</span>
-                          <Select
-                            value={processEstadoId ? String(processEstadoId) : "all"}
-                            onValueChange={(value) => setProcessEstadoId(value === "all" ? null : value)}
-                          >
-                            <SelectTrigger className="h-10 w-full min-w-[220px] border-slate-200 focus:border-[color:var(--brand-primary)] focus:ring-[color:var(--brand-primary)]/30 sm:w-[240px]">
-                              <SelectValue placeholder="Todos los estados" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">Todos los estados</SelectItem>
-                              {estadoOptions.length > 0 ? (
-                                estadoOptions.map((estado) => (
-                                  <SelectItem key={estado.id} value={String(estado.id)}>
-                                    {estado.descripcion}
+                        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+                          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                            <span className="text-sm font-medium text-slate-600">Compañía</span>
+                            <Select
+                              value={processCompanyId ? String(processCompanyId) : "none"}
+                              onValueChange={(value) => setProcessCompanyId(value === "none" ? null : value)}
+                            >
+                              <SelectTrigger className="h-10 w-full min-w-[220px] border-slate-200 focus:border-[color:var(--brand-primary)] focus:ring-[color:var(--brand-primary)]/30 sm:w-[240px]">
+                                <SelectValue placeholder="Seleccionar compañía" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="none">Seleccionar compañía</SelectItem>
+                                {companyOptions.length > 0 ? (
+                                  companyOptions.map((company) => (
+                                    <SelectItem key={company.id} value={String(company.id)}>
+                                      {company.nombre}
+                                    </SelectItem>
+                                  ))
+                                ) : (
+                                  <SelectItem value="sin-companias" disabled>
+                                    Sin compañías disponibles
                                   </SelectItem>
-                                ))
-                              ) : (
-                                <SelectItem value="sin-estados" disabled>
-                                  Sin estados disponibles
-                                </SelectItem>
-                              )}
-                            </SelectContent>
-                          </Select>
+                                )}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                            <span className="text-sm font-medium text-slate-600">Estado</span>
+                            <Select
+                              value={processEstadoId ? String(processEstadoId) : "all"}
+                              onValueChange={(value) => setProcessEstadoId(value === "all" ? null : value)}
+                            >
+                              <SelectTrigger className="h-10 w-full min-w-[220px] border-slate-200 focus:border-[color:var(--brand-primary)] focus:ring-[color:var(--brand-primary)]/30 sm:w-[240px]">
+                                <SelectValue placeholder="Todos los estados" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="all">Todos los estados</SelectItem>
+                                {estadoOptions.length > 0 ? (
+                                  estadoOptions.map((estado) => (
+                                    <SelectItem key={estado.id} value={String(estado.id)}>
+                                      {estado.descripcion}
+                                    </SelectItem>
+                                  ))
+                                ) : (
+                                  <SelectItem value="sin-estados" disabled>
+                                    Sin estados disponibles
+                                  </SelectItem>
+                                )}
+                              </SelectContent>
+                            </Select>
+                          </div>
                           <div className="flex items-center gap-2 text-xs text-slate-600 sm:pl-4">
                             <Checkbox
                               id="toggle-process-values"
@@ -1698,6 +1792,8 @@ export function Dashboard() {
                                 Reintentar
                               </Button>
                             </div>
+                          ) : !processCompanyId ? (
+                            <p className="text-sm text-slate-600">Selecciona una compañía para ver el reporte.</p>
                           ) : projectsByProcessCompanyChartData.length === 0 ? (
                             <p className="text-sm text-slate-600">No hay datos disponibles para mostrar.</p>
                           ) : (

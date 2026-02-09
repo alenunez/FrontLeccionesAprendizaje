@@ -233,17 +233,25 @@ const buildSingleValueTooltipLabel =
     )
   }
 
-const buildStatusSummaryLabel =
-  (statuses: string[], colorMap: Record<string, string>) =>
-  ({
+const buildStatusSummaryLabel = (statuses: string[], colorMap: Record<string, string>) => {
+  const renderedIndexes = new Set<number>()
+
+  return ({
     x,
     y,
     width,
     payload,
-  }: LabelProps & { payload?: Record<string, number | string | null | undefined> }): JSX.Element | null => {
-    if (!payload || statuses.length === 0) {
+    index,
+  }: LabelProps & { payload?: Record<string, number | string | null | undefined>; index?: number }): JSX.Element | null => {
+    if (!payload || statuses.length === 0 || index == null) {
       return null
     }
+
+    if (renderedIndexes.has(index)) {
+      return null
+    }
+
+    renderedIndexes.add(index)
 
     const companyLabel = String(payload.compania ?? "Sin compañía")
     const lines = statuses.map((status) => ({
@@ -283,11 +291,11 @@ const buildStatusSummaryLabel =
         >
           {companyLabel}
         </text>
-        {lines.map((line, index) => (
+        {lines.map((line, lineIndex) => (
           <text
             key={line.label}
             x={originX + padding}
-            y={originY + padding + lineHeight * (index + 1.85)}
+            y={originY + padding + lineHeight * (lineIndex + 1.85)}
             fontSize={12}
             fill={line.color}
           >
@@ -297,6 +305,7 @@ const buildStatusSummaryLabel =
       </g>
     )
   }
+}
 
 const mapLessons = (payload: ProyectoSituacionDto[]): LessonSummary[] =>
   payload.map((item, index) => {
@@ -895,6 +904,8 @@ export function Dashboard() {
       }, {} as Record<string, string>),
     [statusKeys],
   )
+
+  const statusSummaryLabel = buildStatusSummaryLabel(statusKeys, statusColorMap)
 
   const projectStatusChartData = useMemo(
     () =>
@@ -1579,7 +1590,7 @@ export function Dashboard() {
                                   />
                                 )}
                                 <Legend wrapperStyle={{ fontSize: "12px" }} />
-                                {statusKeys.map((status, index) => (
+                                {statusKeys.map((status) => (
                                   <Bar
                                     key={status}
                                     dataKey={status}
@@ -1587,9 +1598,7 @@ export function Dashboard() {
                                     fill={statusColorMap[status] ?? brandAccent}
                                     radius={[4, 4, 0, 0]}
                                   >
-                                    {showStatusValues && index === statusKeys.length - 1 ? (
-                                      <LabelList content={buildStatusSummaryLabel(statusKeys, statusColorMap)} />
-                                    ) : null}
+                                    {showStatusValues ? <LabelList content={statusSummaryLabel} /> : null}
                                   </Bar>
                                 ))}
                               </BarChart>

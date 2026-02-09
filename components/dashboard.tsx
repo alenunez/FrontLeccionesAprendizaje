@@ -242,13 +242,12 @@ const buildSingleValueTooltipLabel =
     )
   }
 
-const buildStatusSummaryLabel = (
+const buildStatusSummaryLabelForKey = (
+  statusKey: string,
   statuses: string[],
   colorMap: Record<string, string>,
   data?: Array<Record<string, number | string | null | undefined>>,
 ) => {
-  const renderedIndexes = new Set<number>()
-
   return ({
     x,
     y,
@@ -267,11 +266,15 @@ const buildStatusSummaryLabel = (
       return null
     }
 
-    if (renderedIndexes.has(index)) {
+    const topStatus =
+      statuses
+        .slice()
+        .reverse()
+        .find((status) => Number(resolvedPayload[status] ?? 0) > 0) ?? statuses[statuses.length - 1]
+
+    if (statusKey !== topStatus) {
       return null
     }
-
-    renderedIndexes.add(index)
 
     const companyLabel = String(resolvedPayload.compania ?? "Sin compañía")
     const lines = statuses.map((status) => ({
@@ -938,7 +941,14 @@ export function Dashboard() {
     [projectsByStatusCompany, statusKeys],
   )
 
-  const statusSummaryLabel = buildStatusSummaryLabel(statusKeys, statusColorMap, projectStatusChartData)
+  const statusSummaryLabelByKey = useMemo(
+    () =>
+      statusKeys.reduce((acc, status) => {
+        acc[status] = buildStatusSummaryLabelForKey(status, statusKeys, statusColorMap, projectStatusChartData)
+        return acc
+      }, {} as Record<string, ReturnType<typeof buildStatusSummaryLabelForKey>>),
+    [projectStatusChartData, statusColorMap, statusKeys],
+  )
 
   const projectYearCompanies = useMemo(() => {
     const companies = new Set<string>()
@@ -1611,20 +1621,17 @@ export function Dashboard() {
                                   />
                                 )}
                                 <Legend wrapperStyle={{ fontSize: "12px" }} />
-                                {statusKeys.map((status, index) => {
-                                  const isTopStatus = index === statusKeys.length - 1
-                                  return (
-                                    <Bar
-                                      key={status}
-                                      dataKey={status}
-                                      stackId="estado"
-                                      fill={statusColorMap[status] ?? brandAccent}
-                                      radius={[4, 4, 0, 0]}
-                                    >
-                                      {showStatusValues && isTopStatus ? <LabelList content={statusSummaryLabel} /> : null}
-                                    </Bar>
-                                  )
-                                })}
+                                {statusKeys.map((status) => (
+                                  <Bar
+                                    key={status}
+                                    dataKey={status}
+                                    stackId="estado"
+                                    fill={statusColorMap[status] ?? brandAccent}
+                                    radius={[4, 4, 0, 0]}
+                                  >
+                                    {showStatusValues ? <LabelList content={statusSummaryLabelByKey[status]} /> : null}
+                                  </Bar>
+                                ))}
                               </BarChart>
                             </ResponsiveContainer>
                           )}

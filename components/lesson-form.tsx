@@ -111,6 +111,10 @@ interface SelectOption {
   nombre: string
 }
 
+interface ProcesoOption extends SelectOption {
+  companiaId?: string
+}
+
 interface SedeOption extends SelectOption {
   companiaId?: string
 }
@@ -192,6 +196,21 @@ const toSelectOptions = (entities: RemoteEntity[]): SelectOption[] =>
     }
   })
 
+const toProcesoOptions = (entities: RemoteEntity[]): ProcesoOption[] =>
+  entities.map((entity, index) => {
+    const identifier = entity.id ?? entity.Id ?? entity.codigo ?? index
+    const label = entity.nombre ?? entity.Nombre ?? entity.name ?? entity.Name ?? "Sin nombre"
+    const compania = (entity as { compania?: RemoteEntity }).compania
+    const nestedCompania = (compania as { data?: RemoteEntity })?.data
+    const companiaId = compania?.id ?? compania?.Id ?? nestedCompania?.id ?? nestedCompania?.Id
+
+    return {
+      id: String(identifier),
+      nombre: String(label),
+      companiaId: isDefined(companiaId) ? String(companiaId) : undefined,
+    }
+  })
+
 const toSedeOptions = (entities: RemoteEntity[]): SedeOption[] =>
   entities.map((entity, index) => {
     const identifier = entity.id ?? entity.Id ?? entity.codigo ?? index
@@ -245,6 +264,25 @@ const fetchSedes = async (
   } catch (error) {
     if ((error as Error).name !== "AbortError") {
       console.error("No fue posible cargar las sedes", error)
+    }
+  }
+}
+
+const fetchProcesos = async (
+  setter: React.Dispatch<React.SetStateAction<ProcesoOption[]>>,
+  signal: AbortSignal,
+  fetcher: Fetcher,
+) => {
+  try {
+    const response = await fetcher(`${API_BASE_URL}/Proceso`, { signal })
+    if (!response.ok) {
+      throw new Error(`Error al cargar procesos: ${response.status}`)
+    }
+    const payload = await response.json()
+    setter(toProcesoOptions(normalizePayload(payload)))
+  } catch (error) {
+    if ((error as Error).name !== "AbortError") {
+      console.error("No fue posible cargar los procesos", error)
     }
   }
 }
@@ -508,7 +546,7 @@ export function LessonForm({ onClose, onSaved, initialData, loggedUser }: Lesson
   const [nivelAcceso, setNivelAcceso] = useState<"Público" | "Privado">(() =>
     normalizeAccessLevel(initialData?.proyecto?.isPrivate),
   )
-const [sedeInicialAplicada, setSedeInicialAplicada] = useState(false);
+  const [sedeInicialAplicada, setSedeInicialAplicada] = useState(false)
 
   const [selectedUsers, setSelectedUsers] = useState<string[]>([])
   const [showUserDropdown, setShowUserDropdown] = useState(false)
@@ -553,7 +591,7 @@ const [sedeInicialAplicada, setSedeInicialAplicada] = useState(false);
     [authHeaders],
   )
 
-  const [procesos, setProcesos] = useState<SelectOption[]>([])
+  const [procesos, setProcesos] = useState<ProcesoOption[]>([])
   const [companias, setCompanias] = useState<SelectOption[]>([])
   const [allSedes, setAllSedes] = useState<SedeOption[]>([])
   const [sedes, setSedes] = useState<SedeOption[]>([])
@@ -610,11 +648,15 @@ const [sedeInicialAplicada, setSedeInicialAplicada] = useState(false);
       ),
     [formData.estado, workflowActions],
   )
+  const procesosFiltrados = useMemo(
+    () => (formData.compania ? procesos.filter((proceso) => proceso.companiaId === formData.compania) : []),
+    [formData.compania, procesos],
+  )
 
   useEffect(() => {
     const controller = new AbortController()
 
-    fetchEntities("Proceso", setProcesos, controller.signal, authorizedFetch)
+    fetchProcesos(setProcesos, controller.signal, authorizedFetch)
     fetchEntities("Compania", setCompanias, controller.signal, authorizedFetch)
     fetchSedes(setAllSedes, controller.signal, authorizedFetch)
 
@@ -675,24 +717,23 @@ const [sedeInicialAplicada, setSedeInicialAplicada] = useState(false);
     setSedes(filtered)
   }, [formData.compania, formData.sede, allSedes, initialSelectionNames.sede])
 
-// 🔥 Este efecto asegura que la sede aparezca cuando editas un proyecto,
-// pero solo la PRIMERA VEZ (para no bloquear cambios del usuario)
-useEffect(() => {
-  if (!isEditing) return;
-  if (!initialData?.proyecto) return;
-  if (sedes.length === 0) return;
-  if (sedeInicialAplicada) return; // ⛔ Ya aplicamos la sede una vez
+  // Este efecto asegura que la sede aparezca cuando editas un proyecto,
+  // pero solo la primera vez para no bloquear cambios del usuario.
+  useEffect(() => {
+    if (!isEditing) return
+    if (!initialData?.proyecto) return
+    if (sedes.length === 0) return
+    if (sedeInicialAplicada) return
 
-  const sedeId = String(getEntityId(initialData.proyecto.sede));
-  if (!sedeId) return;
+    const sedeId = String(getEntityId(initialData.proyecto.sede))
+    if (!sedeId) return
 
-  const existe = sedes.some((s) => s.id === sedeId);
-  if (!existe) return;
+    const existe = sedes.some((sede) => sede.id === sedeId)
+    if (!existe) return
 
-  // Aplicamos la sede seleccionada del proyecto únicamente la primera vez
-  setFormData((prev) => ({ ...prev, sede: sedeId }));
-  setSedeInicialAplicada(true); // 🔥 Evita que se ejecute nuevamente
-}, [isEditing, initialData, sedes, sedeInicialAplicada]);
+    setFormData((prev) => ({ ...prev, sede: sedeId }))
+    setSedeInicialAplicada(true)
+  }, [isEditing, initialData, sedes, sedeInicialAplicada])
 
 
 
@@ -2217,32 +2258,6 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                   />
                 </div>
                 <div className="space-y-3">
-                  <Label htmlFor="proceso" className="text-base font-semibold text-slate-700">
-                    Proceso *
-                  </Label>
-                  <Select
-                    value={formData.proceso}
-                    onValueChange={(value) => setFormData({ ...formData, proceso: value })}
-                  >
-                    <SelectTrigger className="border-slate-200 focus:border-[color:var(--brand-primary)] focus:ring-[color:var(--brand-primary)]/30">
-                      <SelectValue placeholder="Seleccionar proceso" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {procesos.length > 0 ? (
-                        procesos.map((proceso) => (
-                          <SelectItem key={proceso.id} value={proceso.id}>
-                            {proceso.nombre}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <SelectItem value="sin-procesos" disabled>
-                          No hay procesos disponibles
-                        </SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-3">
                   <Label htmlFor="compania" className="text-base font-semibold text-slate-700">
                     Compañía *
                   </Label>
@@ -2252,6 +2267,7 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                       setFormData({
                         ...formData,
                         compania: value,
+                        proceso: "",
                         sede: "", // 🔥 Cuando cambia compañía, resetea sede
                       })
                     }
@@ -2271,6 +2287,36 @@ const mapEventToDto = (event: Event): ProyectoSituacionEventoDto => {
                           No hay compañías disponibles
                         </SelectItem>
                       )}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-3">
+                  <Label htmlFor="proceso" className="text-base font-semibold text-slate-700">
+                    Proceso *
+                  </Label>
+                  <Select
+                    value={formData.proceso}
+                    onValueChange={(value) => setFormData({ ...formData, proceso: value })}
+                    disabled={!formData.compania}
+                  >
+                    <SelectTrigger className="border-slate-200 focus:border-[color:var(--brand-primary)] focus:ring-[color:var(--brand-primary)]/30">
+                      <SelectValue placeholder="Seleccionar proceso" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {!formData.compania && (
+                        <div className="px-3 py-2 text-sm text-slate-500">Selecciona una compañía primero.</div>
+                      )}
+                      {formData.compania && procesosFiltrados.length > 0
+                        ? procesosFiltrados.map((proceso) => (
+                            <SelectItem key={proceso.id} value={proceso.id}>
+                              {proceso.nombre}
+                            </SelectItem>
+                          ))
+                        : formData.compania && (
+                            <SelectItem value="sin-procesos" disabled>
+                              No hay procesos disponibles para la compañía seleccionada
+                            </SelectItem>
+                          )}
                     </SelectContent>
                   </Select>
                 </div>

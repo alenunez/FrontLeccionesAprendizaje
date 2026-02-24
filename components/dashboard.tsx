@@ -1082,6 +1082,17 @@ export function Dashboard() {
     [processCompanyNames, projectsByProcessCompany],
   )
 
+  const processChartHeight = useMemo(() => {
+    const processCount = projectsByProcessCompanyChartData.length
+    if (processCount === 0) {
+      return 384
+    }
+
+    const rowHeight = showProcessValues ? 56 : 34
+    const chartPadding = showProcessValues ? 120 : 90
+    return Math.max(384, processCount * rowHeight + chartPadding)
+  }, [projectsByProcessCompanyChartData.length, showProcessValues])
+
   const projectsByYearChartData = useMemo(() => {
     const yearMap = new Map<number, Record<string, number | string>>()
 
@@ -1889,7 +1900,7 @@ export function Dashboard() {
                         </div>
                       </CardHeader>
                       <CardContent>
-                        <div className="h-96">
+                        <div style={{ height: `${processChartHeight}px` }}>
                           {isLoadingProcessReport ? (
                             <div className="flex h-full flex-col items-center justify-center gap-2 text-sm text-slate-600">
                               <Spinner />

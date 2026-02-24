@@ -1721,6 +1721,109 @@ export function Dashboard() {
                     <Card className="shadow-sm border border-emerald-50 bg-white/80 backdrop-blur-sm">
                       <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                         <div>
+                          <CardTitle className="text-lg">Proyectos o situaciones por año y compañía</CardTitle>
+                          <CardDescription>Evolución anual de proyectos o situaciones por empresa</CardDescription>
+                        </div>
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                          <span className="text-sm font-medium text-slate-600">Estado</span>
+                          <Select
+                            value={yearEstadoId ? String(yearEstadoId) : "all"}
+                            onValueChange={(value) => setYearEstadoId(value === "all" ? null : value)}
+                          >
+                            <SelectTrigger className="h-10 w-full min-w-[220px] border-slate-200 focus:border-[color:var(--brand-primary)] focus:ring-[color:var(--brand-primary)]/30 sm:w-[240px]">
+                              <SelectValue placeholder="Todos los estados" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">Todos los estados</SelectItem>
+                              {estadoOptions.length > 0 ? (
+                                estadoOptions.map((estado) => (
+                                  <SelectItem key={estado.id} value={String(estado.id)}>
+                                    {estado.descripcion}
+                                  </SelectItem>
+                                ))
+                              ) : (
+                                <SelectItem value="sin-estados" disabled>
+                                  Sin estados disponibles
+                                </SelectItem>
+                              )}
+                            </SelectContent>
+                          </Select>
+                          <div className="flex items-center gap-2 text-xs text-slate-600 sm:pl-4">
+                            <Checkbox
+                              id="toggle-year-values"
+                              checked={showYearValues}
+                              onCheckedChange={(value) => setShowYearValues(Boolean(value))}
+                            />
+                            <label htmlFor="toggle-year-values">Mostrar valores</label>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="h-96">
+                          {isLoadingYearReport ? (
+                            <div className="flex h-full flex-col items-center justify-center gap-2 text-sm text-slate-600">
+                              <Spinner />
+                              Cargando reporte por año...
+                            </div>
+                          ) : yearReportError ? (
+                            <div className="flex h-full flex-col items-center justify-center gap-3 text-sm text-slate-600">
+                              <p>{yearReportError}</p>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="border-slate-200 text-[color:var(--brand-primary)] hover:bg-[color:var(--brand-soft)]"
+                                onClick={() => setAnalyticsReloadKey((prev) => prev + 1)}
+                              >
+                                Reintentar
+                              </Button>
+                            </div>
+                          ) : projectsByYearChartData.length === 0 ? (
+                            <p className="text-sm text-slate-600">No hay datos disponibles para mostrar.</p>
+                          ) : (
+                            <ResponsiveContainer width="100%" height="100%">
+                              <BarChart data={projectsByYearChartData}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                                <XAxis dataKey="anio" tick={{ fontSize: 12 }} />
+                                <YAxis tick={{ fontSize: 12 }} />
+                                <Tooltip
+                                  contentStyle={{
+                                    backgroundColor: "white",
+                                    border: "1px solid #e2e8f0",
+                                    borderRadius: "8px",
+                                  }}
+                                  {...yearTooltipProps}
+                                />
+                                <Legend wrapperStyle={{ fontSize: "12px" }} />
+                                {projectYearCompanies.map((company) => (
+                                  <Bar
+                                    key={company}
+                                    dataKey={company}
+                                    fill={companyColorMap[company] ?? brandPrimary}
+                                    radius={[4, 4, 0, 0]}
+                                  >
+                                    {showYearValues ? (
+                                      <LabelList
+                                        content={buildSingleValueTooltipLabel({
+                                          titleKey: "anio",
+                                          titleFallback: "Sin año",
+                                          valueLabel: company,
+                                          valueKey: company,
+                                          data: projectsByYearChartData,
+                                          valueColor: companyColorMap[company] ?? brandPrimary,
+                                        })}
+                                      />
+                                    ) : null}
+                                  </Bar>
+                                ))}
+                              </BarChart>
+                            </ResponsiveContainer>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card className="shadow-sm border border-emerald-50 bg-white/80 backdrop-blur-sm">
+                      <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                        <div>
                           <CardTitle className="text-lg">Cantidad de procesos por proyecto o situación y compañía</CardTitle>
                           <CardDescription>Procesos registrados por proyecto o situación según la empresa</CardDescription>
                         </div>
@@ -1851,109 +1954,6 @@ export function Dashboard() {
                       </CardContent>
                     </Card>
 
-                    <Card className="shadow-sm border border-emerald-50 bg-white/80 backdrop-blur-sm">
-                      <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                        <div>
-                          <CardTitle className="text-lg">Proyectos o situaciones por año y compañía</CardTitle>
-                          <CardDescription>Evolución anual de proyectos o situaciones por empresa</CardDescription>
-                        </div>
-                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                          <span className="text-sm font-medium text-slate-600">Estado</span>
-                          <Select
-                            value={yearEstadoId ? String(yearEstadoId) : "all"}
-                            onValueChange={(value) => setYearEstadoId(value === "all" ? null : value)}
-                          >
-                            <SelectTrigger className="h-10 w-full min-w-[220px] border-slate-200 focus:border-[color:var(--brand-primary)] focus:ring-[color:var(--brand-primary)]/30 sm:w-[240px]">
-                              <SelectValue placeholder="Todos los estados" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">Todos los estados</SelectItem>
-                              {estadoOptions.length > 0 ? (
-                                estadoOptions.map((estado) => (
-                                  <SelectItem key={estado.id} value={String(estado.id)}>
-                                    {estado.descripcion}
-                                  </SelectItem>
-                                ))
-                              ) : (
-                                <SelectItem value="sin-estados" disabled>
-                                  Sin estados disponibles
-                                </SelectItem>
-                              )}
-                            </SelectContent>
-                          </Select>
-                          <div className="flex items-center gap-2 text-xs text-slate-600 sm:pl-4">
-                            <Checkbox
-                              id="toggle-year-values"
-                              checked={showYearValues}
-                              onCheckedChange={(value) => setShowYearValues(Boolean(value))}
-                            />
-                            <label htmlFor="toggle-year-values">Mostrar valores</label>
-                          </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="h-96">
-                          {isLoadingYearReport ? (
-                            <div className="flex h-full flex-col items-center justify-center gap-2 text-sm text-slate-600">
-                              <Spinner />
-                              Cargando reporte por año...
-                            </div>
-                          ) : yearReportError ? (
-                            <div className="flex h-full flex-col items-center justify-center gap-3 text-sm text-slate-600">
-                              <p>{yearReportError}</p>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="border-slate-200 text-[color:var(--brand-primary)] hover:bg-[color:var(--brand-soft)]"
-                                onClick={() => setAnalyticsReloadKey((prev) => prev + 1)}
-                              >
-                                Reintentar
-                              </Button>
-                            </div>
-                          ) : projectsByYearChartData.length === 0 ? (
-                            <p className="text-sm text-slate-600">No hay datos disponibles para mostrar.</p>
-                          ) : (
-                            <ResponsiveContainer width="100%" height="100%">
-                              <BarChart data={projectsByYearChartData}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                                <XAxis dataKey="anio" tick={{ fontSize: 12 }} />
-                                <YAxis tick={{ fontSize: 12 }} />
-                                <Tooltip
-                                  contentStyle={{
-                                    backgroundColor: "white",
-                                    border: "1px solid #e2e8f0",
-                                    borderRadius: "8px",
-                                  }}
-                                  {...yearTooltipProps}
-                                />
-                                <Legend wrapperStyle={{ fontSize: "12px" }} />
-                                {projectYearCompanies.map((company) => (
-                                  <Bar
-                                    key={company}
-                                    dataKey={company}
-                                    fill={companyColorMap[company] ?? brandPrimary}
-                                    radius={[4, 4, 0, 0]}
-                                  >
-                                    {showYearValues ? (
-                                      <LabelList
-                                        content={buildSingleValueTooltipLabel({
-                                          titleKey: "anio",
-                                          titleFallback: "Sin año",
-                                          valueLabel: company,
-                                          valueKey: company,
-                                          data: projectsByYearChartData,
-                                          valueColor: companyColorMap[company] ?? brandPrimary,
-                                        })}
-                                      />
-                                    ) : null}
-                                  </Bar>
-                                ))}
-                              </BarChart>
-                            </ResponsiveContainer>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
                   </div>
                 )}
               </div>
